@@ -1,5 +1,5 @@
 "use client";
-
+import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { authService } from "../../services/auth.service";
@@ -74,6 +74,11 @@ export default function LoginPage() {
           >
             {isSubmitting ? "Connexion..." : "Se connecter"}
           </button>
+          <p className="text-center text-sm text-zinc-600">
+           <Link href="/forgot-password" className="text-zinc-900 underline">
+                 Mot de passe oublié ?
+            </Link>
+          </p>
         </form>
       </div>
     </main>

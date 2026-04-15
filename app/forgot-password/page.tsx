@@ -1,11 +1,13 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import Link from "next/link";
 import { useForm } from "react-hook-form";
 import {
   forgotPasswordSchema,
   ForgotPasswordFormData,
 } from "../../lib/validations";
+
 
 export default function ForgotPasswordPage() {
   const {
@@ -62,6 +64,11 @@ export default function ForgotPasswordPage() {
           >
             {isSubmitting ? "Envoi..." : "Envoyer le lien"}
           </button>
+          <p className="text-center text-sm text-zinc-600">
+           <Link href="/login" className="text-zinc-900 underline">
+            Retour à la connexion
+           </Link>
+          </p>
         </form>
       </div>
     </main>
