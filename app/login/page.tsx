@@ -1,16 +1,24 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { authService, LoginPayload } from "../../services/auth.service";
+import { authService } from "../../services/auth.service";
+import { loginSchema, LoginFormData } from "../../lib/validations";
 
 export default function LoginPage() {
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<LoginPayload>();
+  } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
 
-  const onSubmit = async (data: LoginPayload) => {
+  const onSubmit = async (data: LoginFormData) => {
     try {
       const response = await authService.login(data);
       console.log("Login success:", response);
@@ -26,14 +34,14 @@ export default function LoginPage() {
       <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-md">
         <h1 className="mb-6 text-2xl font-bold text-zinc-900">Connexion</h1>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
           <div>
             <label className="mb-1 block text-sm font-medium text-zinc-700">
               Email
             </label>
             <input
               type="email"
-              {...register("email", { required: "L'email est obligatoire" })}
+              {...register("email")}
               className="w-full rounded-lg border border-zinc-300 px-4 py-2 outline-none focus:border-zinc-500"
               placeholder="exemple@email.com"
             />
@@ -48,9 +56,7 @@ export default function LoginPage() {
             </label>
             <input
               type="password"
-              {...register("password", {
-                required: "Le mot de passe est obligatoire",
-              })}
+              {...register("password")}
               className="w-full rounded-lg border border-zinc-300 px-4 py-2 outline-none focus:border-zinc-500"
               placeholder="********"
             />
