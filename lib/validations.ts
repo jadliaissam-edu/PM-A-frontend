@@ -12,3 +12,11 @@ export const loginSchema = z.object({
 });
 
 export type LoginFormData = z.infer<typeof loginSchema>;
+export const forgotPasswordSchema = z.object({
+  email: z
+    .string()
+    .min(1, "L'email est obligatoire")
+    .email("Veuillez entrer un email valide"),
+});
+
+export type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
