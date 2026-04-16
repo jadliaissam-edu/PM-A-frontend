@@ -2,14 +2,19 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import {
   forgotPasswordSchema,
   ForgotPasswordFormData,
 } from "../../lib/validations";
+import { authService } from "../../services/auth.service";
+import { getApiErrorMessage } from "../../lib/utils";
 
 
 export default function ForgotPasswordPage() {
+  const router = useRouter();
+
   const {
     register,
     handleSubmit,
@@ -23,11 +28,13 @@ export default function ForgotPasswordPage() {
 
   const onSubmit = async (data: ForgotPasswordFormData) => {
     try {
-      console.log("Forgot password data:", data);
-      alert("Demande de réinitialisation envoyée.");
+      const response = await authService.requestPasswordReset(data);
+      console.log("Forgot password response:", response);
+      alert(response.message ?? "Demande de réinitialisation envoyée.");
+      router.push(`/reset-password-verify?email=${encodeURIComponent(data.email)}`);
     } catch (error) {
       console.error(error);
-      alert("Erreur lors de l'envoi.");
+      alert(getApiErrorMessage(error, "Erreur lors de l'envoi."));
     }
   };
 
@@ -38,7 +45,7 @@ export default function ForgotPasswordPage() {
           Mot de passe oublié
         </h1>
         <p className="mb-6 text-sm text-zinc-600">
-          Entrez votre email pour recevoir un lien de réinitialisation.
+          Entrez votre email pour recevoir un code OTP de réinitialisation.
         </p>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
@@ -62,7 +69,7 @@ export default function ForgotPasswordPage() {
             disabled={isSubmitting}
             className="w-full rounded-lg bg-zinc-900 px-4 py-2 font-medium text-white transition hover:bg-zinc-800 disabled:opacity-50"
           >
-            {isSubmitting ? "Envoi..." : "Envoyer le lien"}
+            {isSubmitting ? "Envoi..." : "Envoyer le code"}
           </button>
           <p className="text-center text-sm text-zinc-600">
            <Link href="/login" className="text-zinc-900 underline">

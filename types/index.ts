@@ -1,34 +1,10 @@
-import { create } from "zustand";
-import { User } from "../types";
-
-interface AuthState {
-  user: User | null;
-  accessToken: string | null;
-  refreshToken: string | null;
-  setAuth: (data: {
-    user: User | null;
-    accessToken: string;
-    refreshToken: string;
-  }) => void;
-  clearAuth: () => void;
+export interface User {
+  id: number;
+  username: string;
+  email: string;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
-  user: null,
-  accessToken: null,
-  refreshToken: null,
-
-  setAuth: ({ user, accessToken, refreshToken }) =>
-    set({
-      user,
-      accessToken,
-      refreshToken,
-    }),
-
-  clearAuth: () =>
-    set({
-      user: null,
-      accessToken: null,
-      refreshToken: null,
-    }),
-}));
+export interface AuthResponse {
+  refresh: string;
+  access: string;
+}
