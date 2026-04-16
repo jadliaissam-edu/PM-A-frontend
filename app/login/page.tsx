@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { authService } from "../../services/auth.service";
@@ -8,6 +9,7 @@ import { loginSchema, LoginFormData } from "../../lib/validations";
 import { useAuthStore } from "../../store";
 
 export default function LoginPage() {
+  const router = useRouter();
   const setAuth = useAuthStore((state) => state.setAuth);
 
   const {
@@ -36,7 +38,7 @@ export default function LoginPage() {
       localStorage.setItem("refreshToken", response.refresh);
 
       alert("Connexion réussie.");
-      console.log("Login success:", response);
+      router.push("/dashboard");
     } catch (error) {
       console.error("Login error:", error);
       alert("Erreur de connexion au backend.");
@@ -51,7 +53,7 @@ export default function LoginPage() {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
           <div>
             <label className="mb-1 block text-sm font-medium text-zinc-700">
-              Username
+              Nom d'utilisateur
             </label>
             <input
               type="text"
@@ -92,6 +94,13 @@ export default function LoginPage() {
           <p className="text-center text-sm text-zinc-600">
             <Link href="/forgot-password" className="text-zinc-900 underline">
               Mot de passe oublié ?
+            </Link>
+          </p>
+
+          <p className="text-center text-sm text-zinc-600">
+            Pas encore de compte ?{" "}
+            <Link href="/register" className="text-zinc-900 underline">
+              S’inscrire
             </Link>
           </p>
         </form>
