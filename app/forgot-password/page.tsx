@@ -3,11 +3,11 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
+import { authService } from "../../services/auth.service";
 import {
   forgotPasswordSchema,
   ForgotPasswordFormData,
 } from "../../lib/validations";
-
 
 export default function ForgotPasswordPage() {
   const {
@@ -23,8 +23,9 @@ export default function ForgotPasswordPage() {
 
   const onSubmit = async (data: ForgotPasswordFormData) => {
     try {
-      console.log("Forgot password data:", data);
-      alert("Demande de réinitialisation envoyée.");
+      const response = await authService.requestPasswordReset(data.email);
+      console.log("Forgot password response:", response);
+      alert(response.message || "Demande de réinitialisation envoyée.");
     } catch (error) {
       console.error(error);
       alert("Erreur lors de l'envoi.");
@@ -64,10 +65,11 @@ export default function ForgotPasswordPage() {
           >
             {isSubmitting ? "Envoi..." : "Envoyer le lien"}
           </button>
+
           <p className="text-center text-sm text-zinc-600">
-           <Link href="/login" className="text-zinc-900 underline">
-            Retour à la connexion
-           </Link>
+            <Link href="/login" className="text-zinc-900 underline">
+              Retour à la connexion
+            </Link>
           </p>
         </form>
       </div>
