@@ -20,6 +20,7 @@ export default function LoginPage() {
     },
   });
 
+  
   const setAuth = useAuthStore((state) => state.setAuth);
 
   const onSubmit = async (data: LoginFormData) => {
