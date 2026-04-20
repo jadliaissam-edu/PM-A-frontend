@@ -2,7 +2,7 @@ import { api } from "../lib/api";
 import { AuthResponse } from "../types";
 
 export interface LoginPayload {
-  username: string;
+  email: string;
   password: string;
 }
 
@@ -12,24 +12,15 @@ export interface RegisterPayload {
   password: string;
 }
 
-export interface LoginPayload {
+export interface UserProfile {
+  id: string;
   username: string;
-  password: string;
-}
-
-export interface ResetPasswordRequestPayload {
   email: string;
-}
-
-export interface VerifyOtpPayload {
-  email: string;
-  otp: string;
-}
-
-export interface ConfirmResetPayload {
-  email: string;
-  otp: string;
-  new_password: string;
+  first_name?: string;
+  last_name?: string;
+  avatar_url?: string;
+  bio?: string;
+  preferences_json?: any;
 }
 
 export const authService = {
@@ -39,17 +30,33 @@ export const authService = {
   },
 
   login: async (data: LoginPayload): Promise<AuthResponse> => {
+    // API uses email for login based on previous session summary
     const response = await api.post("/auth/login/", data);
     return response.data;
   },
 
-  register: async (data: RegisterPayload) => {
-    const response = await api.post("/auth/register/", data);
+  getProfile: async (): Promise<UserProfile> => {
+    const response = await api.get("/auth/profile/");
+    return response.data;
+  },
+
+  updateProfile: async (data: Partial<UserProfile>): Promise<UserProfile> => {
+    const response = await api.patch("/auth/profile/", data);
     return response.data;
   },
 
   requestPasswordReset: async (email: string) => {
     const response = await api.post("/auth/reset-password/", { email });
+    return response.data;
+  },
+
+  verifyOtp: async (data: { email: string; otp: string }) => {
+    const response = await api.post("/auth/verify-otp/", data);
+    return response.data;
+  },
+
+  confirmReset: async (data: any) => {
+    const response = await api.post("/auth/confirm-reset/", data);
     return response.data;
   },
 };

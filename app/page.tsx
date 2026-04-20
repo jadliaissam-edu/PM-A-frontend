@@ -126,6 +126,7 @@ const deadlines = [
 ];
 
 export default function HomePage() {
+  
   return (
     <main className="min-h-screen bg-zinc-100 text-zinc-900">
       <div className="flex min-h-screen">
