@@ -4,13 +4,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
+import { authService } from "../../services/auth.service";
 import {
   forgotPasswordSchema,
   ForgotPasswordFormData,
 } from "../../lib/validations";
 import { authService } from "../../services/auth.service";
 import { getApiErrorMessage } from "../../lib/utils";
-
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
@@ -28,10 +28,9 @@ export default function ForgotPasswordPage() {
 
   const onSubmit = async (data: ForgotPasswordFormData) => {
     try {
-      const response = await authService.requestPasswordReset(data);
+      const response = await authService.requestPasswordReset(data.email);
       console.log("Forgot password response:", response);
-      alert(response.message ?? "Demande de réinitialisation envoyée.");
-      router.push(`/reset-password-verify?email=${encodeURIComponent(data.email)}`);
+      alert(response.message || "Demande de réinitialisation envoyée.");
     } catch (error) {
       console.error(error);
       alert(getApiErrorMessage(error, "Erreur lors de l'envoi."));
@@ -71,10 +70,11 @@ export default function ForgotPasswordPage() {
           >
             {isSubmitting ? "Envoi..." : "Envoyer le code"}
           </button>
+
           <p className="text-center text-sm text-zinc-600">
-           <Link href="/login" className="text-zinc-900 underline">
-            Retour à la connexion
-           </Link>
+            <Link href="/login" className="text-zinc-900 underline">
+              Retour à la connexion
+            </Link>
           </p>
         </form>
       </div>

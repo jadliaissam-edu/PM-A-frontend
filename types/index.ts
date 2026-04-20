@@ -1,10 +1,12 @@
 export interface User {
-  id: number;
-  username: string;
-  email: string;
+  id?: number;
+  email?: string;
+  first_name?: string;
+  last_name?: string;
+  username?: string;
 }
 
 export interface AuthResponse {
-  refresh: string;
   access: string;
+  refresh: string;
 }
