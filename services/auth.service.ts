@@ -30,7 +30,6 @@ export const authService = {
   },
 
   login: async (data: LoginPayload): Promise<AuthResponse> => {
-    // API uses email for login based on previous session summary
     const response = await api.post("/auth/login/", data);
     return response.data;
   },
@@ -58,5 +57,10 @@ export const authService = {
   confirmReset: async (data: any) => {
     const response = await api.post("/auth/confirm-reset/", data);
     return response.data;
+  },
+
+  logout: async () => {
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
   },
 };

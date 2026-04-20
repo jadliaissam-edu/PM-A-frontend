@@ -1,476 +1,371 @@
 "use client";
 
-import type { ReactNode } from "react";
+import React from "react";
+import Link from "next/link";
 import {
-  Bell,
-  ChevronDown,
-  ChevronRight,
-  CirclePlus,
-  Clock3,
-  FolderKanban,
-  Home,
-  Layers3,
-  LayoutGrid,
-  MoreHorizontal,
-  Search,
-  Settings,
-  Star,
-  Users,
+  Rocket,
+  Shield,
+  Zap,
+  BarChart3,
+  Users2,
+  Layout,
   CheckCircle2,
-  CalendarDays,
-  Activity,
-  PanelsTopLeft,
-  BriefcaseBusiness,
+  ArrowRight,
+
 } from "lucide-react";
 
-const spaces = [
-  {
-    name: "Engineering",
-    description: "Development tasks, bugs, sprint planning and technical delivery.",
-    members: 12,
-    tasks: 24,
-    updated: "Updated 2h ago",
-    status: "Active",
-    color: "bg-blue-100 text-blue-700",
-  },
-  {
-    name: "Design",
-    description: "UI/UX work, prototypes, component system and product visuals.",
-    members: 5,
-    tasks: 13,
-    updated: "Updated 4h ago",
-    status: "Active",
-    color: "bg-pink-100 text-pink-700",
-  },
-  {
-    name: "Marketing",
-    description: "Campaign planning, brand content and growth coordination.",
-    members: 7,
-    tasks: 18,
-    updated: "Updated today",
-    status: "In progress",
-    color: "bg-emerald-100 text-emerald-700",
-  },
-  {
-    name: "Product",
-    description: "Roadmap definition, feedback analysis and feature planning.",
-    members: 4,
-    tasks: 9,
-    updated: "Updated yesterday",
-    status: "Planning",
-    color: "bg-amber-100 text-amber-700",
-  },
-];
-
-const favorites = [
-  "Frontend space",
-  "Sprint board",
-  "Auth project",
-  "Design system",
-];
-
-const recentActivity = [
-  {
-    title: "Authentication flow updated",
-    meta: "Aya • 24 min ago",
-  },
-  {
-    title: "OTP verification task completed",
-    meta: "Hassine • 1h ago",
-  },
-  {
-    title: "Register page UI improved",
-    meta: "Aya • 2h ago",
-  },
-  {
-    title: "Backend auth endpoints connected",
-    meta: "Team • Today",
-  },
-];
-
-const assignedTasks = [
-  {
-    title: "Finalize Jira-inspired homepage",
-    priority: "High",
-  },
-  {
-    title: "Create spaces section UI",
-    priority: "Medium",
-  },
-  {
-    title: "Improve auth pages design",
-    priority: "Medium",
-  },
-];
-
-const quickActions = [
-  "Create new space",
-  "Open project board",
-  "Invite team members",
-  "Create task",
-];
-
-const deadlines = [
-  {
-    title: "Homepage review",
-    date: "Today",
-  },
-  {
-    title: "Frontend auth polish",
-    date: "Tomorrow",
-  },
-  {
-    title: "Team sync meeting",
-    date: "Friday",
-  },
-];
-
-export default function HomePage() {
-  
+export default function InfoPage() {
   return (
-    <main className="min-h-screen bg-zinc-100 text-zinc-900">
-      <div className="flex min-h-screen">
-        <aside className="hidden w-72 border-r border-zinc-200 bg-white px-4 py-5 xl:block">
-          <div className="mb-6 flex items-center gap-3 rounded-2xl border border-zinc-200 bg-zinc-50 p-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-zinc-900 text-sm font-bold text-white">
+    <div className="min-h-screen bg-white text-zinc-900 selection:bg-zinc-900 selection:text-white">
+      {/* Navigation */}
+      <nav className="fixed top-0 z-50 w-full border-b border-zinc-100 bg-white/80 backdrop-blur-md">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+          <div className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-900 text-sm font-bold text-white">
               A
             </div>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold">AgileFlow</p>
-              <p className="text-xs text-zinc-500">Project workspace</p>
-            </div>
-            <ChevronDown size={16} className="text-zinc-400" />
+            <span className="text-xl font-bold tracking-tight">AgileFlow</span>
           </div>
-
-          <div className="mb-6 space-y-2">
-            <SidebarItem icon={<Home size={18} />} label="Home" active />
-            <SidebarItem icon={<Layers3 size={18} />} label="Spaces" />
-            <SidebarItem icon={<FolderKanban size={18} />} label="Projects" />
-            <SidebarItem icon={<CheckCircle2 size={18} />} label="Tasks" />
-            <SidebarItem icon={<Users size={18} />} label="Teams" />
-            <SidebarItem icon={<Settings size={18} />} label="Settings" />
+          <div className="hidden items-center gap-8 text-sm font-medium text-zinc-600 md:flex">
+            <a href="#features" className="transition hover:text-zinc-900">Features</a>
+            <a href="#solutions" className="transition hover:text-zinc-900">Solutions</a>
+            <a href="#about" className="transition hover:text-zinc-900">About us</a>
           </div>
-
-          <SectionTitle title="Favorites" />
-          <div className="mb-6 space-y-2">
-            {favorites.map((item) => (
-              <MiniSidebarItem key={item} icon={<Star size={14} />} label={item} />
-            ))}
+          <div className="flex items-center gap-4">
+            <Link href="/login" className="text-sm font-medium text-zinc-600 transition hover:text-zinc-900">
+              Sign in
+            </Link>
+            <Link
+              href="/register"
+              className="rounded-full bg-zinc-900 px-5 py-2 text-sm font-medium text-white transition hover:bg-zinc-800"
+            >
+              Get Started
+            </Link>
           </div>
+        </div>
+      </nav>
 
-          <SectionTitle title="Recent" />
-          <div className="mb-6 space-y-2">
-            {["HomePage", "Register", "Auth Flow", "Spaces"].map((item) => (
-              <MiniSidebarItem key={item} icon={<Clock3 size={14} />} label={item} />
-            ))}
-          </div>
-
-          <SectionTitle title="Workspaces" />
-          <div className="space-y-2">
-            <MiniSidebarItem icon={<BriefcaseBusiness size={14} />} label="Product Team" />
-            <MiniSidebarItem icon={<PanelsTopLeft size={14} />} label="Development Team" />
-          </div>
-        </aside>
-
-        <section className="flex-1">
-          <header className="border-b border-zinc-200 bg-white px-4 py-4 md:px-8">
-            <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-              <div>
-                <div className="mb-1 flex items-center gap-2 text-sm text-zinc-500">
-                  <span>Workspace</span>
-                  <ChevronRight size={14} />
-                  <span className="text-zinc-700">Home</span>
-                </div>
-                <h1 className="text-3xl font-bold tracking-tight">Welcome back, Aya</h1>
-                <p className="mt-1 text-sm text-zinc-500">
-                  Manage your spaces, follow recent activity, and keep track of your work.
-                </p>
+      {/* Hero Section */}
+      <section className="relative px-6 pt-32 pb-20 md:pt-48 md:pb-32">
+        <div className="mx-auto max-w-7xl">
+          <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
+            <div className="max-w-3xl">
+              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1 text-xs font-semibold text-zinc-600">
+                <span className="flex h-2 w-2 rounded-full bg-red-500 animate-pulse"></span>
+                Now in Public Beta
               </div>
-
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                <div className="flex items-center gap-2 rounded-xl border border-zinc-300 bg-zinc-50 px-3 py-2">
-                  <Search size={16} className="text-zinc-500" />
-                  <input
-                    type="text"
-                    placeholder="Search..."
-                    className="w-44 bg-transparent text-sm outline-none"
-                  />
-                </div>
-
-                <button className="flex items-center justify-center gap-2 rounded-xl bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-zinc-800">
-                  <CirclePlus size={16} />
-                  Create
-                </button>
-
-                <button className="rounded-xl border border-zinc-300 p-2 text-zinc-700 transition hover:bg-zinc-100">
-                  <Bell size={18} />
-                </button>
-
-                <div className="flex items-center gap-3 rounded-xl border border-zinc-200 px-3 py-2">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-zinc-900 text-xs font-semibold text-white">
-                    AA
-                  </div>
-                  <div className="hidden text-left sm:block">
-                    <p className="text-sm font-medium">Aya Achiban</p>
-                    <p className="text-xs text-zinc-500">Frontend</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </header>
-
-          <div className="p-4 md:p-8">
-            <section className="mb-8 grid gap-4 xl:grid-cols-4">
-              <MetricCard title="Total spaces" value="4" subtitle="Active team workspaces" />
-              <MetricCard title="Assigned tasks" value="3" subtitle="Currently assigned to you" />
-              <MetricCard title="Recent updates" value="12" subtitle="Changes in the last 24h" />
-              <MetricCard title="Upcoming deadlines" value="3" subtitle="Planned this week" />
-            </section>
-
-            <section className="mb-8">
-              <div className="mb-4 flex items-center justify-between">
-                <div>
-                  <h2 className="text-xl font-semibold">Spaces</h2>
-                  <p className="text-sm text-zinc-500">
-                    Organize work by teams and functional areas.
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <button className="rounded-xl border border-zinc-300 bg-white px-4 py-2 text-sm font-medium transition hover:bg-zinc-50">
-                    View all
-                  </button>
-                  <button className="rounded-xl bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-zinc-800">
-                    Create space
-                  </button>
-                </div>
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-4">
-                {spaces.map((space) => (
-                  <div
-                    key={space.name}
-                    className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-lg"
-                  >
-                    <div className="mb-4 flex items-start justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className={`rounded-xl p-3 ${space.color}`}>
-                          <LayoutGrid size={18} />
-                        </div>
-                        <div>
-                          <h3 className="text-lg font-semibold">{space.name}</h3>
-                          <span className="text-xs text-zinc-500">
-                            {space.members} members
-                          </span>
-                        </div>
-                      </div>
-
-                      <button className="text-zinc-400 hover:text-zinc-700">
-                        <MoreHorizontal size={18} />
-                      </button>
-                    </div>
-
-                    <p className="mb-3 text-sm leading-6 text-zinc-600">
-                      {space.description}
-                    </p>
-
-                    <p className="mb-4 text-xs text-zinc-500">
-                      {space.tasks} tasks • {space.updated}
-                    </p>
-
-                    <div className="flex items-center justify-between">
-                      <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-700">
-                        {space.status}
-                      </span>
-
-                      <div className="flex -space-x-2">
-                        <AvatarDot />
-                        <AvatarDot />
-                        <AvatarDot />
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            <section className="mb-4">
-              <h2 className="text-xl font-semibold">Your work</h2>
-              <p className="text-sm text-zinc-500">
-                Quick access to important items, ongoing tasks, and team activity.
+              <h1 className="text-5xl font-bold leading-[1.1] tracking-tight md:text-7xl">
+                Shipping products is <br />
+                <span className="bg-gradient-to-r from-zinc-900 via-zinc-500 to-zinc-400 bg-clip-text text-transparent">
+                  hard enough.
+                </span>
+              </h1>
+              <p className="mt-8 text-lg leading-relaxed text-zinc-600 md:text-xl">
+                AgileFlow streamlines your engineering workflow, connects your team, and gives you back the time to focus on what matters: building great software.
               </p>
-            </section>
+              <div className="mt-10 flex flex-col gap-4 sm:flex-row">
+                <Link
+                  href="/register"
+                  className="flex items-center justify-center gap-2 rounded-full bg-zinc-900 px-8 py-4 text-base font-semibold text-white transition hover:bg-zinc-800"
+                >
+                  Join the beta <ArrowRight size={18} />
+                </Link>
+                <button className="flex items-center justify-center gap-2 rounded-full border border-zinc-200 bg-white px-8 py-4 text-base font-semibold text-zinc-900 transition hover:bg-zinc-50">
+                  View demo
+                </button>
+              </div>
+            </div>
 
-            <div className="grid gap-6 2xl:grid-cols-12">
-              <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm transition duration-200 hover:shadow-md 2xl:col-span-4">
-                <BlockTitle icon={<Star size={18} />} title="Favorites" />
-                <div className="space-y-3">
-                  {favorites.map((item) => (
-                    <RowCard key={item} text={item} />
-                  ))}
-                </div>
-              </section>
+            {/* Animated Graphic */}
+            <div className="flex items-center justify-center lg:justify-end">
+              <div className="relative h-64 w-64 md:h-96 md:w-96">
+                <svg viewBox="0 0 200 200" className="h-full w-full drop-shadow-2xl overflow-visible">
+                  {/* Outer Glow with Pulse */}
+                  <circle cx="100" cy="100" r="95" fill="white" className="opacity-10">
+                    <animate attributeName="r" values="90;100;90" dur="4s" repeatCount="indefinite" />
+                    <animate attributeName="opacity" values="0.05;0.15;0.05" dur="4s" repeatCount="indefinite" />
+                  </circle>
 
-              <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm transition duration-200 hover:shadow-md 2xl:col-span-4">
-                <BlockTitle icon={<Activity size={18} />} title="Recent activity" />
-                <div className="space-y-3">
-                  {recentActivity.map((item) => (
-                    <div
-                      key={item.title}
-                      className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3"
-                    >
-                      <p className="text-sm font-medium text-zinc-800">{item.title}</p>
-                      <p className="mt-1 text-xs text-zinc-500">{item.meta}</p>
-                    </div>
-                  ))}
-                </div>
-              </section>
+                  {/* Red Circle */}
+                  <circle cx="100" cy="100" r="85" fill="#EF4444" className="shadow-inner" />
 
-              <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm transition duration-200 hover:shadow-md 2xl:col-span-4">
-                <BlockTitle icon={<CheckCircle2 size={18} />} title="Assigned to me" />
-                <div className="space-y-3">
-                  {assignedTasks.map((task) => (
-                    <div
-                      key={task.title}
-                      className="flex items-center justify-between rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3"
-                    >
-                      <p className="text-sm text-zinc-800">{task.title}</p>
-                      <span className="rounded-full bg-zinc-200 px-2.5 py-1 text-xs font-medium text-zinc-700">
-                        {task.priority}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </section>
-
-              <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm transition duration-200 hover:shadow-md 2xl:col-span-6">
-                <BlockTitle icon={<CirclePlus size={18} />} title="Quick actions" />
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {quickActions.map((action) => (
-                    <button
-                      key={action}
-                      className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-4 text-left text-sm font-medium text-zinc-800 transition hover:bg-zinc-100"
-                    >
-                      {action}
-                    </button>
-                  ))}
-                </div>
-              </section>
-
-              <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm transition duration-200 hover:shadow-md 2xl:col-span-6">
-                <BlockTitle icon={<CalendarDays size={18} />} title="Upcoming deadlines" />
-                <div className="space-y-3">
-                  {deadlines.map((item) => (
-                    <div
-                      key={item.title}
-                      className="flex items-center justify-between rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3"
-                    >
-                      <p className="text-sm font-medium text-zinc-800">{item.title}</p>
-                      <span className="text-xs text-zinc-500">{item.date}</span>
-                    </div>
-                  ))}
-                </div>
-              </section>
+                  {/* 3 Rectangles with SVG Animations - Balanced for centering */}
+                  <rect x="55" y="60" width="20" height="80" fill="white" rx="6">
+                    <animate attributeName="y" values="60;50;70;60" dur="4s" repeatCount="indefinite" begin="0s" />
+                  </rect>
+                  <rect x="90" y="50" width="20" height="100" fill="white" rx="6">
+                    <animate attributeName="y" values="50;40;60;50" dur="4s" repeatCount="indefinite" begin="0.4s" />
+                  </rect>
+                  <rect x="125" y="70" width="20" height="60" fill="white" rx="6">
+                    <animate attributeName="y" values="70;60;80;70" dur="4s" repeatCount="indefinite" begin="0.8s" />
+                  </rect>
+                </svg>
+                {/* Dynamic background blur */}
+                <div className="absolute -z-10 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[130%] h-[130%] bg-red-500/20 blur-[120px] rounded-full animate-pulse"></div>
+              </div>
             </div>
           </div>
-        </section>
+        </div>
+      </section>
+
+      {/* Features Grid */}
+      <section id="features" className="bg-zinc-50 py-24 md:py-32">
+        <div className="mx-auto max-w-7xl px-6">
+          <div className="mb-16 max-w-2xl">
+            <h2 className="text-3xl font-bold tracking-tight md:text-4xl">Everything you need to scale.</h2>
+            <p className="mt-4 text-lg text-zinc-600">
+              Stop fighting with your tools and start shipping features. AgileFlow is built for modern engineering teams.
+            </p>
+          </div>
+
+          <div className="grid gap-8 md:grid-cols-3">
+            <FeatureCard
+              icon={<Zap className="text-amber-500" />}
+              title="Lightning Fast"
+              description="Built with speed in mind. Our interface reacts instantly to your every click, keeping you in flow."
+            />
+            <FeatureCard
+              icon={<Shield className="text-blue-500" />}
+              title="Enterprise Ready"
+              description="Advanced permissions, SSO, and audit logs. Everything your security team needs."
+            />
+            <FeatureCard
+              icon={<Users2 className="text-emerald-500" />}
+              title="Built for Teams"
+              description="Collaborate in real-time. Comments, notifications, and shared boards keep everyone in sync."
+            />
+            <FeatureCard
+              icon={<BarChart3 className="text-indigo-500" />}
+              title="Deep Insights"
+              description="Visualize your team's velocity and identify bottlenecks before they slow you down."
+            />
+            <FeatureCard
+              icon={<Rocket className="text-rose-500" />}
+              title="Automated Workflows"
+              description="Connect with GitHub, Slack, and Discord to automate your repetitive tasks."
+            />
+            <FeatureCard
+              icon={<CheckCircle2 className="text-teal-500" />}
+              title="Simple Pricing"
+              description="No hidden fees. Scale from 1 to 1000 members with a simple, predictable cost."
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* About Us Section */}
+      <section id="about" className="py-24 md:py-32 bg-white">
+        <div className="mx-auto max-w-7xl px-6">
+          <div className="grid gap-16 md:grid-cols-2 items-center">
+            <div>
+              <h2 className="text-3xl font-bold tracking-tight md:text-5xl mb-8">
+                Building the future of <br />
+                <span className="text-zinc-400">Engineering Collaboration.</span>
+              </h2>
+              <p className="text-lg text-zinc-600 leading-relaxed mb-6">
+                AgileFlow was born out of a simple frustration: project management tools were either too simple to be useful or too complex to be pleasant.
+              </p>
+              <p className="text-lg text-zinc-600 leading-relaxed">
+                Our mission is to create a workspace that feels like your favorite code editor—fast, keyboard-driven, and designed for deep work. We believe that when the tools disappear, the best work happens.
+              </p>
+            </div>
+            <div className="relative">
+              <div className="aspect-square rounded-2xl bg-zinc-100 overflow-hidden border border-zinc-200 flex items-center justify-center p-12">
+                <div className="grid grid-cols-2 gap-4 w-full h-full opacity-40">
+                  <div className="bg-zinc-900 rounded-lg"></div>
+                  <div className="bg-zinc-300 rounded-lg translate-y-8"></div>
+                  <div className="bg-zinc-400 rounded-lg -translate-y-8"></div>
+                  <div className="bg-zinc-200 rounded-lg"></div>
+                </div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="bg-white p-6 rounded-2xl shadow-xl border border-zinc-100 max-w-[280px]">
+                    <p className="text-zinc-900 font-bold text-xl mb-2 italic">"The most intuitive tool we've ever used."</p>
+                    <p className="text-zinc-500 text-sm">— Engineering Team at TechFlow</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Feature Slider Section */}
+      <section className="py-24 border-y border-zinc-100 bg-zinc-50/50">
+        <div className="mx-auto max-w-7xl px-6">
+          <FeatureSlider />
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-24 md:py-48 text-center bg-zinc-900 text-white overflow-hidden relative">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-to-r from-zinc-500/20 to-zinc-400/20 blur-[120px] rounded-full pointer-events-none"></div>
+        <div className="relative z-10 mx-auto max-w-3xl px-6">
+          <h2 className="text-4xl font-bold tracking-tight md:text-6xl">Ready to ship faster?</h2>
+          <p className="mt-6 text-lg text-zinc-400 md:text-xl">
+            Join thousands of teams using AgileFlow to build the future.
+            Start your free 14-day trial today, no credit card required.
+          </p>
+          <div className="mt-10 flex flex-col justify-center gap-4 sm:flex-row">
+            <Link
+              href="/"
+              className="rounded-full bg-white px-8 py-4 text-base font-semibold text-zinc-900 transition hover:bg-zinc-100"
+            >
+              Get started for free
+            </Link>
+            <button className="rounded-full border border-zinc-700 bg-zinc-800/50 px-8 py-4 text-base font-semibold text-white backdrop-blur-sm transition hover:bg-zinc-800">
+              Contact sales
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="border-t border-zinc-100 py-12 md:py-20 bg-white">
+        <div className="mx-auto max-w-7xl px-6">
+          <div className="grid gap-12 md:grid-cols-4">
+            <div className="md:col-span-1">
+              <div className="flex items-center gap-2 mb-6">
+                <div className="flex h-6 w-6 items-center justify-center rounded bg-zinc-900 text-[10px] font-bold text-white">
+                  A
+                </div>
+                <span className="text-lg font-bold tracking-tight">AgileFlow</span>
+              </div>
+              <p className="text-sm text-zinc-500 leading-relaxed">
+                The modern standard for project management. Built by developers, for developers.
+              </p>
+
+            </div>
+            <div>
+              <h4 className="text-sm font-bold text-zinc-900 mb-6 uppercase tracking-wider">Product</h4>
+              <ul className="space-y-4 text-sm text-zinc-500">
+                <li className="hover:text-zinc-900 cursor-pointer transition">Changelog</li>
+                <li className="hover:text-zinc-900 cursor-pointer transition">Documentation</li>
+                <li className="hover:text-zinc-900 cursor-pointer transition">Pricing</li>
+                <li className="hover:text-zinc-900 cursor-pointer transition">App</li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="text-sm font-bold text-zinc-900 mb-6 uppercase tracking-wider">Company</h4>
+              <ul className="space-y-4 text-sm text-zinc-500">
+                <li className="hover:text-zinc-900 cursor-pointer transition">About Us</li>
+                <li className="hover:text-zinc-900 cursor-pointer transition">Careers</li>
+                <li className="hover:text-zinc-900 cursor-pointer transition">Contact</li>
+                <li className="hover:text-zinc-900 cursor-pointer transition">Privacy</li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="text-sm font-bold text-zinc-900 mb-6 uppercase tracking-wider">Resources</h4>
+              <ul className="space-y-4 text-sm text-zinc-500">
+                <li className="hover:text-zinc-900 cursor-pointer transition">Community</li>
+                <li className="hover:text-zinc-900 cursor-pointer transition">Help Center</li>
+                <li className="hover:text-zinc-900 cursor-pointer transition">Security</li>
+                <li className="hover:text-zinc-900 cursor-pointer transition">Status</li>
+              </ul>
+            </div>
+          </div>
+          <div className="mt-20 border-t border-zinc-100 pt-12 flex flex-col md:flex-row justify-between items-center gap-4">
+            <p className="text-sm text-zinc-500">
+              © 2026 AgileFlow Inc. All rights reserved.
+            </p>
+            <div className="flex gap-8 text-sm text-zinc-400">
+              <span className="hover:text-zinc-600 cursor-pointer transition">Status</span>
+              <span className="hover:text-zinc-600 cursor-pointer transition">Privacy</span>
+              <span className="hover:text-zinc-600 cursor-pointer transition">Terms</span>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+}
+
+function FeatureSlider() {
+  const [activeSlide, setActiveSlide] = React.useState(0);
+  const slides = [
+    { title: "Project Strategy", desc: "Define your long-term goals and milestones." },
+    { title: "Team Velocity", desc: "Track how fast your team is delivering features." },
+    { title: "Resource Planning", desc: "Allocate your best talent where it matters most." },
+    { title: "Risk Mitigation", desc: "Identify and resolve bottlenecks before they happen." },
+  ];
+
+  return (
+    <div className="relative">
+      <div className="flex flex-col lg:flex-row gap-12 items-center">
+        <div className="w-full lg:w-1/3 space-y-8">
+          <div>
+            <h2 className="text-3xl font-bold tracking-tight mb-4">Core Capabilities</h2>
+            <p className="text-zinc-500">Explore how AgileFlow empowers your entire development lifecycle.</p>
+          </div>
+          <div className="space-y-4">
+            {slides.map((slide, index) => (
+              <button
+                key={index}
+                onClick={() => setActiveSlide(index)}
+                className={`w-full text-left p-6 rounded-2xl border transition-all duration-300 ${
+                  activeSlide === index 
+                    ? "bg-white border-zinc-200 shadow-xl shadow-zinc-200/50 translate-x-2" 
+                    : "border-transparent hover:bg-white/50 text-zinc-400"
+                }`}
+              >
+                <h3 className={`font-bold transition-colors ${activeSlide === index ? "text-zinc-900" : ""}`}>
+                  {slide.title}
+                </h3>
+                {activeSlide === index && (
+                  <p className="mt-2 text-sm text-zinc-500 animate-in fade-in slide-in-from-left-2">
+                    {slide.desc}
+                  </p>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+        
+        <div className="w-full lg:w-2/3 aspect-video rounded-3xl bg-zinc-200 border border-zinc-200 overflow-hidden relative group">
+          <div className="absolute inset-0 flex items-center justify-center text-zinc-400 font-medium italic">
+            {/* Placeholder for User Image */}
+            <div className="text-center">
+              <p>Image Placeholder: {slides[activeSlide].title}</p>
+              <p className="text-xs mt-2">Insert your 16:9 image here</p>
+            </div>
+          </div>
+          {/* Overlays for premium feel */}
+          <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black/5 to-transparent pointer-events-none"></div>
+          
+          <div className="absolute bottom-6 right-6 flex gap-2">
+            {slides.map((_, index) => (
+              <div 
+                key={index}
+                className={`h-1.5 rounded-full transition-all duration-500 ${
+                  activeSlide === index ? "w-8 bg-zinc-900" : "w-1.5 bg-zinc-300"
+                }`}
+              />
+            ))}
+          </div>
+        </div>
       </div>
-    </main>
-  );
-}
-
-function SidebarItem({
-  icon,
-  label,
-  active = false,
-}: {
-  icon: ReactNode;
-  label: string;
-  active?: boolean;
-}) {
-  return (
-    <button
-      className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition ${
-        active
-          ? "bg-zinc-900 text-white"
-          : "text-zinc-700 hover:bg-zinc-100"
-      }`}
-    >
-      {icon}
-      <span>{label}</span>
-    </button>
-  );
-}
-
-function MiniSidebarItem({
-  icon,
-  label,
-}: {
-  icon: ReactNode;
-  label: string;
-}) {
-  return (
-    <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm text-zinc-700 transition hover:bg-zinc-100">
-      <span className="text-zinc-400">{icon}</span>
-      <span>{label}</span>
-    </button>
-  );
-}
-
-function SectionTitle({ title }: { title: string }) {
-  return (
-    <div className="mb-3 flex items-center justify-between">
-      <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-        {title}
-      </h3>
-      <button className="text-zinc-400 hover:text-zinc-700">
-        <CirclePlus size={16} />
-      </button>
     </div>
   );
 }
 
-function BlockTitle({
-  icon,
-  title,
-}: {
-  icon: ReactNode;
-  title: string;
-}) {
+function FeatureCard({ icon, title, description }: { icon: React.ReactNode, title: string, description: string }) {
   return (
-    <div className="mb-4 flex items-center gap-2">
-      {icon}
-      <h3 className="text-lg font-semibold">{title}</h3>
+    <div className="group rounded-2xl border border-zinc-200 bg-white p-8 transition duration-300 hover:border-zinc-300 hover:shadow-xl hover:shadow-zinc-200/50">
+      <div className="mb-6 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-zinc-50 transition group-hover:bg-zinc-100">
+        {icon}
+      </div>
+      <h3 className="text-xl font-bold text-zinc-900">{title}</h3>
+      <p className="mt-4 leading-relaxed text-zinc-500">
+        {description}
+      </p>
     </div>
   );
 }
 
-function MetricCard({
-  title,
-  value,
-  subtitle,
-}: {
-  title: string;
-  value: string;
-  subtitle: string;
-}) {
+function StatCard({ label, value }: { label: string, value: string }) {
   return (
-    <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
-      <p className="text-sm text-zinc-500">{title}</p>
-      <p className="mt-2 text-3xl font-bold">{value}</p>
-      <p className="mt-1 text-xs text-zinc-500">{subtitle}</p>
+    <div className="text-center md:text-left">
+      <p className="text-sm font-medium text-zinc-500 mb-1">{label}</p>
+      <p className="text-4xl font-bold text-zinc-900 tracking-tight">{value}</p>
     </div>
   );
-}
-
-function RowCard({ text }: { text: string }) {
-  return (
-    <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-800">
-      {text}
-    </div>
-  );
-}
-
-function AvatarDot() {
-  return <div className="h-7 w-7 rounded-full border-2 border-white bg-zinc-300" />;
 }
