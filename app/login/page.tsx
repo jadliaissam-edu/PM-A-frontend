@@ -4,9 +4,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { authService } from "../../services/auth.service";
 import { loginSchema, LoginFormData } from "../../lib/validations";
 import { useAuthStore } from "../../store";
+import { loginAction } from "@/app/actions/auth";
 import { getApiErrorMessage } from "../../lib/utils";
 
 export default function LoginPage() {
@@ -28,20 +28,17 @@ export default function LoginPage() {
 
   const onSubmit = async (data: LoginFormData) => {
     try {
-      // Only send email and password for login
-      const response = await authService.login({
-        email: data.email,
-        password: data.password,
-      });
+      const result = await loginAction(data);
 
+      if (!result.success || !result.user) {
+        alert(result.error || "Erreur de connexion.");
+        return;
+      }
+
+      // Only store non-sensitive user data in Zustand
       setAuth({
-        user: { username: response.username, email: response.email },
-        accessToken: response.access,
-        refreshToken: response.refresh,
+        user: result.user
       });
-
-      localStorage.setItem("accessToken", response.access);
-      localStorage.setItem("refreshToken", response.refresh);
 
       alert("Connexion réussie.");
       

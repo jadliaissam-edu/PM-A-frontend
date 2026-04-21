@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useAuthStore } from "../../../store";
+import { useAuthStore } from "@/store";
 import { useRouter } from "next/navigation";
 
 export default function EnterpriseDashboard() {
@@ -74,8 +74,8 @@ export default function EnterpriseDashboard() {
                                     <Link
                                         href={item.path}
                                         className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition ${item.active
-                                                ? "bg-zinc-900 text-white"
-                                                : "text-zinc-700 hover:bg-zinc-100"
+                                            ? "bg-zinc-900 text-white"
+                                            : "text-zinc-700 hover:bg-zinc-100"
                                             }`}
                                     >
                                         <span className="text-base">{item.icon}</span>

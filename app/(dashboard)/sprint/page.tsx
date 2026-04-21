@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useAuthStore } from "../../store";
+import { useAuthStore } from "@/store";
 
 export default function SprintPlanningPage() {
   const user = useAuthStore((state) => state.user);
@@ -74,7 +74,7 @@ export default function SprintPlanningPage() {
                 </div>
 
                 <div className="pt-2">
-                   <div className="flex justify-between text-xs mb-1.5">
+                  <div className="flex justify-between text-xs mb-1.5">
                     <span className="text-zinc-500">Progression globale</span>
                     <span className="font-bold text-zinc-900">45%</span>
                   </div>
@@ -105,11 +105,10 @@ export default function SprintPlanningPage() {
               <div key={item.id} className="bg-white rounded-xl p-4 shadow-sm border border-zinc-200 hover:shadow-md transition cursor-grab active:cursor-grabbing">
                 <div className="flex justify-between items-start mb-2">
                   <span className="text-[10px] font-mono font-bold text-zinc-400">{item.id}</span>
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                    item.priority === 'High' ? 'bg-red-50 text-red-600' : 
-                    item.priority === 'Medium' ? 'bg-orange-50 text-orange-600' : 
-                    'bg-zinc-100 text-zinc-600'
-                  }`}>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${item.priority === 'High' ? 'bg-red-50 text-red-600' :
+                      item.priority === 'Medium' ? 'bg-orange-50 text-orange-600' :
+                        'bg-zinc-100 text-zinc-600'
+                    }`}>
                     {item.priority}
                   </span>
                 </div>
