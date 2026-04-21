@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form";
 import { authService } from "../../services/auth.service";
 import { loginSchema, LoginFormData } from "../../lib/validations";
 import { useAuthStore } from "../../store";
+import { getApiErrorMessage } from "../../lib/utils";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -20,19 +21,21 @@ export default function LoginPage() {
     resolver: zodResolver(loginSchema),
     defaultValues: {
       username: "",
+      email: "",
       password: "",
     },
   });
 
-  
-  const setAuth = useAuthStore((state) => state.setAuth);
-
   const onSubmit = async (data: LoginFormData) => {
     try {
-      const response = await authService.login(data);
+      // Only send email and password for login
+      const response = await authService.login({
+        email: data.email,
+        password: data.password,
+      });
 
       setAuth({
-        user: { username: data.username },
+        user: { username: response.username, email: response.email },
         accessToken: response.access,
         refreshToken: response.refresh,
       });
@@ -41,7 +44,13 @@ export default function LoginPage() {
       localStorage.setItem("refreshToken", response.refresh);
 
       alert("Connexion réussie.");
-      router.push("/dashboard");
+      
+      const preferredMode = localStorage.getItem("dashboard_mode");
+      if (preferredMode) {
+        router.push(preferredMode);
+      } else {
+        router.push("/user_enterprise");
+      }
     } catch (error) {
       console.error("Login error:", error);
       alert(getApiErrorMessage(error, "Erreur de connexion au backend."));
@@ -49,23 +58,24 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-zinc-100 px-4">
-      <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-md">
-        <h1 className="mb-6 text-2xl font-bold text-zinc-900">Connexion</h1>
+    <main className="flex min-h-screen items-center justify-center bg-white px-4">
+      <div className="w-full max-w-md rounded-3xl bg-white p-10 shadow-premium border border-silver ring-1 ring-black/5">
+        <h1 className="mb-6 text-3xl font-bold text-zinc-900 tracking-tight">Connexion</h1>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
           <div>
             <label className="mb-1 block text-sm font-medium text-zinc-700">
-              Nom d'utilisateur
+              Email
             </label>
             <input
-              type="text"
-              {...register("username")}
-              className="w-full rounded-lg border border-zinc-300 px-4 py-2 outline-none focus:border-zinc-500"
-              placeholder="Votre username"
+              type="email"
+              {...register("email")}
+              className="w-full rounded-lg border border-zinc-300 px-4 py-2 outline-none 
+           bg-white text-zinc-900 placeholder:text-zinc-400 caret-zinc-900
+           focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500"              placeholder="votre@email.com"
             />
-            {errors.username && (
-              <p className="mt-1 text-sm text-red-500">{errors.username.message}</p>
+            {errors.email && (
+              <p className="mt-1 text-sm text-red-500">{errors.email.message}</p>
             )}
           </div>
 
@@ -76,8 +86,9 @@ export default function LoginPage() {
             <input
               type="password"
               {...register("password")}
-              className="w-full rounded-lg border border-zinc-300 px-4 py-2 outline-none focus:border-zinc-500"
-              placeholder="********"
+              className="w-full rounded-lg border border-zinc-300 px-4 py-2 outline-none 
+             bg-white text-zinc-900 placeholder:text-zinc-400 caret-zinc-900
+             focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500"              placeholder="********"
             />
             {errors.password && (
               <p className="mt-1 text-sm text-red-500">

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useState } from "react";
@@ -8,6 +9,7 @@ import { authService } from "../../services/auth.service";
 import { registerSchema, RegisterFormData } from "../../lib/validations";
 
 export default function RegisterPage() {
+  const router = useRouter();
   const [successMessage, setSuccessMessage] = useState("");
   const [backendError, setBackendError] = useState("");
 
@@ -31,9 +33,9 @@ export default function RegisterPage() {
 
     try {
       await authService.register(data);
-
-      setSuccessMessage("Compte créé avec succès. Vous pouvez maintenant vous connecter.");
+      setSuccessMessage("Compte créé avec succès. Redirection vers la connexion...");
       reset();
+      setTimeout(() => router.push("/login"), 2000);
     } catch (error: any) {
       console.error("Register error:", error);
       console.error("Backend response:", error?.response?.data);
@@ -52,9 +54,9 @@ export default function RegisterPage() {
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-zinc-100 px-4">
-      <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-md">
-        <h1 className="mb-6 text-2xl font-bold text-zinc-900">Inscription</h1>
+    <main className="flex min-h-screen items-center justify-center bg-white px-4">
+      <div className="w-full max-w-md rounded-3xl bg-white p-10 shadow-premium border border-silver ring-1 ring-black/5">
+        <h1 className="mb-6 text-3xl font-bold text-zinc-900 tracking-tight">Inscription</h1>
 
         {successMessage && (
           <div className="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
@@ -76,8 +78,9 @@ export default function RegisterPage() {
             <input
               type="text"
               {...register("username")}
-              className="w-full rounded-lg border border-zinc-300 px-4 py-2 outline-none focus:border-zinc-500"
-              placeholder="Votre username"
+              className="w-full rounded-lg border border-zinc-300 px-4 py-2 outline-none 
+                 text-zinc-900 placeholder:text-zinc-400 
+                 focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500"
             />
             {errors.username && (
               <p className="mt-1 text-sm text-red-500">{errors.username.message}</p>
@@ -91,7 +94,9 @@ export default function RegisterPage() {
             <input
               type="email"
               {...register("email")}
-              className="w-full rounded-lg border border-zinc-300 px-4 py-2 outline-none focus:border-zinc-500"
+              className="w-full rounded-lg border border-zinc-300 px-4 py-2 outline-none 
+                 text-zinc-900 placeholder:text-zinc-400 
+                 focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500"
               placeholder="exemple@email.com"
             />
             {errors.email && (
@@ -106,7 +111,9 @@ export default function RegisterPage() {
             <input
               type="password"
               {...register("password")}
-              className="w-full rounded-lg border border-zinc-300 px-4 py-2 outline-none focus:border-zinc-500"
+              className="w-full rounded-lg border border-zinc-300 px-4 py-2 outline-none 
+             bg-white text-zinc-900 placeholder:text-zinc-400 caret-zinc-900
+             focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500"
               placeholder="********"
             />
             {errors.password && (

@@ -10,6 +10,13 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  
+  --color-silver: #E2E8F0;
+  --color-silver-dark: #94A3B8;
+  --color-brown-shadow: #5D4037;
+  
+  --shadow-premium: 0 10px 40px -10px rgba(93, 64, 55, 0.15), 0 0 20px -5px rgba(0, 0, 0, 0.1);
+  --shadow-hover: 0 20px 50px -12px rgba(93, 64, 55, 0.25);
 }
 
 @media (prefers-color-scheme: dark) {

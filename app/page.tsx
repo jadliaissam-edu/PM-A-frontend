@@ -11,14 +11,14 @@ import {
   Layout,
   CheckCircle2,
   ArrowRight,
-
+  ZapOffIcon,
 } from "lucide-react";
 
 export default function InfoPage() {
   return (
     <div className="min-h-screen bg-white text-zinc-900 selection:bg-zinc-900 selection:text-white">
       {/* Navigation */}
-      <nav className="fixed top-0 z-50 w-full border-b border-zinc-100 bg-white/80 backdrop-blur-md">
+      <nav className="fixed top-0 z-50 w-full border-b border-silver bg-white/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
           <div className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-900 text-sm font-bold text-white">
@@ -28,7 +28,7 @@ export default function InfoPage() {
           </div>
           <div className="hidden items-center gap-8 text-sm font-medium text-zinc-600 md:flex">
             <a href="#features" className="transition hover:text-zinc-900">Features</a>
-            <a href="#solutions" className="transition hover:text-zinc-900">Solutions</a>
+
             <a href="#about" className="transition hover:text-zinc-900">About us</a>
           </div>
           <div className="flex items-center gap-4">
@@ -39,7 +39,7 @@ export default function InfoPage() {
               href="/register"
               className="rounded-full bg-zinc-900 px-5 py-2 text-sm font-medium text-white transition hover:bg-zinc-800"
             >
-              Get Started
+              Login in
             </Link>
           </div>
         </div>
@@ -55,9 +55,10 @@ export default function InfoPage() {
                 Now in Public Beta
               </div>
               <h1 className="text-5xl font-bold leading-[1.1] tracking-tight md:text-7xl">
-                Shipping products is <br />
+                Stop
+                <br />
                 <span className="bg-gradient-to-r from-zinc-900 via-zinc-500 to-zinc-400 bg-clip-text text-transparent">
-                  hard enough.
+                  fighting your workflow.
                 </span>
               </h1>
               <p className="mt-8 text-lg leading-relaxed text-zinc-600 md:text-xl">
@@ -109,12 +110,12 @@ export default function InfoPage() {
       </section>
 
       {/* Features Grid */}
-      <section id="features" className="bg-zinc-50 py-24 md:py-32">
+      <section id="features" className="bg-white py-24 md:py-32">
         <div className="mx-auto max-w-7xl px-6">
-          <div className="mb-16 max-w-2xl">
-            <h2 className="text-3xl font-bold tracking-tight md:text-4xl">Everything you need to scale.</h2>
-            <p className="mt-4 text-lg text-zinc-600">
-              Stop fighting with your tools and start shipping features. AgileFlow is built for modern engineering teams.
+          <div className="mb-16 max-w-2xl text-center md:text-left">
+            <h2 className="text-3xl font-bold tracking-tight md:text-5xl text-zinc-900 mb-4">Everything you need to scale.</h2>
+            <p className="mt-4 text-lg text-zinc-500 silver-subtext">
+              Built for performance, designed for human interaction. AgileFlow is the standard for modern teams.
             </p>
           </div>
 
@@ -135,19 +136,19 @@ export default function InfoPage() {
               description="Collaborate in real-time. Comments, notifications, and shared boards keep everyone in sync."
             />
             <FeatureCard
-              icon={<BarChart3 className="text-indigo-500" />}
-              title="Deep Insights"
-              description="Visualize your team's velocity and identify bottlenecks before they slow you down."
-            />
-            <FeatureCard
               icon={<Rocket className="text-rose-500" />}
               title="Automated Workflows"
               description="Connect with GitHub, Slack, and Discord to automate your repetitive tasks."
             />
             <FeatureCard
-              icon={<CheckCircle2 className="text-teal-500" />}
-              title="Simple Pricing"
-              description="No hidden fees. Scale from 1 to 1000 members with a simple, predictable cost."
+              icon={<ZapOffIcon className="text-cyan-500" />}
+              title="Task Dependency Graph"
+              description="Visualize task relationships and blockers with interactive dependency graphs."
+            />
+            <FeatureCard
+              icon={<Zap className="text-green-500" />}
+              title="Generous Free Plan"
+              description="Unlimited tasks  and core sprint features — completely free first version."
             />
           </div>
         </div>
@@ -159,8 +160,8 @@ export default function InfoPage() {
           <div className="grid gap-16 md:grid-cols-2 items-center">
             <div>
               <h2 className="text-3xl font-bold tracking-tight md:text-5xl mb-8">
-                Building the future of <br />
-                <span className="text-zinc-400">Engineering Collaboration.</span>
+                Building the future of Engineering Collaboration.<br />
+                <span className="text-zinc-400">from engineers to engineers</span>
               </h2>
               <p className="text-lg text-zinc-600 leading-relaxed mb-6">
                 AgileFlow was born out of a simple frustration: project management tools were either too simple to be useful or too complex to be pleasant.
@@ -177,12 +178,7 @@ export default function InfoPage() {
                   <div className="bg-zinc-400 rounded-lg -translate-y-8"></div>
                   <div className="bg-zinc-200 rounded-lg"></div>
                 </div>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="bg-white p-6 rounded-2xl shadow-xl border border-zinc-100 max-w-[280px]">
-                    <p className="text-zinc-900 font-bold text-xl mb-2 italic">"The most intuitive tool we've ever used."</p>
-                    <p className="text-zinc-500 text-sm">— Engineering Team at TechFlow</p>
-                  </div>
-                </div>
+
               </div>
             </div>
           </div>
@@ -197,13 +193,13 @@ export default function InfoPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-24 md:py-48 text-center bg-zinc-900 text-white overflow-hidden relative">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-to-r from-zinc-500/20 to-zinc-400/20 blur-[120px] rounded-full pointer-events-none"></div>
+      <section className="py-24 md:py-48 text-center bg-zinc-900 border-y border-silver/20 text-white overflow-hidden relative shadow-premium">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-to-r from-silver/10 to-zinc-400/5 blur-[120px] rounded-full pointer-events-none"></div>
         <div className="relative z-10 mx-auto max-w-3xl px-6">
           <h2 className="text-4xl font-bold tracking-tight md:text-6xl">Ready to ship faster?</h2>
           <p className="mt-6 text-lg text-zinc-400 md:text-xl">
-            Join thousands of teams using AgileFlow to build the future.
-            Start your free 14-day trial today, no credit card required.
+            Join us with AgileFlow to build the future of collaboration.
+            Start now,free plan no credit card required.
           </p>
           <div className="mt-10 flex flex-col justify-center gap-4 sm:flex-row">
             <Link
@@ -213,16 +209,16 @@ export default function InfoPage() {
               Get started for free
             </Link>
             <button className="rounded-full border border-zinc-700 bg-zinc-800/50 px-8 py-4 text-base font-semibold text-white backdrop-blur-sm transition hover:bg-zinc-800">
-              Contact sales
+              Contact us
             </button>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-zinc-100 py-12 md:py-20 bg-white">
-        <div className="mx-auto max-w-7xl px-6">
-          <div className="grid gap-12 md:grid-cols-4">
+      <footer className="border-t border-silver/50 py-12 md:py-20 bg-white">
+        <div className="mx-auto max-w-7xl px-6">{/*
+          <div className="grid gap-12 md:grid-cols-4">{/*
             <div className="md:col-span-1">
               <div className="flex items-center gap-2 mb-6">
                 <div className="flex h-6 w-6 items-center justify-center rounded bg-zinc-900 text-[10px] font-bold text-white">
@@ -263,6 +259,7 @@ export default function InfoPage() {
               </ul>
             </div>
           </div>
+          */}
           <div className="mt-20 border-t border-zinc-100 pt-12 flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-sm text-zinc-500">
               © 2026 AgileFlow Inc. All rights reserved.
@@ -301,11 +298,10 @@ function FeatureSlider() {
               <button
                 key={index}
                 onClick={() => setActiveSlide(index)}
-                className={`w-full text-left p-6 rounded-2xl border transition-all duration-300 ${
-                  activeSlide === index 
-                    ? "bg-white border-zinc-200 shadow-xl shadow-zinc-200/50 translate-x-2" 
-                    : "border-transparent hover:bg-white/50 text-zinc-400"
-                }`}
+                className={`w-full text-left p-6 rounded-2xl border transition-all duration-300 ${activeSlide === index
+                  ? "bg-white border-silver shadow-premium translate-x-2"
+                  : "border-transparent hover:bg-white/50 text-zinc-400"
+                  }`}
               >
                 <h3 className={`font-bold transition-colors ${activeSlide === index ? "text-zinc-900" : ""}`}>
                   {slide.title}
@@ -319,7 +315,7 @@ function FeatureSlider() {
             ))}
           </div>
         </div>
-        
+
         <div className="w-full lg:w-2/3 aspect-video rounded-3xl bg-zinc-200 border border-zinc-200 overflow-hidden relative group">
           <div className="absolute inset-0 flex items-center justify-center text-zinc-400 font-medium italic">
             {/* Placeholder for User Image */}
@@ -330,14 +326,13 @@ function FeatureSlider() {
           </div>
           {/* Overlays for premium feel */}
           <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black/5 to-transparent pointer-events-none"></div>
-          
+
           <div className="absolute bottom-6 right-6 flex gap-2">
             {slides.map((_, index) => (
-              <div 
+              <div
                 key={index}
-                className={`h-1.5 rounded-full transition-all duration-500 ${
-                  activeSlide === index ? "w-8 bg-zinc-900" : "w-1.5 bg-zinc-300"
-                }`}
+                className={`h-1.5 rounded-full transition-all duration-500 ${activeSlide === index ? "w-8 bg-zinc-900" : "w-1.5 bg-zinc-300"
+                  }`}
               />
             ))}
           </div>
@@ -349,12 +344,12 @@ function FeatureSlider() {
 
 function FeatureCard({ icon, title, description }: { icon: React.ReactNode, title: string, description: string }) {
   return (
-    <div className="group rounded-2xl border border-zinc-200 bg-white p-8 transition duration-300 hover:border-zinc-300 hover:shadow-xl hover:shadow-zinc-200/50">
-      <div className="mb-6 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-zinc-50 transition group-hover:bg-zinc-100">
+    <div className="group rounded-3xl border border-silver bg-white p-8 transition-all duration-300 hover:shadow-premium ring-1 ring-black/5">
+      <div className="mb-6 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-zinc-50 border border-zinc-100 transition group-hover:scale-110 group-hover:bg-white group-hover:shadow-md">
         {icon}
       </div>
-      <h3 className="text-xl font-bold text-zinc-900">{title}</h3>
-      <p className="mt-4 leading-relaxed text-zinc-500">
+      <h3 className="text-xl font-bold text-zinc-900 group-hover:text-black transition-colors">{title}</h3>
+      <p className="mt-4 leading-relaxed text-zinc-500 group-hover:text-zinc-600 transition-colors">
         {description}
       </p>
     </div>

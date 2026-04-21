@@ -9,7 +9,6 @@ import {
   forgotPasswordSchema,
   ForgotPasswordFormData,
 } from "../../lib/validations";
-import { authService } from "../../services/auth.service";
 import { getApiErrorMessage } from "../../lib/utils";
 
 export default function ForgotPasswordPage() {
@@ -38,12 +37,12 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-zinc-100 px-4">
-      <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-md">
-        <h1 className="mb-2 text-2xl font-bold text-zinc-900">
+    <main className="flex min-h-screen items-center justify-center bg-white px-4">
+      <div className="w-full max-w-md rounded-3xl bg-white p-10 shadow-premium border border-silver ring-1 ring-black/5">
+        <h1 className="mb-2 text-3xl font-bold text-zinc-900 tracking-tight">
           Mot de passe oublié
         </h1>
-        <p className="mb-6 text-sm text-zinc-600">
+        <p className="mb-8 text-sm text-zinc-500 silver-subtext">
           Entrez votre email pour recevoir un code OTP de réinitialisation.
         </p>
 

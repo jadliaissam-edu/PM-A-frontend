@@ -9,4 +9,6 @@ export interface User {
 export interface AuthResponse {
   access: string;
   refresh: string;
+  username: string;
+  email: string;
 }

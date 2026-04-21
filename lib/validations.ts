@@ -2,9 +2,11 @@ import { z } from "zod";
 export type RegisterFormData = z.infer<typeof registerSchema>;
 
 export const loginSchema = z.object({
-  username: z
+  username: z.string().optional(),
+  email: z
     .string()
-    .min(1, "Le nom d'utilisateur est obligatoire"),
+    .min(1, "L'email est obligatoire")
+    .email("Veuillez entrer un email valide"),
   password: z
     .string()
     .min(1, "Le mot de passe est obligatoire")
