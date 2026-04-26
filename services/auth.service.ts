@@ -1,3 +1,4 @@
+import { ResetConfirmFormData, VerifyOtpFormData } from "@/lib/validations";
 import { api } from "../lib/api";
 import { AuthResponse } from "../types";
 
@@ -63,4 +64,14 @@ export const authService = {
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
   },
+  confirmPasswordReset: async (data: ResetConfirmFormData) => {
+  const res = await api.post("/auth/reset-password/confirm/", data);
+  return res.data;
+
+},
+verifyResetOtp: async (data: VerifyOtpFormData) => {
+  const res = await api.post("/auth/reset-password/verify-otp/", data);
+  return res.data;
+},
+
 };

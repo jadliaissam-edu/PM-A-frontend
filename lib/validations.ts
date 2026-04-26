@@ -38,5 +38,29 @@ export const registerSchema = z.object({
     .min(8, "Le mot de passe doit contenir au moins 8 caractères"),
 });
 
+export const verifyOtpSchema = z.object({
+  email: z
+    .string()
+    .min(1, "L'email est obligatoire")
+    .email("Veuillez entrer un email valide"),
+  otp: z.string().min(1, "Le code OTP est obligatoire"),
+});
+
+export type VerifyOtpFormData = z.infer<typeof verifyOtpSchema>;
+
+export const resetConfirmSchema = z.object({
+  email: z
+    .string()
+    .min(1, "L'email est obligatoire")
+    .email("Veuillez entrer un email valide"),
+  otp: z.string().min(1, "Le code OTP est obligatoire"),
+  new_password: z
+    .string()
+    .min(1, "Le mot de passe est obligatoire")
+    .min(8, "Le mot de passe doit contenir au moins 8 caractères"),
+});
+
+export type ResetConfirmFormData = z.infer<typeof resetConfirmSchema>;
+
 
 
