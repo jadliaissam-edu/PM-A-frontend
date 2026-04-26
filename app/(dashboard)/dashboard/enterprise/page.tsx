@@ -1,15 +1,24 @@
 "use client";
+
 import React, { useEffect, useState } from "react";
 import { authService, UserProfile } from "@/services/auth.service";
 import { dashboardService, DashboardStats, ActivityItem, AssignedTask } from "@/services/dashboard.service";
-import SpacesSection from "@/components/SpacesSection";
+import ExploreTree from "@/components/ExploreTree";
 import {
-  CirclePlus,
+  TrendingUp,
+  BarChart3,
+  Layers,
+  ChevronRight,
+  ChevronLeft,
+  Activity,
   Star,
   CheckCircle2,
   CalendarDays,
-  Activity,
+  Plus
 } from "lucide-react";
+import { 
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
+} from 'recharts';
 
 const favorites = [
   "Frontend space",
@@ -18,17 +27,15 @@ const favorites = [
   "Design system",
 ];
 
-const quickActions = [
-  "Create new space",
-  "Open project board",
-  "Invite team members",
-  "Create task",
-];
-
-const deadlines = [
-  { title: "Homepage review", date: "Today" },
-  { title: "Frontend auth polish", date: "Tomorrow" },
-  { title: "Team sync meeting", date: "Friday" },
+// Mock data for the graph
+const chartData = [
+  { name: 'Jan', projects: 4, activity: 240 },
+  { name: 'Feb', projects: 7, activity: 320 },
+  { name: 'Mar', projects: 5, activity: 190 },
+  { name: 'Apr', projects: 9, activity: 480 },
+  { name: 'May', projects: 12, activity: 560 },
+  { name: 'Jun', projects: 15, activity: 410 },
+  { name: 'Jul', projects: 18, activity: 680 },
 ];
 
 export default function EnterpriseDashboardPage() {
@@ -36,21 +43,23 @@ export default function EnterpriseDashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [tasks, setTasks] = useState<AssignedTask[]>([]);
+  const [hierarchy, setHierarchy] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [prof, st, act, tsk] = await Promise.all([
+        const [prof, dashData, act, tsk] = await Promise.all([
           authService.getProfile(),
-          dashboardService.getStats(),
+          dashboardService.getDashboardData(),
           dashboardService.getRecentActivity(),
           dashboardService.getAssignedTasks(),
         ]);
         setProfile(prof);
-        setStats(st);
+        setStats(dashData as any);
         setActivities(act);
         setTasks(tsk);
+        setHierarchy([]);  // /api/dashboard/ no longer returns nested orgs tree
       } catch (error) {
         console.error("Failed to fetch dashboard data", error);
       } finally {
@@ -62,111 +71,153 @@ export default function EnterpriseDashboardPage() {
 
   return (
     <>
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold tracking-tight text-zinc-900">
-          Welcome back, {profile?.username || "loading..."}
-        </h1>
-        <p className="mt-1 text-sm text-zinc-500">
-          Manage your spaces, follow recent activity, and keep track of your work.
-        </p>
+      <div className="mb-10 flex items-center justify-between">
+        <div>
+          <h1 className="text-4xl font-black tracking-tight text-zinc-900">
+            Welcome back, {profile?.username || "loading..."}
+          </h1>
+          <p className="mt-2 text-[15px] font-medium text-zinc-500">
+            Enterprise overview and real-time project metrics.
+          </p>
+        </div>
+        <div className="flex -space-x-2">
+           {[1,2,3,4].map(i => (
+             <div key={i} className="h-10 w-10 rounded-full border-2 border-white bg-zinc-100 flex items-center justify-center text-[11px] font-black text-zinc-400">U{i}</div>
+           ))}
+        </div>
       </div>
 
-      <section className="mb-8 grid gap-4 xl:grid-cols-4">
-        <MetricCard title="Total projects" value={stats?.total_projects.toString() || "0"} subtitle="Active projects" />
-        <MetricCard title="Owned projects" value={stats?.owned_projects.toString() || "0"} subtitle="Projects created by you" />
-        <MetricCard title="Member projects" value={stats?.member_projects.toString() || "0"} subtitle="Collaborations" />
-        <MetricCard title="Archived" value={stats?.archived_projects.toString() || "0"} subtitle="Inactive projects" />
+      {/* Metric Grid */}
+      <section className="mb-10 grid gap-6 xl:grid-cols-4">
+        <MetricCard title="Total Projets" value={(stats as any)?.total_projects?.toString() || "0"} icon={<Layers size={20} />} trend="Tous statuts" />
+        <MetricCard title="Mes Projets" value={(stats as any)?.owned_projects?.toString() || "0"} icon={<BarChart3 size={20} />} trend="Propriétaire" />
+        <MetricCard title="Membre de" value={(stats as any)?.member_projects?.toString() || "0"} icon={<Activity size={20} />} trend="Collaboration" />
+        <MetricCard title="Archivés" value={(stats as any)?.archived_projects?.toString() || "0"} icon={<CheckCircle2 size={20} />} trend="Terminés" />
       </section>
 
-      <section className="mb-8">
-        <div className="mb-4 flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-semibold">Spaces</h2>
-            <p className="text-sm text-zinc-500">Organize work by teams and functional areas.</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <button className="rounded-xl border border-zinc-300 bg-white px-4 py-2 text-sm font-medium transition hover:bg-zinc-50">
-              View all
-            </button>
-            <button className="rounded-xl bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-zinc-800">
-              Create space
-            </button>
-          </div>
+      {/* CHARTS SECTION */}
+      <div className="mb-10 grid gap-8 xl:grid-cols-12">
+        {/* Main Growth Chart */}
+        <section className="xl:col-span-8 rounded-[2.5rem] bg-white border border-zinc-200 p-8 shadow-sm hover:shadow-xl transition-all duration-500">
+           <div className="mb-8 flex items-center justify-between">
+              <div>
+                <h3 className="text-xl font-black text-zinc-900">Performance de l'Entreprise</h3>
+                <p className="text-xs font-black text-zinc-400 uppercase tracking-widest mt-1">Activité des projets & Engagements</p>
+              </div>
+              <div className="flex items-center gap-2 rounded-xl bg-zinc-50 p-1.5">
+                <button className="px-4 py-2 text-[10px] font-black bg-white shadow-sm rounded-lg text-zinc-900 transition">7 JOURS</button>
+                <button className="px-4 py-2 text-[10px] font-black text-zinc-400 hover:text-zinc-600 transition">30 JOURS</button>
+              </div>
+           </div>
+           
+           <div className="h-[350px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={chartData}>
+                <defs>
+                  <linearGradient id="colorActivity" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#18181b" stopOpacity={0.1}/>
+                    <stop offset="95%" stopColor="#18181b" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f1f1" />
+                <XAxis 
+                  dataKey="name" 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fontSize: 10, fontWeight: 900, fill: '#A1A1AA' }}
+                  dy={15}
+                />
+                <YAxis hide />
+                <Tooltip 
+                  contentStyle={{ 
+                    borderRadius: '20px', 
+                    border: 'none', 
+                    boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
+                    fontSize: '12px',
+                    fontWeight: '900'
+                  }}
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="activity" 
+                  stroke="#18181b" 
+                  strokeWidth={4} 
+                  fillOpacity={1} 
+                  fill="url(#colorActivity)" 
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+           </div>
+        </section>
+
+        {/* Distributed Stats Chart */}
+        <section className="xl:col-span-4 rounded-[2.5rem] bg-zinc-900 p-8 shadow-2xl text-white">
+           <h3 className="text-xl font-black mb-1">Impact Global</h3>
+           <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-10">Répartition par catégorie</p>
+           
+           <div className="space-y-6">
+              <StatBar label="Développement" value={78} color="bg-blue-500" />
+              <StatBar label="Marketing" value={45} color="bg-emerald-500" />
+              <StatBar label="Support" value={92} color="bg-orange-500" />
+              <StatBar label="Ventes" value={61} color="bg-rose-500" />
+           </div>
+
+           <div className="mt-12 p-6 rounded-[2rem] bg-white/5 border border-white/10">
+              <div className="flex items-center gap-3 mb-2">
+                 <TrendingUp className="text-emerald-400" size={18} />
+                 <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400">Efficacité +24%</span>
+              </div>
+              <p className="text-sm font-medium text-zinc-400">Votre vitesse de livraison a augmenté significativement ce mois-ci.</p>
+           </div>
+        </section>
+      </div>
+
+      <section className="mb-12">
+        <div className="mb-8">
+          <h2 className="text-2xl font-black text-zinc-900">Arbre de Structure</h2>
+          <p className="text-sm font-medium text-zinc-500">Navigation hiérarchique de vos espaces de travail.</p>
         </div>
-        <SpacesSection />
+
+        {loading ? (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {[1,2,3].map(i => <div key={i} className="h-40 rounded-3xl bg-zinc-100 animate-pulse" />)}
+          </div>
+        ) : (
+          <ExploreTree data={hierarchy} />
+        )}
       </section>
 
-      <section className="mb-4">
-        <h2 className="text-xl font-semibold">Your work</h2>
-        <p className="text-sm text-zinc-500">Quick access to important items, ongoing tasks, and team activity.</p>
-      </section>
-
-      <div className="grid gap-6 2xl:grid-cols-12 pb-12">
-        <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm transition duration-200 hover:shadow-md 2xl:col-span-4">
+      <div className="grid gap-8 xl:grid-cols-12 pb-20">
+        <section className="rounded-[2rem] border border-zinc-200 bg-white p-8 shadow-sm transition-all hover:shadow-xl xl:col-span-4">
           <BlockTitle icon={<Star size={18} />} title="Favorites" />
           <div className="space-y-3">
-            {favorites.map((item) => (
-              <RowCard key={item} text={item} />
-            ))}
+            {favorites.map((item) => <RowCard key={item} text={item} />)}
           </div>
         </section>
 
-        <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm transition duration-200 hover:shadow-md 2xl:col-span-4">
-          <BlockTitle icon={<Activity size={18} />} title="Recent activity" />
-          <div className="space-y-3">
-            {loading ? (
-              [1, 2, 3].map(i => <div key={i} className="h-12 bg-zinc-50 animate-pulse rounded-xl" />)
-            ) : activities.length > 0 ? (
-              activities.map((item) => (
-                <div key={item.id} className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3">
-                  <p className="text-sm font-medium text-zinc-800">{item.title}</p>
-                  <p className="mt-1 text-xs text-zinc-500">{item.meta}</p>
+        <section className="rounded-[2rem] border border-zinc-200 bg-white p-8 shadow-sm transition-all hover:shadow-xl xl:col-span-4">
+          <BlockTitle icon={<Activity size={18} />} title="Activités Récentes" />
+          <div className="space-y-4">
+            {activities.length > 0 ? activities.map((item) => (
+              <div key={item.id} className="flex gap-4 items-start border-l-2 border-zinc-100 pl-4 transition-colors hover:border-zinc-900">
+                <div>
+                  <p className="text-sm font-bold text-zinc-800">{item.title}</p>
+                  <p className="text-[10px] font-black text-zinc-400 uppercase mt-1">{item.meta}</p>
                 </div>
-              ))
-            ) : (
-              <p className="text-xs text-zinc-400">No recent activity.</p>
-            )}
+              </div>
+            )) : <p className="text-xs text-zinc-400">No recent activity.</p>}
           </div>
         </section>
 
-        <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm transition duration-200 hover:shadow-md 2xl:col-span-4">
-          <BlockTitle icon={<CheckCircle2 size={18} />} title="Assigned to me" />
-          <div className="space-y-3">
-            {loading ? (
-              [1, 2, 3].map(i => <div key={i} className="h-12 bg-zinc-50 animate-pulse rounded-xl" />)
-            ) : tasks.length > 0 ? (
-              tasks.map((task) => (
-                <div key={task.id} className="flex items-center justify-between rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3">
-                  <p className="text-sm text-zinc-800">{task.title}</p>
-                  <span className="rounded-full bg-zinc-200 px-2.5 py-1 text-[10px] font-bold text-zinc-700 uppercase tracking-tight">
-                    {task.priority || "Medium"}
-                  </span>
-                </div>
-              ))
-            ) : (
-              <p className="text-xs text-zinc-400">All caught up!</p>
-            )}
-          </div>
-        </section>
-
-        <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm transition duration-200 hover:shadow-md 2xl:col-span-6">
-          <BlockTitle icon={<CirclePlus size={18} />} title="Quick actions" />
-          <div className="grid gap-3 sm:grid-cols-2">
-            {quickActions.map((action) => (
-              <button key={action} className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-4 text-left text-sm font-medium text-zinc-800 transition hover:bg-zinc-100">
-                {action}
-              </button>
-            ))}
-          </div>
-        </section>
-
-        <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm transition duration-200 hover:shadow-md 2xl:col-span-6">
-          <BlockTitle icon={<CalendarDays size={18} />} title="Upcoming deadlines" />
-          <div className="space-y-3">
-            {deadlines.map((item) => (
-              <div key={item.title} className="flex items-center justify-between rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3">
-                <p className="text-sm font-medium text-zinc-800">{item.title}</p>
-                <span className="text-xs text-zinc-500">{item.date}</span>
+        <section className="rounded-[2rem] border border-zinc-200 bg-white p-8 shadow-sm transition-all hover:shadow-xl xl:col-span-4">
+          <BlockTitle icon={<CheckCircle2 size={18} />} title="Mes Tâches" />
+          <div className="space-y-4">
+            {tasks.map((task) => (
+              <div key={task.id} className="group flex items-center justify-between rounded-2xl bg-zinc-50 p-4 transition-all hover:bg-zinc-100">
+                <span className="text-sm font-bold text-zinc-700">{task.title}</span>
+                <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase ${
+                  task.priority === 'critical' ? 'bg-rose-100 text-rose-600' : 'bg-white text-zinc-400'
+                }`}>{task.priority}</span>
               </div>
             ))}
           </div>
@@ -176,29 +227,49 @@ export default function EnterpriseDashboardPage() {
   );
 }
 
-function BlockTitle({ icon, title }: { icon: React.ReactNode; title: string }) {
+function StatBar({ label, value, color }: { label: string; value: number; color: string }) {
   return (
-    <div className="mb-4 flex items-center gap-2">
-      <div className="text-zinc-500">{icon}</div>
-      <h3 className="text-lg font-semibold text-zinc-800">{title}</h3>
+    <div>
+      <div className="flex justify-between mb-2">
+        <span className="text-[10px] font-black uppercase tracking-widest">{label}</span>
+        <span className="text-[10px] font-black">{value}%</span>
+      </div>
+      <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
+        <div className={`h-full ${color} transition-all duration-1000`} style={{ width: `${value}%` }} />
+      </div>
     </div>
   );
 }
 
-function MetricCard({ title, value, subtitle }: { title: string; value: string; subtitle: string }) {
+function BlockTitle({ icon, title }: { icon: React.ReactNode; title: string }) {
   return (
-    <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm hover:border-zinc-300 transition">
-      <p className="text-sm font-medium text-zinc-500">{title}</p>
-      <p className="mt-2 text-3xl font-bold text-zinc-900">{value}</p>
-      <p className="mt-1 text-xs text-zinc-500">{subtitle}</p>
+    <div className="mb-6 flex items-center gap-3">
+      <div className="h-10 w-10 rounded-xl bg-zinc-50 flex items-center justify-center text-zinc-900 shadow-inner">{icon}</div>
+      <h3 className="text-lg font-black text-zinc-900">{title}</h3>
+    </div>
+  );
+}
+
+function MetricCard({ title, value, icon, trend }: { title: string; value: string; icon: any; trend: string }) {
+  return (
+    <div className="rounded-[2rem] border border-zinc-200 bg-white p-7 shadow-sm transition-all hover:shadow-xl hover:-translate-y-1">
+      <div className="flex items-center justify-between mb-4">
+        <div className="text-zinc-400">{icon}</div>
+        <span className="text-[9px] font-black uppercase text-emerald-500 bg-emerald-50 px-2 py-1 rounded-lg">{trend}</span>
+      </div>
+      <p className="text-[11px] font-black text-zinc-400 uppercase tracking-widest">{title}</p>
+      <p className="mt-2 text-4xl font-black text-zinc-900 tracking-tighter">{value}</p>
     </div>
   );
 }
 
 function RowCard({ text }: { text: string }) {
   return (
-    <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm font-medium text-zinc-800 hover:bg-zinc-100 transition cursor-pointer">
-      {text}
+    <div className="rounded-2xl border border-zinc-100 bg-zinc-50 px-5 py-4 text-sm font-bold text-zinc-800 hover:bg-zinc-900 hover:text-white transition-all cursor-pointer shadow-sm group">
+      <div className="flex items-center justify-between">
+        <span>{text}</span>
+        <ChevronRight size={14} className="opacity-0 group-hover:opacity-100 transition-all group-hover:translate-x-1" />
+      </div>
     </div>
   );
 }

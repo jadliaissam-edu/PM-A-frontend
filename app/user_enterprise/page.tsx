@@ -2,16 +2,20 @@
 
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "../../store";
+import { authService } from "../../services/auth.service";
 import { User, Building2, LogOut, ArrowRight } from "lucide-react";
 
 export default function UserEnterprisePage() {
   const router = useRouter();
   const clearAuth = useAuthStore((state) => state.clearAuth);
 
-  const handleReturn = () => {
+  const handleReturn = async () => {
+    try {
+      await authService.logout();
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
     clearAuth();
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
     router.replace("/login");
   };
 

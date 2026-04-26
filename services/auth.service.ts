@@ -36,12 +36,12 @@ export const authService = {
   },
 
   getProfile: async (): Promise<UserProfile> => {
-    const response = await api.get("/auth/profile/");
+    const response = await api.get("/users/me/");
     return response.data;
   },
 
   updateProfile: async (data: Partial<UserProfile>): Promise<UserProfile> => {
-    const response = await api.patch("/auth/profile/", data);
+    const response = await api.patch("/users/me/", data);
     return response.data;
   },
 
@@ -50,28 +50,23 @@ export const authService = {
     return response.data;
   },
 
-  verifyOtp: async (data: { email: string; otp: string }) => {
-    const response = await api.post("/auth/verify-otp/", data);
+  verifyResetOtp: async (data: VerifyOtpFormData) => {
+    const response = await api.post("/auth/reset-password/verify-otp/", data);
     return response.data;
   },
 
-  confirmReset: async (data: any) => {
-    const response = await api.post("/auth/confirm-reset/", data);
+  confirmPasswordReset: async (data: ResetConfirmFormData) => {
+    const response = await api.post("/auth/reset-password/confirm/", data);
+    return response.data;
+  },
+
+  getUsers: async (): Promise<UserProfile[]> => {
+    const response = await api.get("/users/");
     return response.data;
   },
 
   logout: async () => {
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
+    await api.post("/auth/logout/");
   },
-  confirmPasswordReset: async (data: ResetConfirmFormData) => {
-  const res = await api.post("/auth/reset-password/confirm/", data);
-  return res.data;
-
-},
-verifyResetOtp: async (data: VerifyOtpFormData) => {
-  const res = await api.post("/auth/reset-password/verify-otp/", data);
-  return res.data;
-},
 
 };

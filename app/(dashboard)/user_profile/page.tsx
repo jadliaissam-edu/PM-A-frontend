@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useAuthStore } from "../../../store";
 import { useRouter } from "next/navigation";
+import { useAuthStore } from "@/store";
+import { authService, UserProfile } from "@/services/auth.service";
 import { 
     UploadCloud, 
     Share2, 
@@ -225,8 +226,54 @@ function ProjectPreferencesTab() {
 }
 
 function ProfileTab() {
-    const user = useAuthStore((state) => state.user);
+    const setAuth = useAuthStore((state) => state.setAuth);
+    const [profile, setProfile] = useState<UserProfile | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const [form, setForm] = useState({
+        first_name: "",
+        last_name: "",
+        email: "",
+        bio: "",
+    });
+
+    useEffect(() => {
+        const fetchProfile = async () => {
+            try {
+                const data = await authService.getProfile();
+                setProfile(data);
+                setForm({
+                    first_name: data.first_name || "",
+                    last_name: data.last_name || "",
+                    email: data.email || "",
+                    bio: data.bio || "",
+                });
+                setAuth({ user: data as any });
+            } catch (error) {
+                console.error("Failed to fetch profile", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchProfile();
+    }, [setAuth]);
+
+    const handleSave = async () => {
+        setSaving(true);
+        try {
+            const updated = await authService.updateProfile(form);
+            setProfile(updated);
+            setAuth({ user: updated as any });
+            alert("Profil mis à jour avec succès !");
+        } catch (error) {
+            console.error("Failed to update profile", error);
+            alert("Erreur lors de la mise à jour du profil.");
+        } finally {
+            setSaving(false);
+        }
+    };
 
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
     const [isAIPromptOpen, setIsAIPromptOpen] = useState(false);
@@ -337,10 +384,10 @@ function ProfileTab() {
                             className="relative mx-auto mt-6 mb-4 flex h-28 w-28 cursor-pointer items-center justify-center rounded-full bg-zinc-900 text-4xl font-bold text-white shadow-xl ring-4 ring-white group transition-transform hover:scale-105 overflow-hidden"
                             onClick={handleAvatarClick}
                         >
-                            {avatarUrl ? (
-                                <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                            {avatarUrl || profile?.avatar_url ? (
+                                <img src={avatarUrl || profile?.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
                             ) : (
-                                <span>{user?.username?.charAt(0).toUpperCase() ?? "U"}</span>
+                                <span>{profile?.username?.charAt(0).toUpperCase() ?? "U"}</span>
                             )}
                             <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/60 opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100">
                                 <Camera size={28} className="text-white" />
@@ -356,9 +403,9 @@ function ProfileTab() {
                         />
                         
                         <h2 className="text-xl font-bold text-zinc-900 mt-2">
-                            {user?.username ?? "Utilisateur"}
+                            {profile?.username ?? "Utilisateur"}
                         </h2>
-                        <p className="text-sm font-medium text-zinc-500 mt-1">{user?.email ?? "email@exemple.com"}</p>
+                        <p className="text-sm font-medium text-zinc-500 mt-1">{profile?.email ?? "email@exemple.com"}</p>
                         
                         <div className="mt-6 flex flex-col gap-2">
                             <button 
@@ -408,7 +455,8 @@ function ProfileTab() {
                                     <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-500">Prénom</label>
                                     <input
                                         type="text"
-                                        defaultValue={user?.first_name || ""}
+                                        value={form.first_name}
+                                        onChange={(e) => setForm({ ...form, first_name: e.target.value })}
                                         className="w-full rounded-xl border border-zinc-300 bg-zinc-50 px-4 py-2.5 text-sm outline-none focus:border-zinc-900 focus:bg-white transition"
                                         placeholder="Jean"
                                     />
@@ -417,7 +465,8 @@ function ProfileTab() {
                                     <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-500">Nom</label>
                                     <input
                                         type="text"
-                                        defaultValue={user?.last_name || ""}
+                                        value={form.last_name}
+                                        onChange={(e) => setForm({ ...form, last_name: e.target.value })}
                                         className="w-full rounded-xl border border-zinc-300 bg-zinc-50 px-4 py-2.5 text-sm outline-none focus:border-zinc-900 focus:bg-white transition"
                                         placeholder="Dupont"
                                     />
@@ -427,16 +476,30 @@ function ProfileTab() {
                                 <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-500">Email</label>
                                 <input
                                     type="email"
-                                    defaultValue={user?.email || ""}
+                                    value={form.email}
+                                    onChange={(e) => setForm({ ...form, email: e.target.value })}
                                     className="w-full rounded-xl border border-zinc-300 bg-zinc-50 px-4 py-2.5 text-sm outline-none focus:border-zinc-900 focus:bg-white transition"
                                     placeholder="exemple@email.com"
+                                />
+                            </div>
+                            <div>
+                                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-500">Bio</label>
+                                <textarea
+                                    value={form.bio}
+                                    onChange={(e) => setForm({ ...form, bio: e.target.value })}
+                                    rows={3}
+                                    className="w-full rounded-xl border border-zinc-300 bg-zinc-50 px-4 py-2.5 text-sm outline-none focus:border-zinc-900 focus:bg-white transition"
+                                    placeholder="Décrivez-vous en quelques mots..."
                                 />
                             </div>
                             <div className="pt-4 flex justify-end">
                                 <button
                                     type="button"
-                                    className="rounded-xl bg-zinc-900 px-6 py-2.5 text-sm font-semibold text-white hover:bg-zinc-800 transition shadow-sm"
+                                    onClick={handleSave}
+                                    disabled={saving}
+                                    className="flex items-center gap-2 rounded-xl bg-zinc-900 px-6 py-2.5 text-sm font-semibold text-white hover:bg-zinc-800 transition shadow-sm disabled:opacity-50"
                                 >
+                                    {saving && <Loader2 size={16} className="animate-spin" />}
                                     Sauvegarder
                                 </button>
                             </div>

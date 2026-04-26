@@ -1,153 +1,280 @@
 "use client";
 
-import React, { useState } from "react";
-import { useAuthStore } from "../../../../store";
+import React, { Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { projectService, Project, ProjectBoard, BoardColumn, Ticket } from "@/services/project.service";
+import { Loader2, Plus, LayoutGrid } from "lucide-react";
 
-type TaskType = { id: string; content: string };
-type ColumnType = { title: string; tasks: TaskType[] };
+export default function KanbanPageWrapper() {
+  return (
+    <Suspense fallback={
+      <div className="flex h-96 items-center justify-center">
+        <Loader2 className="animate-spin text-zinc-400" size={36} />
+      </div>
+    }>
+      <KanbanBoardPage />
+    </Suspense>
+  );
+}
 
-const initialData: ColumnType[] = [
-  { 
-    title: "À faire", 
-    tasks: [
-      { id: "t1", content: "Définir architecture API" },
-      { id: "t2", content: "Créer maquettes Figma" },
-      { id: "t3", content: "Installer Tailwind" }
-    ] 
-  },
-  { 
-    title: "En cours", 
-    tasks: [
-      { id: "t4", content: "Développement de la sidebar" },
-      { id: "t5", content: "Intégration d'Axios" }
-    ] 
-  },
-  { 
-    title: "Review", 
-    tasks: [
-      { id: "t6", content: "Authentification JWT" }
-    ] 
-  },
-  { 
-    title: "Terminé", 
-    tasks: [
-      { id: "t7", content: "Initier le projet Next.js" },
-      { id: "t8", content: "Configuration du backend Django" }
-    ] 
-  },
-];
+const PRIORITY_COLORS: Record<string, string> = {
+  critical: "bg-rose-500",
+  high: "bg-orange-400",
+  medium: "bg-amber-400",
+  low: "bg-zinc-300",
+};
 
-export default function KanbanBoardPage() {
-  const user = useAuthStore((state: any) => state.user);
-  const [columns, setColumns] = useState<ColumnType[]>(initialData);
-  const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
+const TYPE_LABEL: Record<string, string> = {
+  task: "Tâche",
+  bug: "Bug",
+  feature: "Feature",
+  story: "Story",
+};
 
-  const handleDragStart = (e: React.DragEvent, taskId: string, sourceColIndex: number) => {
-    setDraggedTaskId(taskId);
-    e.dataTransfer.setData("taskId", taskId);
-    e.dataTransfer.setData("sourceColIndex", sourceColIndex.toString());
-    e.dataTransfer.effectAllowed = "move";
+function KanbanBoardPage() {
+  const searchParams = useSearchParams();
+  const projectIdParam = searchParams.get("projectId");
+
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [selectedProjectId, setSelectedProjectId] = useState<string>(projectIdParam || "");
+  const [board, setBoard] = useState<ProjectBoard | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [draggedTicketId, setDraggedTicketId] = useState<string | null>(null);
+  const [dragSourceColId, setDragSourceColId] = useState<string | null>(null);
+
+  // Load projects
+  useEffect(() => {
+    projectService.getProjects().then((data) => {
+      setProjects(data);
+      if (!selectedProjectId && data.length > 0) {
+        setSelectedProjectId(data[0].id);
+      }
+    });
+  }, []);
+
+  // Load board when project changes
+  useEffect(() => {
+    if (!selectedProjectId) {
+      setLoading(false);
+      return;
+    }
+    loadBoard();
+  }, [selectedProjectId]);
+
+  const loadBoard = async () => {
+    setLoading(true);
+    try {
+      const data = await projectService.getProjectBoard(selectedProjectId);
+      setBoard(data);
+    } catch (e) {
+      console.error("Failed to load board", e);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
+  const handleDragStart = (ticketId: string, sourceColId: string) => {
+    setDraggedTicketId(ticketId);
+    setDragSourceColId(sourceColId);
   };
 
-  const handleDrop = (e: React.DragEvent, targetColIndex: number) => {
-    e.preventDefault();
-    const taskId = e.dataTransfer.getData("taskId");
-    const sourceColIndex = parseInt(e.dataTransfer.getData("sourceColIndex"), 10);
-
-    if (sourceColIndex === targetColIndex) {
-      setDraggedTaskId(null);
+  const handleDrop = async (targetColId: string) => {
+    if (!board || !draggedTicketId || !dragSourceColId || dragSourceColId === targetColId) {
+      setDraggedTicketId(null);
+      setDragSourceColId(null);
       return;
     }
 
-    setColumns((prevCols) => {
-      const newCols = [...prevCols];
-      
-      // Find the task in the source column
-      const taskIndex = newCols[sourceColIndex].tasks.findIndex(t => t.id === taskId);
-      if (taskIndex === -1) return prevCols;
-      
-      const [movedTask] = newCols[sourceColIndex].tasks.splice(taskIndex, 1);
-      
-      // Append to the target column
-      newCols[targetColIndex].tasks.push(movedTask);
-      
-      return newCols;
+    // Optimistic update
+    const newBoard = { ...board };
+    newBoard.columns = newBoard.columns.map((col) => {
+      if (col.id === dragSourceColId) {
+        return { ...col, tickets: (col.tickets || []).filter((t) => t.id !== draggedTicketId) };
+      }
+      if (col.id === targetColId) {
+        const ticket = board.columns
+          .flatMap((c) => c.tickets || [])
+          .find((t) => t.id === draggedTicketId);
+        return { ...col, tickets: ticket ? [...(col.tickets || []), ticket] : col.tickets };
+      }
+      return col;
     });
-    
-    setDraggedTaskId(null);
+    setBoard(newBoard);
+
+    try {
+      await projectService.moveTicket(selectedProjectId, draggedTicketId, targetColId);
+    } catch (e) {
+      console.error("Failed to move ticket", e);
+      await loadBoard(); // Revert on error
+    } finally {
+      setDraggedTicketId(null);
+      setDragSourceColId(null);
+    }
+  };
+
+  const handleCreateTicket = async (colId: string, colName: string) => {
+    const title = window.prompt(`Nouveau ticket dans "${colName}" :`);
+    if (!title?.trim()) return;
+    try {
+      await projectService.createTicket(selectedProjectId, {
+        title,
+        current_column: colId,
+        priority: "medium",
+        type: "task",
+      });
+      await loadBoard();
+    } catch (e) {
+      console.error("Failed to create ticket", e);
+    }
   };
 
   return (
-    <main className="min-h-screen bg-zinc-100 p-8">
-      <div className="mb-8 flex items-center justify-between">
+    <main className="min-h-screen bg-zinc-50 p-6">
+      {/* Header */}
+      <div className="mb-6 flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-bold text-zinc-900">Board Kanban</h1>
-          <p className="text-sm text-zinc-500">Suivi des tâches en temps réel</p>
+          <p className="text-sm text-zinc-500 mt-0.5">Glissez-déposez les tickets entre colonnes</p>
         </div>
-        <div className="flex gap-3">
-          <button className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 transition shadow-sm">
-            Filtrer
-          </button>
-          <button className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 transition shadow-sm">
-            + Ajouter une tâche
-          </button>
-        </div>
-      </div>
-
-      <div className="flex gap-6 overflow-x-auto pb-4">
-        {columns.map((column, colIndex) => (
-          <div key={column.title} className="flex min-w-[300px] flex-col gap-4">
-            <div className="flex items-center justify-between px-2">
-              <h2 className="text-sm font-bold uppercase tracking-wider text-zinc-500">
-                {column.title} <span className="ml-2 rounded-full bg-zinc-200 px-2 py-0.5 text-xs text-zinc-600">{column.tasks.length}</span>
-              </h2>
-              <button className="text-zinc-400 hover:text-zinc-900">•••</button>
-            </div>
-
-            {/* Drop Zone */}
-            <div 
-              className={`flex flex-col gap-3 rounded-2xl p-3 min-h-[500px] border-2 transition-colors duration-200 ${
-                draggedTaskId ? "border-zinc-300 bg-zinc-200/40 border-dashed" : "border-transparent bg-zinc-200/50"
-              }`}
-              onDragOver={handleDragOver}
-              onDrop={(e) => handleDrop(e, colIndex)}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <LayoutGrid size={14} className="text-zinc-400" />
+            <select
+              className="bg-white border border-zinc-300 rounded-lg px-3 py-1.5 text-sm font-medium text-zinc-700 outline-none shadow-sm"
+              value={selectedProjectId}
+              onChange={(e) => setSelectedProjectId(e.target.value)}
             >
-              {column.tasks.map((task) => (
-                <div
-                  key={task.id}
-                  draggable
-                  onDragStart={(e) => handleDragStart(e, task.id, colIndex)}
-                  onDragEnd={() => setDraggedTaskId(null)}
-                  className={`cursor-move rounded-xl bg-white p-4 shadow-sm border border-zinc-200 transition-all hover:shadow-md hover:border-zinc-300 active:scale-95 ${
-                    draggedTaskId === task.id ? "opacity-50 scale-95" : "opacity-100"
-                  }`}
-                >
-                  <div className="mb-3 flex gap-2">
-                    <span className="h-1.5 w-8 rounded-full bg-zinc-900"></span>
-                  </div>
-                  <p className="text-sm font-medium text-zinc-900">{task.content}</p>
-                  <div className="mt-4 flex items-center justify-between">
-                    <div className="flex -space-x-2">
-                      <div className="flex h-6 w-6 items-center justify-center rounded-full bg-zinc-100 text-[10px] font-bold text-zinc-600 ring-2 ring-white">
-                        {user?.username?.charAt(0).toUpperCase() || "U"}
-                      </div>
-                    </div>
-                    <span className="text-[10px] font-semibold text-zinc-400">2 jrs</span>
-                  </div>
-                </div>
+              {projects.map((p) => (
+                <option key={p.id} value={p.id}>{p.name}</option>
               ))}
-              <button className="mt-2 flex items-center justify-center gap-2 rounded-xl border-2 border-dashed border-zinc-300 py-3 text-sm font-medium text-zinc-500 hover:border-zinc-900 hover:text-zinc-900 transition">
-                <span>+</span> Ajouter
-              </button>
-            </div>
+              {projects.length === 0 && <option>Aucun projet</option>}
+            </select>
           </div>
-        ))}
+        </div>
       </div>
+
+      {/* Board */}
+      {loading ? (
+        <div className="flex h-96 items-center justify-center">
+          <Loader2 className="animate-spin text-zinc-400" size={36} />
+        </div>
+      ) : !board ? (
+        <div className="flex h-96 items-center justify-center text-zinc-400 text-sm">
+          Aucun board trouvé pour ce projet.
+        </div>
+      ) : (
+        <div className="flex gap-5 overflow-x-auto pb-6">
+          {board.columns.map((col) => (
+            <KanbanColumn
+              key={col.id}
+              column={col}
+              isDragActive={!!draggedTicketId}
+              onDragStart={(ticketId) => handleDragStart(ticketId, col.id)}
+              onDrop={() => handleDrop(col.id)}
+              onAddTicket={() => handleCreateTicket(col.id, col.name)}
+              draggedTicketId={draggedTicketId}
+            />
+          ))}
+        </div>
+      )}
     </main>
+  );
+}
+
+function KanbanColumn({
+  column,
+  isDragActive,
+  onDragStart,
+  onDrop,
+  onAddTicket,
+  draggedTicketId,
+}: {
+  column: BoardColumn;
+  isDragActive: boolean;
+  onDragStart: (ticketId: string) => void;
+  onDrop: () => void;
+  onAddTicket: () => void;
+  draggedTicketId: string | null;
+}) {
+  const tickets = column.tickets || [];
+
+  return (
+    <div className="flex min-w-[300px] flex-col gap-3">
+      {/* Column Header */}
+      <div className="flex items-center justify-between px-1">
+        <div className="flex items-center gap-2">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-500">{column.name}</h2>
+          <span className="rounded-full bg-zinc-200 px-2 py-0.5 text-[10px] font-black text-zinc-600">
+            {tickets.length}
+          </span>
+        </div>
+      </div>
+
+      {/* Drop Zone */}
+      <div
+        className={`flex flex-col gap-3 rounded-2xl p-3 min-h-[500px] border-2 transition-all duration-200 ${
+          isDragActive ? "border-zinc-400 bg-zinc-100 border-dashed" : "border-transparent bg-zinc-200/50"
+        }`}
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={onDrop}
+      >
+        {tickets.map((ticket) => (
+          <TicketCard
+            key={ticket.id}
+            ticket={ticket}
+            isDragging={draggedTicketId === ticket.id}
+            onDragStart={() => onDragStart(ticket.id)}
+          />
+        ))}
+
+        <button
+          onClick={onAddTicket}
+          className="mt-1 flex items-center justify-center gap-2 rounded-xl border-2 border-dashed border-zinc-300 py-3 text-sm font-medium text-zinc-500 hover:border-zinc-800 hover:text-zinc-800 transition"
+        >
+          <Plus size={14} /> Ajouter
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function TicketCard({
+  ticket,
+  isDragging,
+  onDragStart,
+}: {
+  ticket: Ticket;
+  isDragging: boolean;
+  onDragStart: () => void;
+}) {
+  const dotColor = PRIORITY_COLORS[ticket.priority] || PRIORITY_COLORS.low;
+
+  return (
+    <div
+      draggable
+      onDragStart={onDragStart}
+      className={`cursor-move rounded-xl bg-white p-4 shadow-sm border border-zinc-200 transition-all hover:shadow-md active:scale-95 ${
+        isDragging ? "opacity-40 scale-95 rotate-1" : "opacity-100"
+      }`}
+    >
+      {/* Priority dot + type */}
+      <div className="mb-2 flex items-center gap-2">
+        <span className={`h-2 w-2 rounded-full flex-shrink-0 ${dotColor}`} />
+        <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+          {TYPE_LABEL[ticket.type] || ticket.type}
+        </span>
+      </div>
+
+      <p className="text-sm font-semibold text-zinc-900 leading-snug">{ticket.title}</p>
+
+      <div className="mt-3 flex items-center justify-between">
+        <span className="text-[10px] font-mono text-zinc-300">#{ticket.id.slice(0, 6)}</span>
+        {ticket.estimate_story_points != null && (
+          <span className="rounded-md bg-zinc-100 px-1.5 py-0.5 text-[10px] font-black text-zinc-600">
+            {ticket.estimate_story_points} pts
+          </span>
+        )}
+      </div>
+    </div>
   );
 }

@@ -1,4 +1,4 @@
-    // app/actions/auth.ts
+// app/actions/auth.ts
 'use server';
 
 import { cookies } from 'next/headers';
@@ -15,32 +15,32 @@ export async function loginAction(data: LoginFormData) {
 
     const cookieStore = await cookies();
 
-    // Set httpOnly cookies from the server
-    cookieStore.set('accessToken', response.access, {
+    // Set httpOnly cookies from the server - MUST MATCH DJANGO SETTINGS
+    cookieStore.set('access_token', response.access, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 15 * 60, // e.g. 15 minutes for access token
+      sameSite: 'lax',
+      maxAge: 60 * 60, // 60 minutes
       path: '/',
     });
 
-    cookieStore.set('refreshToken', response.refresh, {
+    cookieStore.set('refresh_token', response.refresh, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 7 * 24 * 60 * 60, // e.g. 7 days
+      sameSite: 'lax',
+      maxAge: 24 * 60 * 60, // 1 day
       path: '/',
     });
 
     // Optional: set a non-httpOnly cookie to know user is logged in
     cookieStore.set('isLoggedIn', 'true', {
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 7 * 24 * 60 * 60,
+      sameSite: 'lax',
+      maxAge: 24 * 60 * 60,
       path: '/',
     });
 
-    return { success: true, user: { username: response.username, email: response.email } };
+    return { success: true, user: { username: response.username, email: response.email, id: response.user_id } };
   } catch (error: any) {
     console.error('Login action error:', error);
     return { success: false, error: error.message || 'Login failed' };
