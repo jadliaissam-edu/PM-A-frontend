@@ -323,8 +323,17 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             </div>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto bg-white">
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-white">
+            <div className="grid h-7 shrink-0 grid-cols-[minmax(220px,1fr)_120px_120px_100px] items-center border-b border-zinc-200 bg-white px-2.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-400">
+              <div>Task name</div>
+              <div>Status</div>
+              <div>Assignee</div>
+              <div>Due date</div>
+            </div>
+
+            <div className="min-h-0 flex-1 overflow-y-auto">
             {children}
+            </div>
           </div>
         </main>
       </div>
