@@ -115,7 +115,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     <div className="flex h-screen overflow-hidden bg-zinc-50 text-zinc-900">
       {/* FIXED SIDEBAR */}
       <aside className={`fixed left-0 top-0 z-40 hidden h-screen ${isCollapsed ? "w-16" : "w-64"} overflow-visible border-r border-zinc-200 bg-white transition-all duration-300 ease-in-out xl:flex xl:flex-col group`}>
-        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-2.5 py-3">
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-2 py-2.5">
         <button
           onClick={toggleCollapsed}
           className="absolute -right-3 top-16 z-50 flex h-6 w-6 items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-500 opacity-0 shadow-sm transition hover:text-zinc-900 group-hover:opacity-100"
@@ -123,45 +123,45 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           {isCollapsed ? <ChevronsRight size={14} /> : <ChevronsLeft size={14} />}
         </button>
 
-        <div className={`mb-3 flex items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50/80 px-2 py-2 transition-all ${isCollapsed ? "justify-center px-1.5" : ""}`}>
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-zinc-900 text-xs font-bold text-white">
+        <div className={`mb-2 flex items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50/70 px-1.5 py-1.5 transition-all ${isCollapsed ? "justify-center px-1" : ""}`}>
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-zinc-900 text-[11px] font-bold text-white">
             {profile?.username?.charAt(0).toUpperCase() || "A"}
           </div>
           {!isCollapsed && (
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[13px] font-semibold leading-4">AgileFlow</p>
-              <p className="truncate text-[11px] leading-4 text-zinc-500">Project workspace</p>
+              <p className="truncate text-[12px] font-semibold leading-4">AgileFlow</p>
+              <p className="truncate text-[10px] leading-3 text-zinc-500">Project workspace</p>
             </div>
           )}
           {!isCollapsed && <ChevronDown size={14} className="text-zinc-400" />}
         </div>
 
-        <div className="mb-2 space-y-0.5">
-          <SidebarItem icon={<Home size={16} />} label="Home" href="/dashboard/enterprise" active={pathname === "/dashboard/enterprise" || pathname.startsWith("/dashboard")} isCollapsed={isCollapsed} />
-          <SidebarItem icon={<LayoutGrid size={16} />} label="Dashboard" href="/dashboard/enterprise" active={false} isCollapsed={isCollapsed} />
+        <div className="mb-1 space-y-px">
+          <SidebarItem icon={<Home size={15} />} label="Home" href="/dashboard/enterprise" active={pathname === "/dashboard/enterprise" || pathname.startsWith("/dashboard")} isCollapsed={isCollapsed} />
+          <SidebarItem icon={<LayoutGrid size={15} />} label="Dashboard" href="/dashboard/enterprise" active={false} isCollapsed={isCollapsed} />
         </div>
 
         <SectionTitle title="Agile Tools" isCollapsed={isCollapsed} />
-        <div className="mb-2 space-y-0.5">
-          <SidebarItem icon={<Layers3 size={16} />} label="Backlog" href="/sprint" active={pathname === "/sprint"} isCollapsed={isCollapsed} />
-          <SidebarItem icon={<PanelsTopLeft size={16} />} label="Active Board" href="/Board/kanban" active={pathname.startsWith("/Board/kanban")} isCollapsed={isCollapsed} />
-          <SidebarItem icon={<CalendarDays size={16} />} label="Timeline" href="/Board/Timeline" active={pathname.startsWith("/Board/Timeline")} isCollapsed={isCollapsed} />
-          <SidebarItem icon={<Workflow size={16} />} label="Releases" href="/release" active={pathname === "/release"} isCollapsed={isCollapsed} />
+        <div className="mb-1 space-y-px">
+          <SidebarItem icon={<Layers3 size={15} />} label="Backlog" href="/sprint" active={pathname === "/sprint"} isCollapsed={isCollapsed} />
+          <SidebarItem icon={<PanelsTopLeft size={15} />} label="Active Board" href="/Board/kanban" active={pathname.startsWith("/Board/kanban")} isCollapsed={isCollapsed} />
+          <SidebarItem icon={<CalendarDays size={15} />} label="Timeline" href="/Board/Timeline" active={pathname.startsWith("/Board/Timeline")} isCollapsed={isCollapsed} />
+          <SidebarItem icon={<Workflow size={15} />} label="Releases" href="/release" active={pathname === "/release"} isCollapsed={isCollapsed} />
         </div>
 
         <SectionTitle title="Management" isCollapsed={isCollapsed} />
-        <div className="mb-2 space-y-0.5">
-          <SidebarItem icon={<FolderKanban size={16} />} label="Projects" href="/project" active={pathname === "/project" || pathname.startsWith("/project/")} isCollapsed={isCollapsed} />
-          <SidebarItem icon={<CheckCircle2 size={16} />} label="Tasks" href="/tickets" active={pathname === "/tickets"} isCollapsed={isCollapsed} />
-          <SidebarItem icon={<BarChart3 size={16} />} label="Reports" href="/reports" active={pathname === "/reports"} isCollapsed={isCollapsed} />
+        <div className="mb-1 space-y-px">
+          <SidebarItem icon={<FolderKanban size={15} />} label="Projects" href="/project" active={pathname === "/project" || pathname.startsWith("/project/")} isCollapsed={isCollapsed} />
+          <SidebarItem icon={<CheckCircle2 size={15} />} label="Tasks" href="/tickets" active={pathname === "/tickets"} isCollapsed={isCollapsed} />
+          <SidebarItem icon={<BarChart3 size={15} />} label="Reports" href="/reports" active={pathname === "/reports"} isCollapsed={isCollapsed} />
         </div>
 
         <SectionTitle title="System" isCollapsed={isCollapsed} />
-        <div className="mb-2 space-y-0.5">
-          <SidebarItem icon={<Download size={16} />} label="Import" href="/import" active={pathname === "/import"} isCollapsed={isCollapsed} />
-          <SidebarItem icon={<History size={16} />} label="Audit Logs" href="/audit" active={pathname === "/audit"} isCollapsed={isCollapsed} />
-          <SidebarItem icon={<Users size={16} />} label="Teams" href="/chat" active={pathname === "/chat"} isCollapsed={isCollapsed} />
-          <SidebarItem icon={<Settings size={16} />} label="Settings" href="/user_profile" active={pathname === "/user_profile"} isCollapsed={isCollapsed} />
+        <div className="mb-1 space-y-px">
+          <SidebarItem icon={<Download size={15} />} label="Import" href="/import" active={pathname === "/import"} isCollapsed={isCollapsed} />
+          <SidebarItem icon={<History size={15} />} label="Audit Logs" href="/audit" active={pathname === "/audit"} isCollapsed={isCollapsed} />
+          <SidebarItem icon={<Users size={15} />} label="Teams" href="/chat" active={pathname === "/chat"} isCollapsed={isCollapsed} />
+          <SidebarItem icon={<Settings size={15} />} label="Settings" href="/user_profile" active={pathname === "/user_profile"} isCollapsed={isCollapsed} />
         </div>
 
         <SectionTitle title="Spaces" isCollapsed={isCollapsed} />
@@ -382,30 +382,27 @@ function SidebarItem({
     <Link
       href={href}
       title={isCollapsed ? label : ""}
-      className={`group/item relative flex h-8 w-full items-center gap-2 rounded-md px-2 text-[13px] transition-all duration-150 ${isCollapsed ? "justify-center px-1.5" : ""} ${active
-        ? "bg-violet-50 font-medium text-violet-700 shadow-[inset_0_0_0_1px_rgba(124,58,237,0.08)]"
-        : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-950"
+      className={`group/item relative flex h-7 w-full items-center gap-2 rounded-md px-2 text-[12px] transition-colors duration-150 ${isCollapsed ? "justify-center px-1" : ""} ${active
+        ? "bg-violet-50/90 font-semibold text-violet-900 shadow-[inset_0_0_0_1px_rgba(124,58,237,0.06)]"
+        : "text-zinc-600 hover:bg-zinc-100/80 hover:text-zinc-900"
         }`}
     >
-      {active && !isCollapsed && <span className="absolute left-0 top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-full bg-violet-600" />}
-      <div className={`flex h-4 w-4 shrink-0 items-center justify-center ${active ? "text-violet-600" : "text-zinc-400 group-hover/item:text-zinc-700"}`}>
+      {active && !isCollapsed && <span className="absolute left-0 top-1/2 h-3.5 w-0.5 -translate-y-1/2 rounded-full bg-violet-600" />}
+      <div className={`flex h-3.5 w-3.5 shrink-0 items-center justify-center ${active ? "text-violet-700" : "text-zinc-400 group-hover/item:text-zinc-600"}`}>
         {icon}
       </div>
-      {!isCollapsed && <span className="truncate leading-4">{label}</span>}
+      {!isCollapsed && <span className="truncate leading-none">{label}</span>}
     </Link>
   );
 }
 
 function SectionTitle({ title, isCollapsed = false }: { title: string, isCollapsed?: boolean }) {
-  if (isCollapsed) return <div className="mx-2 my-2 h-px bg-zinc-200" />;
+  if (isCollapsed) return <div className="mx-2 my-1.5 h-px bg-zinc-200" />;
   return (
-    <div className="mb-1 mt-3 flex items-center justify-between px-2">
-      <h3 className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+    <div className="mb-0.5 mt-2 px-2">
+      <h3 className="text-[9px] font-semibold uppercase tracking-wide text-zinc-400">
         {title}
       </h3>
-      <button className="flex h-5 w-5 items-center justify-center rounded-md text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-900">
-        <CirclePlus size={13} />
-      </button>
     </div>
   );
 }
