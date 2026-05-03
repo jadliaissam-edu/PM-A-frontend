@@ -123,8 +123,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           {isCollapsed ? <ChevronsRight size={14} /> : <ChevronsLeft size={14} />}
         </button>
 
-        <div className={`mb-1 flex h-7 items-center gap-1.5 rounded px-1.5 transition hover:bg-white ${isCollapsed ? "justify-center px-1" : ""}`}>
-          <div className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded bg-violet-600 text-[10px] font-bold text-white">
+        <div className={`mb-1 flex h-7 items-center gap-1.5 rounded-sm px-1.5 transition hover:bg-white ${isCollapsed ? "justify-center px-1" : ""}`}>
+          <div className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-sm bg-violet-600 text-[10px] font-bold text-white">
             {profile?.username?.charAt(0).toUpperCase() || "A"}
           </div>
           {!isCollapsed && (
@@ -184,7 +184,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 <div className="relative" ref={orgDropdownRef}>
                   <button
                     onClick={() => setIsOrgDropdownOpen(!isOrgDropdownOpen)}
-                    className="flex h-7 items-center gap-1.5 rounded border border-transparent bg-transparent px-1.5 text-[12px] font-medium text-zinc-500 transition hover:border-zinc-200 hover:bg-zinc-50 hover:text-zinc-800"
+                    className="flex h-7 items-center gap-1.5 rounded-sm border border-transparent bg-transparent px-1.5 text-[12px] font-medium text-zinc-500 transition hover:border-zinc-200 hover:bg-zinc-50 hover:text-zinc-800"
                   >
                     <BriefcaseBusiness size={14} className="text-zinc-400" />
                     <span>{selectedOrg}</span>
@@ -274,8 +274,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         </header>
 
         {/* PAGE CONTENT */}
-        <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden bg-[#f6f7f9] p-1 md:p-1.5">
-          <div className="min-h-full border border-zinc-200 bg-white">
+        <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden bg-white">
+          <div className="min-h-full bg-white">
             {children}
           </div>
         </main>
@@ -387,7 +387,7 @@ function SidebarItem({
     <Link
       href={href}
       title={isCollapsed ? label : ""}
-      className={`group/item relative flex h-[26px] w-full items-center gap-1.5 rounded px-1.5 text-[11px] transition-colors duration-150 ${isCollapsed ? "justify-center px-1" : ""} ${active
+      className={`group/item relative flex h-[26px] w-full items-center gap-1.5 rounded-sm px-1.5 text-[11px] transition-colors duration-150 ${isCollapsed ? "justify-center px-1" : ""} ${active
         ? "bg-violet-100 font-semibold text-violet-950 shadow-[inset_2px_0_0_#7c3aed,inset_0_0_0_1px_rgba(124,58,237,0.12)]"
         : "text-zinc-600 hover:bg-white hover:text-zinc-900"
         }`}
