@@ -114,8 +114,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex h-screen overflow-hidden bg-zinc-50 text-zinc-900">
       {/* FIXED SIDEBAR */}
-      <aside className={`fixed left-0 top-0 z-40 hidden h-screen ${isCollapsed ? "w-14" : "w-60"} overflow-visible border-r border-zinc-200 bg-white transition-all duration-200 ease-out xl:flex xl:flex-col group`}>
-        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-2 py-2.5">
+      <aside className={`fixed left-0 top-0 z-40 hidden h-screen ${isCollapsed ? "w-[52px]" : "w-[232px]"} overflow-visible border-r border-zinc-200 bg-white transition-all duration-200 ease-out xl:flex xl:flex-col group`}>
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-1.5 py-2">
         <button
           onClick={toggleCollapsed}
           className="absolute -right-3 top-12 z-50 flex h-6 w-6 items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-500 opacity-0 shadow-sm transition hover:text-zinc-900 group-hover:opacity-100"
@@ -123,26 +123,26 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           {isCollapsed ? <ChevronsRight size={14} /> : <ChevronsLeft size={14} />}
         </button>
 
-        <div className={`mb-2 flex items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50/70 px-1.5 py-1.5 transition-all ${isCollapsed ? "justify-center px-1" : ""}`}>
-          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-zinc-900 text-[11px] font-bold text-white">
+        <div className={`mb-1.5 flex h-8 items-center gap-2 rounded-md px-1.5 transition hover:bg-zinc-100 ${isCollapsed ? "justify-center px-1" : ""}`}>
+          <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-violet-600 text-[10px] font-bold text-white">
             {profile?.username?.charAt(0).toUpperCase() || "A"}
           </div>
           {!isCollapsed && (
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[12px] font-semibold leading-4">AgileFlow</p>
-              <p className="truncate text-[10px] leading-3 text-zinc-500">Project workspace</p>
+              <p className="truncate text-[12px] font-semibold leading-4 text-zinc-900">AgileFlow</p>
+              <p className="truncate text-[10px] leading-3 text-zinc-500">Workspace</p>
             </div>
           )}
-          {!isCollapsed && <ChevronDown size={14} className="text-zinc-400" />}
+          {!isCollapsed && <ChevronDown size={13} className="text-zinc-400" />}
         </div>
 
-        <div className="mb-1 space-y-px border-b border-zinc-100 pb-1">
+        <div className="mb-1 space-y-px border-b border-zinc-100 pb-1.5">
           <SidebarItem icon={<Home size={15} />} label="Home" href="/dashboard/enterprise" active={pathname === "/dashboard/enterprise" || pathname.startsWith("/dashboard")} isCollapsed={isCollapsed} />
           <SidebarItem icon={<LayoutGrid size={15} />} label="Dashboard" href="/dashboard/enterprise" active={false} isCollapsed={isCollapsed} />
         </div>
 
         <SectionTitle title="Agile Tools" isCollapsed={isCollapsed} />
-        <div className="mb-1 space-y-px border-b border-zinc-100 pb-1">
+        <div className="mb-1 space-y-px border-b border-zinc-100 pb-1.5">
           <SidebarItem icon={<Layers3 size={15} />} label="Backlog" href="/sprint" active={pathname === "/sprint"} isCollapsed={isCollapsed} />
           <SidebarItem icon={<PanelsTopLeft size={15} />} label="Active Board" href="/Board/kanban" active={pathname.startsWith("/Board/kanban")} isCollapsed={isCollapsed} />
           <SidebarItem icon={<CalendarDays size={15} />} label="Timeline" href="/Board/Timeline" active={pathname.startsWith("/Board/Timeline")} isCollapsed={isCollapsed} />
@@ -150,7 +150,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         </div>
 
         <SectionTitle title="Management" isCollapsed={isCollapsed} />
-        <div className="mb-1 space-y-px border-b border-zinc-100 pb-1">
+        <div className="mb-1 space-y-px border-b border-zinc-100 pb-1.5">
           <SidebarItem icon={<FolderKanban size={15} />} label="Projects" href="/project" active={pathname === "/project" || pathname.startsWith("/project/")} isCollapsed={isCollapsed} />
           <SidebarItem icon={<CheckCircle2 size={15} />} label="Tasks" href="/tickets" active={pathname === "/tickets"} isCollapsed={isCollapsed} />
           <SidebarItem icon={<BarChart3 size={15} />} label="Reports" href="/reports" active={pathname === "/reports"} isCollapsed={isCollapsed} />
@@ -172,14 +172,14 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       </aside>
 
       {/* MAIN CONTENT AREA SHIFTED RIGHT BY THE FIXED SIDEBAR */}
-      <div className={`flex h-screen min-w-0 flex-1 flex-col transition-all duration-200 ease-out ${isCollapsed ? "xl:ml-14" : "xl:ml-60"}`}>
+      <div className={`flex h-screen min-w-0 flex-1 flex-col transition-all duration-200 ease-out ${isCollapsed ? "xl:ml-[52px]" : "xl:ml-[232px]"}`}>
         {/* FIXED HEADER */}
-        <header className="sticky top-0 z-30 border-b border-zinc-200 bg-white/95 px-3 py-2 shadow-[0_1px_2px_0_rgba(0,0,0,0.03)] backdrop-blur-md md:px-4">
-          <div className="flex flex-col gap-2 xl:flex-row xl:items-center xl:justify-between">
+        <header className="sticky top-0 z-30 border-b border-zinc-200 bg-white/95 px-2.5 py-1.5 shadow-[0_1px_2px_0_rgba(0,0,0,0.025)] backdrop-blur-md md:px-3">
+          <div className="flex flex-col gap-1.5 xl:flex-row xl:items-center xl:justify-between">
             {/* Header left side / Org switcher */}
             <div className="flex flex-col gap-1">
-              <div className="flex items-center gap-1.5">
-                <span className="text-[13px] font-semibold text-zinc-900">Dashboard</span>
+              <div className="flex h-8 items-center gap-1.5">
+                <span className="text-[12px] font-semibold text-zinc-900">Dashboard</span>
                 <span className="text-zinc-300">/</span>
                 <div className="relative" ref={orgDropdownRef}>
                   <button
@@ -225,8 +225,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
             {/* Header Right Actions */}
             <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center">
-              <div className="flex h-8 items-center gap-1.5 rounded-lg border border-zinc-200 bg-white p-0.5 shadow-sm">
-              <div className="flex h-7 items-center gap-2 rounded-md bg-zinc-50 px-2">
+              <div className="flex h-8 items-center gap-1 rounded-md border border-zinc-200 bg-white p-0.5 shadow-sm">
+              <div className="flex h-7 items-center gap-1.5 rounded-[5px] bg-zinc-50 px-2">
                 <Search size={14} className="text-zinc-500" />
                 <input
                   type="text"
@@ -235,19 +235,19 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 />
               </div>
 
-              <button className="flex h-7 items-center justify-center gap-1.5 rounded-md bg-violet-600 px-2.5 text-[12px] font-semibold text-white transition hover:bg-violet-700">
+              <button className="flex h-7 items-center justify-center gap-1.5 rounded-[5px] bg-violet-600 px-2 text-[12px] font-semibold text-white transition hover:bg-violet-700">
                 <CirclePlus size={14} />
                 Créer
               </button>
 
-              <Link href="/notifications" className="flex h-7 w-7 items-center justify-center rounded-md text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900">
+              <Link href="/notifications" className="flex h-7 w-7 items-center justify-center rounded-[5px] text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900">
                 <Bell size={15} />
               </Link>
 
               <div className="relative" ref={dropdownRef}>
                 <button
                   onClick={() => setIsProfileOpen(!isProfileOpen)}
-                  className="flex h-7 items-center gap-1.5 rounded-md px-1.5 transition hover:bg-zinc-100"
+                  className="flex h-7 items-center gap-1.5 rounded-[5px] px-1.5 transition hover:bg-zinc-100"
                 >
                   <div className="flex h-6 w-6 items-center justify-center overflow-hidden rounded-full bg-zinc-900 text-[11px] font-semibold text-white">
                     {profile?.avatar_url ? (
@@ -274,7 +274,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         </header>
 
         {/* PAGE CONTENT */}
-        <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden p-3 md:p-4">
+        <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden bg-zinc-50 p-2.5 md:p-3">
           {children}
         </main>
       </div>
@@ -385,13 +385,12 @@ function SidebarItem({
     <Link
       href={href}
       title={isCollapsed ? label : ""}
-      className={`group/item relative flex h-7 w-full items-center gap-1.5 rounded-md px-1.5 text-[12px] transition-colors duration-150 ${isCollapsed ? "justify-center px-1" : ""} ${active
-        ? "bg-violet-50/90 font-semibold text-violet-900 shadow-[inset_0_0_0_1px_rgba(124,58,237,0.06)]"
+      className={`group/item relative flex h-7 w-full items-center gap-1.5 rounded-[5px] px-1.5 text-[12px] transition-colors duration-150 ${isCollapsed ? "justify-center px-1" : ""} ${active
+        ? "bg-violet-100/80 font-semibold text-violet-950 shadow-[inset_2px_0_0_#7c3aed,inset_0_0_0_1px_rgba(124,58,237,0.08)]"
         : "text-zinc-600 hover:bg-zinc-100/80 hover:text-zinc-900"
         }`}
     >
-      {active && !isCollapsed && <span className="absolute left-0 top-1/2 h-3.5 w-0.5 -translate-y-1/2 rounded-full bg-violet-600" />}
-      <div className={`flex h-3.5 w-3.5 shrink-0 items-center justify-center ${active ? "text-violet-700" : "text-zinc-400 group-hover/item:text-zinc-600"}`}>
+      <div className={`flex h-3.5 w-3.5 shrink-0 items-center justify-center ${active ? "text-violet-800" : "text-zinc-400 group-hover/item:text-zinc-600"}`}>
         {icon}
       </div>
       {!isCollapsed && <span className="truncate leading-none">{label}</span>}
@@ -400,7 +399,7 @@ function SidebarItem({
 }
 
 function SectionTitle({ title, isCollapsed = false }: { title: string, isCollapsed?: boolean }) {
-  if (isCollapsed) return <div className="mx-2 my-1.5 h-px bg-zinc-200" />;
+  if (isCollapsed) return <div className="mx-2 my-1 h-px bg-zinc-200" />;
   return (
     <div className="mb-0.5 mt-1.5 px-1.5">
       <h3 className="text-[9px] font-semibold uppercase tracking-wide text-zinc-400">
