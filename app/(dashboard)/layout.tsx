@@ -114,11 +114,11 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex h-screen overflow-hidden bg-zinc-50 text-zinc-900">
       {/* FIXED SIDEBAR */}
-      <aside className={`fixed left-0 top-0 z-40 hidden h-screen ${isCollapsed ? "w-16" : "w-64"} overflow-visible border-r border-zinc-200 bg-white transition-all duration-300 ease-in-out xl:flex xl:flex-col group`}>
+      <aside className={`fixed left-0 top-0 z-40 hidden h-screen ${isCollapsed ? "w-14" : "w-60"} overflow-visible border-r border-zinc-200 bg-white transition-all duration-200 ease-out xl:flex xl:flex-col group`}>
         <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-2 py-2.5">
         <button
           onClick={toggleCollapsed}
-          className="absolute -right-3 top-16 z-50 flex h-6 w-6 items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-500 opacity-0 shadow-sm transition hover:text-zinc-900 group-hover:opacity-100"
+          className="absolute -right-3 top-12 z-50 flex h-6 w-6 items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-500 opacity-0 shadow-sm transition hover:text-zinc-900 group-hover:opacity-100"
         >
           {isCollapsed ? <ChevronsRight size={14} /> : <ChevronsLeft size={14} />}
         </button>
@@ -136,13 +136,13 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           {!isCollapsed && <ChevronDown size={14} className="text-zinc-400" />}
         </div>
 
-        <div className="mb-1 space-y-px">
+        <div className="mb-1 space-y-px border-b border-zinc-100 pb-1">
           <SidebarItem icon={<Home size={15} />} label="Home" href="/dashboard/enterprise" active={pathname === "/dashboard/enterprise" || pathname.startsWith("/dashboard")} isCollapsed={isCollapsed} />
           <SidebarItem icon={<LayoutGrid size={15} />} label="Dashboard" href="/dashboard/enterprise" active={false} isCollapsed={isCollapsed} />
         </div>
 
         <SectionTitle title="Agile Tools" isCollapsed={isCollapsed} />
-        <div className="mb-1 space-y-px">
+        <div className="mb-1 space-y-px border-b border-zinc-100 pb-1">
           <SidebarItem icon={<Layers3 size={15} />} label="Backlog" href="/sprint" active={pathname === "/sprint"} isCollapsed={isCollapsed} />
           <SidebarItem icon={<PanelsTopLeft size={15} />} label="Active Board" href="/Board/kanban" active={pathname.startsWith("/Board/kanban")} isCollapsed={isCollapsed} />
           <SidebarItem icon={<CalendarDays size={15} />} label="Timeline" href="/Board/Timeline" active={pathname.startsWith("/Board/Timeline")} isCollapsed={isCollapsed} />
@@ -150,7 +150,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         </div>
 
         <SectionTitle title="Management" isCollapsed={isCollapsed} />
-        <div className="mb-1 space-y-px">
+        <div className="mb-1 space-y-px border-b border-zinc-100 pb-1">
           <SidebarItem icon={<FolderKanban size={15} />} label="Projects" href="/project" active={pathname === "/project" || pathname.startsWith("/project/")} isCollapsed={isCollapsed} />
           <SidebarItem icon={<CheckCircle2 size={15} />} label="Tasks" href="/tickets" active={pathname === "/tickets"} isCollapsed={isCollapsed} />
           <SidebarItem icon={<BarChart3 size={15} />} label="Reports" href="/reports" active={pathname === "/reports"} isCollapsed={isCollapsed} />
@@ -165,26 +165,30 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         </div>
 
         <SectionTitle title="Spaces" isCollapsed={isCollapsed} />
-        <SpacesSection variant="sidebar" isCollapsed={isCollapsed} />
+        <div className="pt-0.5">
+          <SpacesSection variant="sidebar" isCollapsed={isCollapsed} />
+        </div>
         </div>
       </aside>
 
       {/* MAIN CONTENT AREA SHIFTED RIGHT BY THE FIXED SIDEBAR */}
-      <div className={`flex h-screen min-w-0 flex-1 flex-col transition-all duration-300 ease-in-out ${isCollapsed ? "xl:ml-16" : "xl:ml-64"}`}>
+      <div className={`flex h-screen min-w-0 flex-1 flex-col transition-all duration-200 ease-out ${isCollapsed ? "xl:ml-14" : "xl:ml-60"}`}>
         {/* FIXED HEADER */}
-        <header className="sticky top-0 z-30 border-b border-zinc-200 bg-white/90 px-4 py-2.5 shadow-[0_1px_2px_0_rgba(0,0,0,0.03)] backdrop-blur-md md:px-6">
+        <header className="sticky top-0 z-30 border-b border-zinc-200 bg-white/95 px-3 py-2 shadow-[0_1px_2px_0_rgba(0,0,0,0.03)] backdrop-blur-md md:px-4">
           <div className="flex flex-col gap-2 xl:flex-row xl:items-center xl:justify-between">
             {/* Header left side / Org switcher */}
             <div className="flex flex-col gap-1">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[13px] font-semibold text-zinc-900">Dashboard</span>
+                <span className="text-zinc-300">/</span>
                 <div className="relative" ref={orgDropdownRef}>
                   <button
                     onClick={() => setIsOrgDropdownOpen(!isOrgDropdownOpen)}
-                    className="flex h-8 items-center gap-2 rounded-lg border border-zinc-200 bg-white px-2.5 text-[13px] font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50"
+                    className="flex h-7 items-center gap-1.5 rounded-md border border-transparent bg-transparent px-1.5 text-[12px] font-medium text-zinc-500 transition hover:border-zinc-200 hover:bg-zinc-50 hover:text-zinc-800"
                   >
-                    <BriefcaseBusiness size={15} className="text-zinc-500" />
+                    <BriefcaseBusiness size={14} className="text-zinc-400" />
                     <span>{selectedOrg}</span>
-                    <ChevronDown size={14} className="text-zinc-400" />
+                    <ChevronDown size={13} className="text-zinc-400" />
                   </button>
 
                   {isOrgDropdownOpen && (
@@ -216,37 +220,36 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                     </div>
                   )}
                 </div>
-                <span className="text-zinc-300">/</span>
-                <span className="text-sm font-medium text-zinc-500">Workspace</span>
               </div>
             </div>
 
             {/* Header Right Actions */}
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-              <div className="flex h-8 items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50 px-2.5">
-                <Search size={15} className="text-zinc-500" />
+            <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center">
+              <div className="flex h-8 items-center gap-1.5 rounded-lg border border-zinc-200 bg-white p-0.5 shadow-sm">
+              <div className="flex h-7 items-center gap-2 rounded-md bg-zinc-50 px-2">
+                <Search size={14} className="text-zinc-500" />
                 <input
                   type="text"
                   placeholder="Rechercher..."
-                  className="w-40 bg-transparent text-[13px] outline-none lg:w-56"
+                  className="w-40 bg-transparent text-[12px] outline-none lg:w-52"
                 />
               </div>
 
-              <button className="flex h-8 items-center justify-center gap-2 rounded-lg bg-zinc-900 px-3 text-[13px] font-medium text-white shadow-sm transition hover:bg-zinc-800">
-                <CirclePlus size={15} />
+              <button className="flex h-7 items-center justify-center gap-1.5 rounded-md bg-violet-600 px-2.5 text-[12px] font-semibold text-white transition hover:bg-violet-700">
+                <CirclePlus size={14} />
                 Créer
               </button>
 
-              <Link href="/notifications" className="flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-200 text-zinc-700 shadow-sm transition hover:bg-zinc-100">
-                <Bell size={16} />
+              <Link href="/notifications" className="flex h-7 w-7 items-center justify-center rounded-md text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900">
+                <Bell size={15} />
               </Link>
 
               <div className="relative" ref={dropdownRef}>
                 <button
                   onClick={() => setIsProfileOpen(!isProfileOpen)}
-                  className="flex h-8 items-center gap-2 rounded-lg border border-zinc-200 bg-white px-2 shadow-sm transition hover:bg-zinc-50"
+                  className="flex h-7 items-center gap-1.5 rounded-md px-1.5 transition hover:bg-zinc-100"
                 >
-                  <div className="flex h-6 w-6 items-center justify-center overflow-hidden rounded-full bg-zinc-900 text-[11px] font-semibold text-white ring-2 ring-white">
+                  <div className="flex h-6 w-6 items-center justify-center overflow-hidden rounded-full bg-zinc-900 text-[11px] font-semibold text-white">
                     {profile?.avatar_url ? (
                       <img src={profile.avatar_url} alt="avatar" className="h-full w-full object-cover" />
                     ) : (
@@ -254,8 +257,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                     )}
                   </div>
                   <div className="hidden text-left sm:block">
-                    <p className="text-[13px] font-medium leading-4">{profile?.username || "Aya Achiban"}</p>
-                    <p className="text-[9px] uppercase leading-3 tracking-widest text-zinc-500">{profile?.bio || "ADMIN"}</p>
+                    <p className="text-[12px] font-medium leading-none text-zinc-800">{profile?.username || "Aya Achiban"}</p>
                   </div>
                 </button>
 
@@ -266,12 +268,13 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                   />
                 )}
               </div>
+              </div>
             </div>
           </div>
         </header>
 
         {/* PAGE CONTENT */}
-        <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-6">
+        <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden p-3 md:p-4">
           {children}
         </main>
       </div>
@@ -382,7 +385,7 @@ function SidebarItem({
     <Link
       href={href}
       title={isCollapsed ? label : ""}
-      className={`group/item relative flex h-7 w-full items-center gap-2 rounded-md px-2 text-[12px] transition-colors duration-150 ${isCollapsed ? "justify-center px-1" : ""} ${active
+      className={`group/item relative flex h-7 w-full items-center gap-1.5 rounded-md px-1.5 text-[12px] transition-colors duration-150 ${isCollapsed ? "justify-center px-1" : ""} ${active
         ? "bg-violet-50/90 font-semibold text-violet-900 shadow-[inset_0_0_0_1px_rgba(124,58,237,0.06)]"
         : "text-zinc-600 hover:bg-zinc-100/80 hover:text-zinc-900"
         }`}
@@ -399,7 +402,7 @@ function SidebarItem({
 function SectionTitle({ title, isCollapsed = false }: { title: string, isCollapsed?: boolean }) {
   if (isCollapsed) return <div className="mx-2 my-1.5 h-px bg-zinc-200" />;
   return (
-    <div className="mb-0.5 mt-2 px-2">
+    <div className="mb-0.5 mt-1.5 px-1.5">
       <h3 className="text-[9px] font-semibold uppercase tracking-wide text-zinc-400">
         {title}
       </h3>
