@@ -275,22 +275,22 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
         {/* PAGE CONTENT */}
         <main className="flex min-h-0 flex-1 flex-col overflow-hidden bg-white">
-          <div className="flex h-9 shrink-0 items-center justify-between border-b border-zinc-200 bg-white px-3">
-            <div className="flex min-w-0 items-center gap-2">
+          <div className="flex h-8 shrink-0 items-center justify-between border-b border-zinc-200 bg-white px-2.5">
+            <div className="flex min-w-0 items-center gap-1.5">
               <span className="h-2 w-2 shrink-0 rounded-sm bg-violet-600" />
-              <span className="truncate text-[12px] font-semibold text-zinc-900">Workspace</span>
-              <span className="text-zinc-300">/</span>
-              <span className="truncate text-[12px] font-medium text-zinc-500">Everything</span>
+              <span className="truncate text-[12px] font-semibold leading-none text-zinc-900">Workspace</span>
+              <span className="text-[11px] text-zinc-300">/</span>
+              <span className="truncate text-[11px] font-medium leading-none text-zinc-500">Everything</span>
             </div>
 
-            <div className="hidden h-7 items-center border border-zinc-200 bg-zinc-50 p-px sm:flex">
-              <button className="h-6 border-r border-zinc-200 bg-white px-2 text-[11px] font-semibold text-zinc-900">
+            <div className="hidden h-6 items-center border border-zinc-200 bg-zinc-50 p-px sm:flex">
+              <button className="h-5 border-r border-zinc-200 bg-white px-2 text-[11px] font-semibold text-violet-800 shadow-[inset_0_-2px_0_#7c3aed]">
                 List
               </button>
-              <button className="h-6 border-r border-zinc-200 px-2 text-[11px] font-medium text-zinc-500 hover:bg-white hover:text-zinc-900">
+              <button className="h-5 border-r border-zinc-200 px-2 text-[11px] font-medium text-zinc-500 hover:bg-white hover:text-zinc-900">
                 Board
               </button>
-              <button className="h-6 px-2 text-[11px] font-medium text-zinc-500 hover:bg-white hover:text-zinc-900">
+              <button className="h-5 px-2 text-[11px] font-medium text-zinc-500 hover:bg-white hover:text-zinc-900">
                 Calendar
               </button>
             </div>
