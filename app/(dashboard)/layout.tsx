@@ -336,7 +336,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 <div className="flex h-7 items-center gap-1.5 border-b border-zinc-100 bg-[#fbfbfc] px-2.5 text-[11px] font-semibold text-zinc-700">
                   <ChevronDown size={13} className="text-zinc-400" />
                   <span>Sprint Backlog</span>
-                  <span className="text-[10px] font-medium text-zinc-400">3 tasks</span>
+                  <span className="border-l border-zinc-200 pl-1.5 text-[10px] font-medium text-zinc-400">3 tasks</span>
                 </div>
 
                 {[
@@ -350,6 +350,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                     assigneeClass: "bg-violet-600",
                     due: "Today",
                     dueClass: "text-rose-600",
+                    selected: true,
                   },
                   {
                     title: "Review sprint backlog priorities",
@@ -376,29 +377,29 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 ].map((row) => (
                   <div
                     key={row.meta}
-                    className="grid h-[34px] grid-cols-[minmax(240px,1fr)_118px_118px_104px] items-center border-b border-zinc-100 text-[11px] last:border-b-0 hover:bg-[#fbfbfc]"
+                    className={`grid h-8 grid-cols-[minmax(240px,1fr)_118px_118px_104px] items-center border-b border-zinc-100 text-[11px] last:border-b-0 hover:bg-[#fbfbfc] ${row.selected ? "bg-violet-50/40 shadow-[inset_2px_0_0_#7c3aed]" : ""}`}
                   >
                     <div className="flex min-w-0 items-center gap-2 px-2.5">
                       <span className="h-3 w-3 shrink-0 border border-zinc-300 bg-white" />
-                      <span className={`h-4 w-0.5 shrink-0 ${row.priorityClass}`} />
-                      <div className="min-w-0">
-                        <div className="truncate font-medium text-zinc-800">{row.title}</div>
-                        <div className="text-[10px] font-medium leading-3 text-zinc-400">{row.meta}</div>
+                      <span className={`h-3.5 w-0.5 shrink-0 ${row.priorityClass}`} />
+                      <div className="flex min-w-0 items-baseline gap-2">
+                        <span className="truncate font-medium text-zinc-800">{row.title}</span>
+                        <span className="shrink-0 text-[10px] font-semibold text-zinc-400">{row.meta}</span>
                       </div>
                     </div>
                     <div className="border-l border-zinc-100 px-2">
-                      <span className={`inline-flex h-5 min-w-16 items-center justify-center border px-1.5 text-[10px] font-semibold ${row.statusClass}`}>
+                      <span className={`inline-flex h-[18px] min-w-[72px] items-center justify-center border px-1.5 text-[10px] font-semibold leading-none ${row.statusClass}`}>
                         {row.status}
                       </span>
                     </div>
                     <div className="flex items-center gap-1.5 border-l border-zinc-100 px-2">
-                      <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-semibold text-white ${row.assigneeClass}`}>
+                      <span className={`flex h-[18px] w-[18px] items-center justify-center rounded-full text-[8px] font-semibold text-white ring-1 ring-white ${row.assigneeClass}`}>
                         {row.assignee}
                       </span>
-                      <span className="truncate font-medium text-zinc-500">Assigned</span>
+                      <span className="truncate text-[10px] font-medium text-zinc-500">Assigned</span>
                     </div>
                     <div className="border-l border-zinc-100 px-2">
-                      <span className={`font-medium ${row.dueClass}`}>{row.due}</span>
+                      <span className={`text-[10px] font-semibold ${row.dueClass}`}>{row.due}</span>
                     </div>
                   </div>
                 ))}
