@@ -274,8 +274,29 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         </header>
 
         {/* PAGE CONTENT */}
-        <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden bg-white">
-          <div className="min-h-full bg-white">
+        <main className="flex min-h-0 flex-1 flex-col overflow-hidden bg-white">
+          <div className="flex h-9 shrink-0 items-center justify-between border-b border-zinc-200 bg-white px-3">
+            <div className="flex min-w-0 items-center gap-2">
+              <span className="h-2 w-2 shrink-0 rounded-sm bg-violet-600" />
+              <span className="truncate text-[12px] font-semibold text-zinc-900">Workspace</span>
+              <span className="text-zinc-300">/</span>
+              <span className="truncate text-[12px] font-medium text-zinc-500">Everything</span>
+            </div>
+
+            <div className="hidden h-7 items-center border border-zinc-200 bg-zinc-50 p-px sm:flex">
+              <button className="h-6 border-r border-zinc-200 bg-white px-2 text-[11px] font-semibold text-zinc-900">
+                List
+              </button>
+              <button className="h-6 border-r border-zinc-200 px-2 text-[11px] font-medium text-zinc-500 hover:bg-white hover:text-zinc-900">
+                Board
+              </button>
+              <button className="h-6 px-2 text-[11px] font-medium text-zinc-500 hover:bg-white hover:text-zinc-900">
+                Calendar
+              </button>
+            </div>
+          </div>
+
+          <div className="min-h-0 flex-1 overflow-y-auto bg-white">
             {children}
           </div>
         </main>
