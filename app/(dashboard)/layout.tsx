@@ -296,6 +296,33 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             </div>
           </div>
 
+          <div className="flex h-8 shrink-0 items-center justify-between border-b border-zinc-200 bg-[#fbfbfc] px-2.5">
+            <div className="flex min-w-0 items-center gap-1">
+              <button type="button" className="h-6 border border-zinc-200 bg-white px-2 text-[11px] font-semibold text-zinc-900">
+                All
+              </button>
+              <button type="button" className="h-6 px-2 text-[11px] font-medium text-zinc-500 hover:bg-white hover:text-zinc-900">
+                Open
+              </button>
+              <button type="button" className="h-6 px-2 text-[11px] font-medium text-zinc-500 hover:bg-white hover:text-zinc-900">
+                Closed
+              </button>
+            </div>
+
+            <div className="hidden items-center gap-1 md:flex">
+              <div className="flex h-6 items-center gap-1.5 border border-zinc-200 bg-white px-1.5">
+                <Search size={13} className="text-zinc-400" />
+                <span className="text-[11px] font-medium text-zinc-400">Search tasks</span>
+              </div>
+              <button type="button" className="h-6 border border-zinc-200 bg-white px-2 text-[11px] font-medium text-zinc-600 hover:text-zinc-900">
+                Filter
+              </button>
+              <button type="button" className="h-6 border border-zinc-200 bg-white px-2 text-[11px] font-medium text-zinc-600 hover:text-zinc-900">
+                Sort
+              </button>
+            </div>
+          </div>
+
           <div className="min-h-0 flex-1 overflow-y-auto bg-white">
             {children}
           </div>
