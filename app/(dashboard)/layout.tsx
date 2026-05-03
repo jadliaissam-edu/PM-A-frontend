@@ -324,65 +324,81 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           </div>
 
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-white">
-            <div className="grid h-7 shrink-0 grid-cols-[minmax(220px,1fr)_120px_120px_100px] items-center border-b border-zinc-200 bg-white px-2.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-400">
-              <div>Task name</div>
-              <div>Status</div>
-              <div>Assignee</div>
-              <div>Due date</div>
+            <div className="grid h-7 shrink-0 grid-cols-[minmax(240px,1fr)_118px_118px_104px] items-center border-b border-zinc-200 bg-white text-[10px] font-semibold uppercase tracking-wide text-zinc-400">
+              <div className="px-2.5">Task name</div>
+              <div className="border-l border-zinc-100 px-2">Status</div>
+              <div className="border-l border-zinc-100 px-2">Assignee</div>
+              <div className="border-l border-zinc-100 px-2">Due date</div>
             </div>
 
             <div className="min-h-0 flex-1 overflow-y-auto">
               <div aria-hidden="true" className="border-b border-zinc-200 bg-white">
+                <div className="flex h-7 items-center gap-1.5 border-b border-zinc-100 bg-[#fbfbfc] px-2.5 text-[11px] font-semibold text-zinc-700">
+                  <ChevronDown size={13} className="text-zinc-400" />
+                  <span>Sprint Backlog</span>
+                  <span className="text-[10px] font-medium text-zinc-400">3 tasks</span>
+                </div>
+
                 {[
                   {
                     title: "Refine workspace navigation",
                     meta: "PM-142",
+                    priorityClass: "bg-rose-500",
                     status: "In progress",
                     statusClass: "border-sky-200 bg-sky-50 text-sky-700",
                     assignee: "AA",
+                    assigneeClass: "bg-violet-600",
                     due: "Today",
+                    dueClass: "text-rose-600",
                   },
                   {
                     title: "Review sprint backlog priorities",
                     meta: "PM-136",
+                    priorityClass: "bg-amber-500",
                     status: "Review",
                     statusClass: "border-amber-200 bg-amber-50 text-amber-700",
                     assignee: "MK",
+                    assigneeClass: "bg-emerald-600",
                     due: "May 8",
+                    dueClass: "text-zinc-600",
                   },
                   {
                     title: "Prepare release checklist",
                     meta: "PM-128",
+                    priorityClass: "bg-zinc-300",
                     status: "To do",
                     statusClass: "border-zinc-200 bg-zinc-50 text-zinc-600",
                     assignee: "YS",
+                    assigneeClass: "bg-sky-600",
                     due: "Next week",
+                    dueClass: "text-zinc-500",
                   },
                 ].map((row) => (
                   <div
                     key={row.meta}
-                    className="grid h-9 grid-cols-[minmax(220px,1fr)_120px_120px_100px] items-center border-b border-zinc-100 px-2.5 text-[11px] last:border-b-0 hover:bg-[#fbfbfc]"
+                    className="grid h-[34px] grid-cols-[minmax(240px,1fr)_118px_118px_104px] items-center border-b border-zinc-100 text-[11px] last:border-b-0 hover:bg-[#fbfbfc]"
                   >
-                    <div className="flex min-w-0 items-center gap-2">
+                    <div className="flex min-w-0 items-center gap-2 px-2.5">
                       <span className="h-3 w-3 shrink-0 border border-zinc-300 bg-white" />
+                      <span className={`h-4 w-0.5 shrink-0 ${row.priorityClass}`} />
                       <div className="min-w-0">
                         <div className="truncate font-medium text-zinc-800">{row.title}</div>
-                        <div className="text-[10px] font-medium text-zinc-400">{row.meta}</div>
+                        <div className="text-[10px] font-medium leading-3 text-zinc-400">{row.meta}</div>
                       </div>
                     </div>
-                    <div>
-                      <span className={`inline-flex h-5 items-center border px-1.5 text-[10px] font-semibold ${row.statusClass}`}>
+                    <div className="border-l border-zinc-100 px-2">
+                      <span className={`inline-flex h-5 min-w-16 items-center justify-center border px-1.5 text-[10px] font-semibold ${row.statusClass}`}>
                         {row.status}
                       </span>
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-zinc-900 text-[9px] font-semibold text-white">
+                    <div className="flex items-center gap-1.5 border-l border-zinc-100 px-2">
+                      <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-semibold text-white ${row.assigneeClass}`}>
                         {row.assignee}
                       </span>
-                      <span className="font-medium text-zinc-500">Assigned</span>
+                      <span className="truncate font-medium text-zinc-500">Assigned</span>
                     </div>
-                    <div>
-                      <span className="font-medium text-zinc-500">{row.due}</span>
+                    <div className="border-l border-zinc-100 px-2">
+                      <span className={`font-medium ${row.dueClass}`}>{row.due}</span>
                     </div>
                   </div>
                 ))}
