@@ -345,7 +345,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                     meta: "PM-142",
                     priorityClass: "bg-rose-500",
                     status: "In progress",
-                    statusClass: "border-sky-200 bg-sky-50 text-sky-700",
+                    statusClass: "border-sky-200 bg-sky-50 text-sky-700 shadow-[inset_3px_0_0_#0ea5e9]",
                     assignee: "AA",
                     assigneeClass: "bg-violet-600",
                     due: "Today",
@@ -357,7 +357,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                     meta: "PM-136",
                     priorityClass: "bg-amber-500",
                     status: "Review",
-                    statusClass: "border-amber-200 bg-amber-50 text-amber-700",
+                    statusClass: "border-amber-200 bg-amber-50 text-amber-700 shadow-[inset_3px_0_0_#f59e0b]",
                     assignee: "MK",
                     assigneeClass: "bg-emerald-600",
                     due: "May 8",
@@ -368,7 +368,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                     meta: "PM-128",
                     priorityClass: "bg-zinc-300",
                     status: "To do",
-                    statusClass: "border-zinc-200 bg-zinc-50 text-zinc-600",
+                    statusClass: "border-zinc-200 bg-zinc-50 text-zinc-600 shadow-[inset_3px_0_0_#d4d4d8]",
                     assignee: "YS",
                     assigneeClass: "bg-sky-600",
                     due: "Next week",
@@ -377,18 +377,20 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 ].map((row) => (
                   <div
                     key={row.meta}
-                    className={`grid h-8 grid-cols-[minmax(240px,1fr)_118px_118px_104px] items-center border-b border-zinc-100 text-[11px] last:border-b-0 hover:bg-[#fbfbfc] ${row.selected ? "bg-violet-50/40 shadow-[inset_2px_0_0_#7c3aed]" : ""}`}
+                    className={`group/row grid h-8 grid-cols-[minmax(240px,1fr)_118px_118px_104px] items-center border-b border-zinc-100 text-[11px] last:border-b-0 hover:bg-[#f8f9fb] ${row.selected ? "bg-violet-50/60 shadow-[inset_2px_0_0_#7c3aed]" : ""}`}
                   >
                     <div className="flex min-w-0 items-center gap-2 px-2.5">
-                      <span className="h-3 w-3 shrink-0 border border-zinc-300 bg-white" />
+                      <span className={`flex h-3.5 w-3.5 shrink-0 items-center justify-center border bg-white ${row.selected ? "border-violet-500" : "border-zinc-300 group-hover/row:border-zinc-400"}`}>
+                        {row.selected && <span className="h-1.5 w-1.5 bg-violet-600" />}
+                      </span>
                       <span className={`h-3.5 w-0.5 shrink-0 ${row.priorityClass}`} />
-                      <div className="flex min-w-0 items-baseline gap-2">
+                      <div className="flex min-w-0 items-baseline gap-1.5">
                         <span className="truncate font-medium text-zinc-800">{row.title}</span>
-                        <span className="shrink-0 text-[10px] font-semibold text-zinc-400">{row.meta}</span>
+                        <span className="shrink-0 border border-zinc-200 bg-zinc-50 px-1 text-[9px] font-semibold leading-4 text-zinc-400">{row.meta}</span>
                       </div>
                     </div>
                     <div className="border-l border-zinc-100 px-2">
-                      <span className={`inline-flex h-[18px] min-w-[72px] items-center justify-center border px-1.5 text-[10px] font-semibold leading-none ${row.statusClass}`}>
+                      <span className={`inline-flex h-[18px] min-w-[78px] items-center justify-center border px-1.5 text-[10px] font-semibold leading-none ${row.statusClass}`}>
                         {row.status}
                       </span>
                     </div>
@@ -396,10 +398,13 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                       <span className={`flex h-[18px] w-[18px] items-center justify-center rounded-full text-[8px] font-semibold text-white ring-1 ring-white ${row.assigneeClass}`}>
                         {row.assignee}
                       </span>
-                      <span className="truncate text-[10px] font-medium text-zinc-500">Assigned</span>
+                      <span className="truncate text-[10px] font-medium text-zinc-500">Owner</span>
                     </div>
                     <div className="border-l border-zinc-100 px-2">
-                      <span className={`text-[10px] font-semibold ${row.dueClass}`}>{row.due}</span>
+                      <span className={`inline-flex items-center gap-1 text-[10px] font-semibold ${row.dueClass}`}>
+                        {row.selected && <span className="h-1.5 w-1.5 rounded-full bg-rose-500" />}
+                        {row.due}
+                      </span>
                     </div>
                   </div>
                 ))}
