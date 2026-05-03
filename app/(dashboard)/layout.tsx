@@ -112,9 +112,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-zinc-50 text-zinc-900">
+    <div className="flex h-screen overflow-hidden bg-[#f7f8fa] text-zinc-900">
       {/* FIXED SIDEBAR */}
-      <aside className={`fixed left-0 top-0 z-40 hidden h-screen ${isCollapsed ? "w-[50px]" : "w-[228px]"} overflow-visible border-r border-zinc-200 bg-white transition-all duration-200 ease-out xl:flex xl:flex-col group`}>
+      <aside className={`fixed left-0 top-0 z-40 hidden h-screen ${isCollapsed ? "w-[50px]" : "w-[228px]"} overflow-visible border-r border-zinc-200 bg-[#fbfbfc] transition-all duration-200 ease-out xl:flex xl:flex-col group`}>
         <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-[6px] py-1.5">
         <button
           onClick={toggleCollapsed}
@@ -136,13 +136,13 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           {!isCollapsed && <ChevronDown size={12} className="text-zinc-400" />}
         </div>
 
-        <div className="mb-1 space-y-px border-b border-zinc-100 pb-1">
+        <div className="mb-1 space-y-px border-b border-zinc-200/70 pb-1">
           <SidebarItem icon={<Home size={14} />} label="Home" href="/dashboard/enterprise" active={pathname === "/dashboard/enterprise" || pathname.startsWith("/dashboard")} isCollapsed={isCollapsed} />
           <SidebarItem icon={<LayoutGrid size={14} />} label="Dashboard" href="/dashboard/enterprise" active={false} isCollapsed={isCollapsed} />
         </div>
 
         <SectionTitle title="Agile Tools" isCollapsed={isCollapsed} />
-        <div className="mb-1 space-y-px border-b border-zinc-100 pb-1">
+        <div className="mb-1 space-y-px border-b border-zinc-200/70 pb-1">
           <SidebarItem icon={<Layers3 size={14} />} label="Backlog" href="/sprint" active={pathname === "/sprint"} isCollapsed={isCollapsed} />
           <SidebarItem icon={<PanelsTopLeft size={14} />} label="Active Board" href="/Board/kanban" active={pathname.startsWith("/Board/kanban")} isCollapsed={isCollapsed} />
           <SidebarItem icon={<CalendarDays size={14} />} label="Timeline" href="/Board/Timeline" active={pathname.startsWith("/Board/Timeline")} isCollapsed={isCollapsed} />
@@ -150,7 +150,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         </div>
 
         <SectionTitle title="Management" isCollapsed={isCollapsed} />
-        <div className="mb-1 space-y-px border-b border-zinc-100 pb-1">
+        <div className="mb-1 space-y-px border-b border-zinc-200/70 pb-1">
           <SidebarItem icon={<FolderKanban size={14} />} label="Projects" href="/project" active={pathname === "/project" || pathname.startsWith("/project/")} isCollapsed={isCollapsed} />
           <SidebarItem icon={<CheckCircle2 size={14} />} label="Tasks" href="/tickets" active={pathname === "/tickets"} isCollapsed={isCollapsed} />
           <SidebarItem icon={<BarChart3 size={14} />} label="Reports" href="/reports" active={pathname === "/reports"} isCollapsed={isCollapsed} />
@@ -174,7 +174,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       {/* MAIN CONTENT AREA SHIFTED RIGHT BY THE FIXED SIDEBAR */}
       <div className={`flex h-screen min-w-0 flex-1 flex-col transition-all duration-200 ease-out ${isCollapsed ? "xl:ml-[50px]" : "xl:ml-[228px]"}`}>
         {/* FIXED HEADER */}
-        <header className="sticky top-0 z-30 border-b border-zinc-200 bg-white/95 px-2 py-1 shadow-[0_1px_2px_0_rgba(0,0,0,0.025)] backdrop-blur-md md:px-2.5">
+        <header className="sticky top-0 z-30 border-b border-zinc-200 bg-white px-2 py-1 md:px-2.5">
           <div className="flex flex-col gap-1 xl:flex-row xl:items-center xl:justify-between">
             {/* Header left side / Org switcher */}
             <div className="flex flex-col gap-1">
@@ -225,7 +225,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
             {/* Header Right Actions */}
             <div className="flex flex-col gap-1 sm:flex-row sm:items-center">
-              <div className="flex h-7 items-center gap-1 rounded-[5px] border border-zinc-200 bg-white p-px shadow-sm">
+              <div className="flex h-7 items-center gap-1 rounded-[5px] border border-zinc-200 bg-white p-px">
               <div className="flex h-6 items-center gap-1.5 rounded-[4px] bg-zinc-50 px-1.5">
                 <Search size={14} className="text-zinc-500" />
                 <input
@@ -274,8 +274,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         </header>
 
         {/* PAGE CONTENT */}
-        <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden bg-zinc-50 p-2 md:p-2.5">
-          {children}
+        <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden bg-[#f7f8fa] p-1.5 md:p-2">
+          <div className="min-h-full border border-zinc-200 bg-white shadow-[0_1px_1px_rgba(15,23,42,0.02)]">
+            {children}
+          </div>
         </main>
       </div>
 
@@ -387,7 +389,7 @@ function SidebarItem({
       title={isCollapsed ? label : ""}
       className={`group/item relative flex h-[26px] w-full items-center gap-1.5 rounded-[5px] px-1.5 text-[11px] transition-colors duration-150 ${isCollapsed ? "justify-center px-1" : ""} ${active
         ? "bg-violet-100/90 font-semibold text-violet-950 shadow-[inset_2px_0_0_#7c3aed,inset_0_0_0_1px_rgba(124,58,237,0.1)]"
-        : "text-zinc-600 hover:bg-zinc-100/80 hover:text-zinc-900"
+        : "text-zinc-600 hover:bg-white hover:text-zinc-900"
         }`}
     >
       <div className={`flex h-3.5 w-3.5 shrink-0 items-center justify-center ${active ? "text-violet-800" : "text-zinc-400 group-hover/item:text-zinc-600"}`}>
