@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import SpacesSection from "@/components/SpacesSection";
 import React, { ReactNode, useEffect, useState, useRef } from "react";
 import { authService, UserProfile } from "@/services/auth.service";
+import { useSidebarStore } from "@/store/sidebar.store";
 import {
   Bell,
   ChevronDown,
@@ -44,7 +45,8 @@ import {
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const isCollapsed = useSidebarStore((state) => state.isCollapsed);
+  const toggleCollapsed = useSidebarStore((state) => state.toggleCollapsed);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isOrgDropdownOpen, setIsOrgDropdownOpen] = useState(false);
   const [selectedOrg, setSelectedOrg] = useState("AgileFlow Inc.");
@@ -123,7 +125,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* FIXED SIDEBAR */}
       <aside className={`fixed top-0 left-0 h-screen ${isCollapsed ? "w-20" : "w-72"} border-r border-zinc-200 bg-white transition-all duration-300 ease-in-out px-4 py-5 xl:block hidden z-40 group`}>
         <button
-          onClick={() => setIsCollapsed(!isCollapsed)}
+          onClick={toggleCollapsed}
           className="absolute -right-3 top-20 z-50 flex h-6 w-6 items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-500 shadow-sm transition hover:text-zinc-900 opacity-0 group-hover:opacity-100"
         >
           {isCollapsed ? <ChevronsRight size={14} /> : <ChevronsLeft size={14} />}
@@ -191,29 +193,29 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     <span>{selectedOrg}</span>
                     <ChevronDown size={14} className="text-zinc-400" />
                   </button>
-                  
+
                   {isOrgDropdownOpen && (
                     <div className="absolute left-0 top-full mt-2 w-64 rounded-xl border border-zinc-200 bg-white p-2 shadow-xl z-50">
                       <div className="mb-2 px-2 pb-2 text-[11px] font-bold uppercase tracking-wider text-zinc-500 border-b border-zinc-100">
                         Vos organisations
                       </div>
-                      <button 
+                      <button
                         onClick={() => { setSelectedOrg("AgileFlow Inc."); setIsOrgDropdownOpen(false); }}
                         className="w-full flex items-center justify-between rounded-lg px-2 py-2 text-left text-sm hover:bg-zinc-100 transition"
                       >
                         <span className={selectedOrg === "AgileFlow Inc." ? "font-semibold text-zinc-900" : "font-medium text-zinc-700"}>AgileFlow Inc.</span>
                         {selectedOrg === "AgileFlow Inc." && <CheckCircle2 size={16} className="text-zinc-900" />}
                       </button>
-                      <button 
+                      <button
                         onClick={() => { setSelectedOrg("Design Team"); setIsOrgDropdownOpen(false); }}
                         className="w-full flex items-center justify-between rounded-lg px-2 py-2 text-left text-sm hover:bg-zinc-100 transition"
                       >
                         <span className={selectedOrg === "Design Team" ? "font-semibold text-zinc-900" : "font-medium text-zinc-700"}>Design Team</span>
                         {selectedOrg === "Design Team" && <CheckCircle2 size={16} className="text-zinc-900" />}
                       </button>
-                      
+
                       <div className="my-1 h-[1px] bg-zinc-100" />
-                      
+
                       <button className="w-full flex items-center gap-2 rounded-lg px-2 py-2 text-left text-sm font-semibold text-zinc-900 hover:bg-zinc-100 transition mt-1">
                         <CirclePlus size={16} />
                         Créer une organisation
@@ -291,7 +293,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 function AIChatbotWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [inputVal, setInputVal] = useState("");
-  const [messages, setMessages] = useState<{ role: "assistant"|"user", text: string }[]>([
+  const [messages, setMessages] = useState<{ role: "assistant" | "user", text: string }[]>([
     { role: "assistant", text: "Bonjour ! Je suis l'IA de votre espace de travail AgileFlow. Comment puis-je vous aider aujourd'hui ?" }
   ]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -301,13 +303,13 @@ function AIChatbotWidget() {
     const userMessage = inputVal;
     setMessages(prev => [...prev, { role: "user", text: userMessage }]);
     setInputVal("");
-    
+
     // Simulate AI typing and response
     setTimeout(() => {
       setMessages(prev => [...prev, { role: "assistant", text: "J'analyse votre requête concernant les projets... Je peux générer un résumé de sprint, suggérer des story points ou créer des tâches si besoin !" }]);
       setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
     }, 1000);
-    
+
     setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
   };
 
@@ -324,15 +326,14 @@ function AIChatbotWidget() {
               <ChevronDown size={20} />
             </button>
           </div>
-          
+
           <div className="h-80 overflow-y-auto bg-zinc-50 p-4 space-y-4">
             {messages.map((msg, idx) => (
               <div key={idx} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                <div className={`max-w-[85%] rounded-2xl px-4 py-2 text-sm ${
-                  msg.role === "user" 
-                    ? "bg-indigo-600 text-white rounded-br-none" 
-                    : "bg-white border border-zinc-200 text-zinc-800 rounded-bl-none shadow-sm"
-                }`}>
+                <div className={`max-w-[85%] rounded-2xl px-4 py-2 text-sm ${msg.role === "user"
+                  ? "bg-indigo-600 text-white rounded-br-none"
+                  : "bg-white border border-zinc-200 text-zinc-800 rounded-bl-none shadow-sm"
+                  }`}>
                   {msg.text}
                 </div>
               </div>
@@ -350,7 +351,7 @@ function AIChatbotWidget() {
                 onChange={(e) => setInputVal(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSend()}
               />
-              <button 
+              <button
                 onClick={handleSend}
                 disabled={!inputVal.trim()}
                 className="flex h-9 w-9 items-center justify-center rounded-full bg-indigo-600 text-white hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
@@ -390,8 +391,8 @@ function SidebarItem({
       href={href}
       title={isCollapsed ? label : ""}
       className={`flex w-full items-center gap-3 rounded-xl px-4 py-2.5 transition-all duration-200 ${isCollapsed ? "justify-center px-1" : ""} ${active
-          ? "bg-zinc-900 text-white shadow-sm font-medium"
-          : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
+        ? "bg-zinc-900 text-white shadow-sm font-medium"
+        : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
         }`}
     >
       <div className="flex h-5 w-5 shrink-0 items-center justify-center">
