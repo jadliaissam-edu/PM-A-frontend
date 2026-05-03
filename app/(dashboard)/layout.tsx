@@ -1,28 +1,23 @@
 "use client";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import SpacesSection from "@/components/SpacesSection";
-import React, { ReactNode, useEffect, useState, useRef } from "react";
-import { authService, UserProfile } from "@/services/auth.service";
+import { type ReactNode, useEffect, useState, useRef } from "react";
+import { authService, type UserProfile } from "@/services/auth.service";
 import { useSidebarStore } from "@/store/sidebar.store";
 import {
   Bell,
   ChevronDown,
-  ChevronRight,
   CirclePlus,
-  Clock3,
   FolderKanban,
   Home,
   Layers3,
   LayoutGrid,
-  MoreHorizontal,
   Search,
   Settings,
-  Star,
   Users,
   CheckCircle2,
   CalendarDays,
-  Activity,
   PanelsTopLeft,
   BriefcaseBusiness,
   BarChart3,
@@ -32,19 +27,46 @@ import {
   ChevronsLeft,
   ChevronsRight,
   LogOut,
-  ExternalLink,
-  HelpCircle,
-  Keyboard,
-  Palette,
-  CreditCard,
   ArrowLeftRight,
-  FlaskConical,
   Sparkles,
 } from "lucide-react";
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+function ProfileDropdown({
+  profile,
+  onLogout,
+}: {
+  profile: UserProfile | null;
+  onLogout: () => void;
+}) {
+  return (
+    <div className="absolute right-0 top-full mt-2 w-64 origin-top-right rounded-xl border border-zinc-200 bg-white p-2 shadow-xl ring-1 ring-black/5 z-50">
+      <div className="mb-2 px-3 pb-3 pt-2">
+        <p className="text-sm font-semibold">{profile?.username || "Aya Achiban"}</p>
+        <p className="text-xs text-zinc-500">{profile?.email || "aya.achiban@agileflow.com"}</p>
+      </div>
+
+      <div className="space-y-1 border-t border-zinc-100 pt-2">
+        <button className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-zinc-700 transition hover:bg-zinc-100">
+          <Settings size={15} className="text-zinc-400" />
+          Paramètres
+        </button>
+      </div>
+
+      <div className="mt-2 space-y-1 border-t border-zinc-100 pt-2">
+        <button
+          onClick={onLogout}
+          className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50"
+        >
+          <LogOut size={15} />
+          Déconnexion
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export default function DashboardLayout({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
   const isCollapsed = useSidebarStore((state) => state.isCollapsed);
   const toggleCollapsed = useSidebarStore((state) => state.toggleCollapsed);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -53,6 +75,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const dropdownRef = useRef<HTMLDivElement>(null);
   const orgDropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -83,111 +106,81 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         setProfile(prof);
       } catch (error) {
         console.error("Failed to fetch dashboard data", error);
-      } finally {
-        setLoading(false);
       }
     };
     fetchData();
   }, []);
 
-  // Using a separate simple profile dropdown since the imported one might clash
-  // Usually this is abstracted into components but keeping it inline to preserve design exactly
-  const ProfileDropdown = ({ profile, onLogout, onClose }: any) => {
-    return (
-      <div className="absolute right-0 top-full mt-2 w-64 origin-top-right rounded-xl border border-zinc-200 bg-white p-2 shadow-xl ring-1 ring-black/5 z-50">
-        <div className="mb-2 px-3 pb-3 pt-2">
-          <p className="text-sm font-semibold">{profile?.username || "Aya Achiban"}</p>
-          <p className="text-xs text-zinc-500">{profile?.email || "aya.achiban@agileflow.com"}</p>
-        </div>
-
-        <div className="space-y-1 border-t border-zinc-100 pt-2">
-          <button className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-zinc-700 transition hover:bg-zinc-100">
-            <Settings size={15} className="text-zinc-400" />
-            Paramètres
-          </button>
-        </div>
-
-        <div className="mt-2 space-y-1 border-t border-zinc-100 pt-2">
-          <button
-            onClick={onLogout}
-            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50"
-          >
-            <LogOut size={15} />
-            Déconnexion
-          </button>
-        </div>
-      </div>
-    );
-  };
-
   return (
-    <div className="flex min-h-screen bg-zinc-100 text-zinc-900 overflow-hidden">
+    <div className="flex h-screen overflow-hidden bg-zinc-50 text-zinc-900">
       {/* FIXED SIDEBAR */}
-      <aside className={`fixed top-0 left-0 h-screen ${isCollapsed ? "w-20" : "w-72"} border-r border-zinc-200 bg-white transition-all duration-300 ease-in-out px-4 py-5 xl:block hidden z-40 group`}>
+      <aside className={`fixed left-0 top-0 z-40 hidden h-screen ${isCollapsed ? "w-16" : "w-64"} overflow-visible border-r border-zinc-200 bg-white transition-all duration-300 ease-in-out xl:flex xl:flex-col group`}>
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-2.5 py-3">
         <button
           onClick={toggleCollapsed}
-          className="absolute -right-3 top-20 z-50 flex h-6 w-6 items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-500 shadow-sm transition hover:text-zinc-900 opacity-0 group-hover:opacity-100"
+          className="absolute -right-3 top-16 z-50 flex h-6 w-6 items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-500 opacity-0 shadow-sm transition hover:text-zinc-900 group-hover:opacity-100"
         >
           {isCollapsed ? <ChevronsRight size={14} /> : <ChevronsLeft size={14} />}
         </button>
 
-        <div className={`mb-6 flex items-center gap-3 rounded-2xl border border-zinc-200 bg-zinc-50 p-3 transition-all ${isCollapsed ? "justify-center px-1" : ""}`}>
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-zinc-900 text-sm font-bold text-white">
+        <div className={`mb-3 flex items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50/80 px-2 py-2 transition-all ${isCollapsed ? "justify-center px-1.5" : ""}`}>
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-zinc-900 text-xs font-bold text-white">
             {profile?.username?.charAt(0).toUpperCase() || "A"}
           </div>
           {!isCollapsed && (
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold">AgileFlow</p>
-              <p className="text-xs text-zinc-500">Project workspace</p>
+              <p className="truncate text-[13px] font-semibold leading-4">AgileFlow</p>
+              <p className="truncate text-[11px] leading-4 text-zinc-500">Project workspace</p>
             </div>
           )}
-          {!isCollapsed && <ChevronDown size={16} className="text-zinc-400" />}
+          {!isCollapsed && <ChevronDown size={14} className="text-zinc-400" />}
         </div>
 
-        <div className="mb-6 space-y-1">
-          <SidebarItem icon={<Home size={18} />} label="Home" href="/dashboard/enterprise" active isCollapsed={isCollapsed} />
-          <SidebarItem icon={<LayoutGrid size={18} />} label="Dashboard" href="/dashboard/enterprise" isCollapsed={isCollapsed} />
+        <div className="mb-2 space-y-0.5">
+          <SidebarItem icon={<Home size={16} />} label="Home" href="/dashboard/enterprise" active={pathname === "/dashboard/enterprise" || pathname.startsWith("/dashboard")} isCollapsed={isCollapsed} />
+          <SidebarItem icon={<LayoutGrid size={16} />} label="Dashboard" href="/dashboard/enterprise" active={false} isCollapsed={isCollapsed} />
         </div>
 
         <SectionTitle title="Agile Tools" isCollapsed={isCollapsed} />
-        <div className="mb-6 space-y-1">
-          <SidebarItem icon={<Layers3 size={18} />} label="Backlog" href="/sprint" isCollapsed={isCollapsed} />
-          <SidebarItem icon={<PanelsTopLeft size={18} />} label="Active Board" href="/Board/kanban" isCollapsed={isCollapsed} />
-          <SidebarItem icon={<CalendarDays size={18} />} label="Timeline" href="/Board/Timeline" isCollapsed={isCollapsed} />
-          <SidebarItem icon={<Workflow size={18} />} label="Releases" href="/release" isCollapsed={isCollapsed} />
+        <div className="mb-2 space-y-0.5">
+          <SidebarItem icon={<Layers3 size={16} />} label="Backlog" href="/sprint" active={pathname === "/sprint"} isCollapsed={isCollapsed} />
+          <SidebarItem icon={<PanelsTopLeft size={16} />} label="Active Board" href="/Board/kanban" active={pathname.startsWith("/Board/kanban")} isCollapsed={isCollapsed} />
+          <SidebarItem icon={<CalendarDays size={16} />} label="Timeline" href="/Board/Timeline" active={pathname.startsWith("/Board/Timeline")} isCollapsed={isCollapsed} />
+          <SidebarItem icon={<Workflow size={16} />} label="Releases" href="/release" active={pathname === "/release"} isCollapsed={isCollapsed} />
         </div>
 
         <SectionTitle title="Management" isCollapsed={isCollapsed} />
-        <div className="mb-6 space-y-1">
-          <SidebarItem icon={<FolderKanban size={18} />} label="Projects" href="/project" isCollapsed={isCollapsed} />
-          <SidebarItem icon={<CheckCircle2 size={18} />} label="Tasks" href="/tickets" isCollapsed={isCollapsed} />
-          <SidebarItem icon={<BarChart3 size={18} />} label="Reports" href="/reports" isCollapsed={isCollapsed} />
+        <div className="mb-2 space-y-0.5">
+          <SidebarItem icon={<FolderKanban size={16} />} label="Projects" href="/project" active={pathname === "/project" || pathname.startsWith("/project/")} isCollapsed={isCollapsed} />
+          <SidebarItem icon={<CheckCircle2 size={16} />} label="Tasks" href="/tickets" active={pathname === "/tickets"} isCollapsed={isCollapsed} />
+          <SidebarItem icon={<BarChart3 size={16} />} label="Reports" href="/reports" active={pathname === "/reports"} isCollapsed={isCollapsed} />
         </div>
 
         <SectionTitle title="System" isCollapsed={isCollapsed} />
-        <div className="mb-6 space-y-1">
-          <SidebarItem icon={<Download size={18} />} label="Import" href="/import" isCollapsed={isCollapsed} />
-          <SidebarItem icon={<History size={18} />} label="Audit Logs" href="/audit" isCollapsed={isCollapsed} />
-          <SidebarItem icon={<Users size={18} />} label="Teams" href="/chat" isCollapsed={isCollapsed} />
-          <SidebarItem icon={<Settings size={18} />} label="Settings" href="/user_profile" isCollapsed={isCollapsed} />
+        <div className="mb-2 space-y-0.5">
+          <SidebarItem icon={<Download size={16} />} label="Import" href="/import" active={pathname === "/import"} isCollapsed={isCollapsed} />
+          <SidebarItem icon={<History size={16} />} label="Audit Logs" href="/audit" active={pathname === "/audit"} isCollapsed={isCollapsed} />
+          <SidebarItem icon={<Users size={16} />} label="Teams" href="/chat" active={pathname === "/chat"} isCollapsed={isCollapsed} />
+          <SidebarItem icon={<Settings size={16} />} label="Settings" href="/user_profile" active={pathname === "/user_profile"} isCollapsed={isCollapsed} />
         </div>
 
         <SectionTitle title="Spaces" isCollapsed={isCollapsed} />
         <SpacesSection variant="sidebar" isCollapsed={isCollapsed} />
+        </div>
       </aside>
 
       {/* MAIN CONTENT AREA SHIFTED RIGHT BY THE FIXED SIDEBAR */}
-      <div className={`flex flex-1 flex-col transition-all duration-300 ease-in-out ${isCollapsed ? "xl:ml-20" : "xl:ml-72"}`}>
+      <div className={`flex h-screen min-w-0 flex-1 flex-col transition-all duration-300 ease-in-out ${isCollapsed ? "xl:ml-16" : "xl:ml-64"}`}>
         {/* FIXED HEADER */}
-        <header className="sticky top-0 z-30 border-b border-zinc-200 bg-white/80 backdrop-blur-md px-4 py-4 md:px-8 shadow-[0_1px_3px_0_rgba(0,0,0,0.03)]">
-          <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+        <header className="sticky top-0 z-30 border-b border-zinc-200 bg-white/90 px-4 py-2.5 shadow-[0_1px_2px_0_rgba(0,0,0,0.03)] backdrop-blur-md md:px-6">
+          <div className="flex flex-col gap-2 xl:flex-row xl:items-center xl:justify-between">
             {/* Header left side / Org switcher */}
             <div className="flex flex-col gap-1">
               <div className="flex items-center gap-2">
                 <div className="relative" ref={orgDropdownRef}>
                   <button
                     onClick={() => setIsOrgDropdownOpen(!isOrgDropdownOpen)}
-                    className="flex items-center gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 transition shadow-sm"
+                    className="flex h-8 items-center gap-2 rounded-lg border border-zinc-200 bg-white px-2.5 text-[13px] font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50"
                   >
                     <BriefcaseBusiness size={15} className="text-zinc-500" />
                     <span>{selectedOrg}</span>
@@ -229,31 +222,31 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
 
             {/* Header Right Actions */}
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-              <div className="flex items-center gap-2 rounded-xl border border-zinc-300 bg-zinc-50 px-3 py-2">
-                <Search size={16} className="text-zinc-500" />
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <div className="flex h-8 items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50 px-2.5">
+                <Search size={15} className="text-zinc-500" />
                 <input
                   type="text"
                   placeholder="Rechercher..."
-                  className="w-44 bg-transparent text-sm outline-none"
+                  className="w-40 bg-transparent text-[13px] outline-none lg:w-56"
                 />
               </div>
 
-              <button className="flex items-center justify-center gap-2 rounded-xl bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-zinc-800 shadow-sm">
-                <CirclePlus size={16} />
+              <button className="flex h-8 items-center justify-center gap-2 rounded-lg bg-zinc-900 px-3 text-[13px] font-medium text-white shadow-sm transition hover:bg-zinc-800">
+                <CirclePlus size={15} />
                 Créer
               </button>
 
-              <Link href="/notifications" className="rounded-xl border border-zinc-300 p-2 text-zinc-700 transition hover:bg-zinc-100 shadow-sm">
-                <Bell size={18} />
+              <Link href="/notifications" className="flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-200 text-zinc-700 shadow-sm transition hover:bg-zinc-100">
+                <Bell size={16} />
               </Link>
 
               <div className="relative" ref={dropdownRef}>
                 <button
                   onClick={() => setIsProfileOpen(!isProfileOpen)}
-                  className="flex items-center gap-3 rounded-xl border border-zinc-200 px-3 py-2 hover:bg-zinc-50 transition shadow-sm bg-white"
+                  className="flex h-8 items-center gap-2 rounded-lg border border-zinc-200 bg-white px-2 shadow-sm transition hover:bg-zinc-50"
                 >
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-900 text-xs font-semibold text-white overflow-hidden ring-2 ring-white">
+                  <div className="flex h-6 w-6 items-center justify-center overflow-hidden rounded-full bg-zinc-900 text-[11px] font-semibold text-white ring-2 ring-white">
                     {profile?.avatar_url ? (
                       <img src={profile.avatar_url} alt="avatar" className="h-full w-full object-cover" />
                     ) : (
@@ -261,8 +254,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     )}
                   </div>
                   <div className="hidden text-left sm:block">
-                    <p className="text-sm font-medium leading-tight">{profile?.username || "Aya Achiban"}</p>
-                    <p className="text-[10px] text-zinc-500 uppercase tracking-widest">{profile?.bio || "ADMIN"}</p>
+                    <p className="text-[13px] font-medium leading-4">{profile?.username || "Aya Achiban"}</p>
+                    <p className="text-[9px] uppercase leading-3 tracking-widest text-zinc-500">{profile?.bio || "ADMIN"}</p>
                   </div>
                 </button>
 
@@ -270,7 +263,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   <ProfileDropdown
                     profile={profile}
                     onLogout={handleLogout}
-                    onClose={() => setIsProfileOpen(false)}
                   />
                 )}
               </div>
@@ -279,7 +271,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </header>
 
         {/* PAGE CONTENT */}
-        <main className="flex-1 overflow-x-hidden p-6 md:p-8">
+        <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-6">
           {children}
         </main>
       </div>
@@ -390,29 +382,29 @@ function SidebarItem({
     <Link
       href={href}
       title={isCollapsed ? label : ""}
-      className={`flex w-full items-center gap-3 rounded-xl px-4 py-2.5 transition-all duration-200 ${isCollapsed ? "justify-center px-1" : ""} ${active
-        ? "bg-zinc-900 text-white shadow-sm font-medium"
-        : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
+      className={`group/item relative flex h-8 w-full items-center gap-2 rounded-md px-2 text-[13px] transition-all duration-150 ${isCollapsed ? "justify-center px-1.5" : ""} ${active
+        ? "bg-violet-50 font-medium text-violet-700 shadow-[inset_0_0_0_1px_rgba(124,58,237,0.08)]"
+        : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-950"
         }`}
     >
-      <div className="flex h-5 w-5 shrink-0 items-center justify-center">
+      {active && !isCollapsed && <span className="absolute left-0 top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-full bg-violet-600" />}
+      <div className={`flex h-4 w-4 shrink-0 items-center justify-center ${active ? "text-violet-600" : "text-zinc-400 group-hover/item:text-zinc-700"}`}>
         {icon}
       </div>
-      {!isCollapsed && <span className="truncate text-sm">{label}</span>}
-      {isCollapsed && <span className="absolute left-16 z-50 hidden rounded-md bg-zinc-900 px-2.5 py-1 text-xs font-medium text-white shadow-lg group-hover:block whitespace-nowrap">{label}</span>}
+      {!isCollapsed && <span className="truncate leading-4">{label}</span>}
     </Link>
   );
 }
 
 function SectionTitle({ title, isCollapsed = false }: { title: string, isCollapsed?: boolean }) {
-  if (isCollapsed) return <div className="my-4 h-[1px] bg-zinc-200" />;
+  if (isCollapsed) return <div className="mx-2 my-2 h-px bg-zinc-200" />;
   return (
-    <div className="mb-2 mt-6 flex items-center justify-between px-2">
-      <h3 className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">
+    <div className="mb-1 mt-3 flex items-center justify-between px-2">
+      <h3 className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">
         {title}
       </h3>
-      <button className="text-zinc-400 hover:text-zinc-900 transition">
-        <CirclePlus size={14} />
+      <button className="flex h-5 w-5 items-center justify-center rounded-md text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-900">
+        <CirclePlus size={13} />
       </button>
     </div>
   );
