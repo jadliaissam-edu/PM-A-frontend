@@ -112,9 +112,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#f7f8fa] text-zinc-900">
+    <div className="flex h-screen overflow-hidden bg-[#f6f7f9] text-zinc-900">
       {/* FIXED SIDEBAR */}
-      <aside className={`fixed left-0 top-0 z-40 hidden h-screen ${isCollapsed ? "w-[50px]" : "w-[228px]"} overflow-visible border-r border-zinc-200 bg-[#fbfbfc] transition-all duration-200 ease-out xl:flex xl:flex-col group`}>
+      <aside className={`fixed left-0 top-0 z-40 hidden h-screen ${isCollapsed ? "w-[50px]" : "w-[228px]"} overflow-visible border-r border-zinc-200 bg-[#fafbfc] transition-all duration-200 ease-out xl:flex xl:flex-col group`}>
         <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-[6px] py-1.5">
         <button
           onClick={toggleCollapsed}
@@ -123,8 +123,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           {isCollapsed ? <ChevronsRight size={14} /> : <ChevronsLeft size={14} />}
         </button>
 
-        <div className={`mb-1 flex h-7 items-center gap-1.5 rounded-[5px] px-1.5 transition hover:bg-zinc-100 ${isCollapsed ? "justify-center px-1" : ""}`}>
-          <div className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-[5px] bg-violet-600 text-[10px] font-bold text-white">
+        <div className={`mb-1 flex h-7 items-center gap-1.5 rounded px-1.5 transition hover:bg-white ${isCollapsed ? "justify-center px-1" : ""}`}>
+          <div className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded bg-violet-600 text-[10px] font-bold text-white">
             {profile?.username?.charAt(0).toUpperCase() || "A"}
           </div>
           {!isCollapsed && (
@@ -179,12 +179,12 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             {/* Header left side / Org switcher */}
             <div className="flex flex-col gap-1">
               <div className="flex h-7 items-center gap-1.5">
-                <span className="text-[12px] font-semibold text-zinc-900">Dashboard</span>
+                <span className="text-[12px] font-semibold text-zinc-900">Workspace</span>
                 <span className="text-zinc-300">/</span>
                 <div className="relative" ref={orgDropdownRef}>
                   <button
                     onClick={() => setIsOrgDropdownOpen(!isOrgDropdownOpen)}
-                    className="flex h-7 items-center gap-1.5 rounded-md border border-transparent bg-transparent px-1.5 text-[12px] font-medium text-zinc-500 transition hover:border-zinc-200 hover:bg-zinc-50 hover:text-zinc-800"
+                    className="flex h-7 items-center gap-1.5 rounded border border-transparent bg-transparent px-1.5 text-[12px] font-medium text-zinc-500 transition hover:border-zinc-200 hover:bg-zinc-50 hover:text-zinc-800"
                   >
                     <BriefcaseBusiness size={14} className="text-zinc-400" />
                     <span>{selectedOrg}</span>
@@ -225,8 +225,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
             {/* Header Right Actions */}
             <div className="flex flex-col gap-1 sm:flex-row sm:items-center">
-              <div className="flex h-7 items-center gap-1 rounded-[5px] border border-zinc-200 bg-white p-px">
-              <div className="flex h-6 items-center gap-1.5 rounded-[4px] bg-zinc-50 px-1.5">
+              <div className="flex h-7 items-center gap-1 border border-zinc-200 bg-white p-px">
+              <div className="flex h-6 items-center gap-1.5 bg-zinc-50 px-1.5">
                 <Search size={14} className="text-zinc-500" />
                 <input
                   type="text"
@@ -235,19 +235,19 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 />
               </div>
 
-              <button className="flex h-6 items-center justify-center gap-1 rounded-[4px] bg-violet-600 px-2 text-[11px] font-semibold text-white transition hover:bg-violet-700">
+              <button className="flex h-6 items-center justify-center gap-1 bg-violet-600 px-2 text-[11px] font-semibold text-white transition hover:bg-violet-700">
                 <CirclePlus size={13} />
                 Créer
               </button>
 
-              <Link href="/notifications" className="flex h-6 w-6 items-center justify-center rounded-[4px] text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900">
+              <Link href="/notifications" className="flex h-6 w-6 items-center justify-center text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900">
                 <Bell size={14} />
               </Link>
 
               <div className="relative" ref={dropdownRef}>
                 <button
                   onClick={() => setIsProfileOpen(!isProfileOpen)}
-                  className="flex h-6 items-center gap-1.5 rounded-[4px] px-1 transition hover:bg-zinc-100"
+                  className="flex h-6 items-center gap-1.5 px-1 transition hover:bg-zinc-100"
                 >
                   <div className="flex h-5 w-5 items-center justify-center overflow-hidden rounded-full bg-zinc-900 text-[10px] font-semibold text-white">
                     {profile?.avatar_url ? (
@@ -274,8 +274,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         </header>
 
         {/* PAGE CONTENT */}
-        <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden bg-[#f7f8fa] p-1.5 md:p-2">
-          <div className="min-h-full border border-zinc-200 bg-white shadow-[0_1px_1px_rgba(15,23,42,0.02)]">
+        <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden bg-[#f6f7f9] p-1 md:p-1.5">
+          <div className="min-h-full border border-zinc-200 bg-white">
             {children}
           </div>
         </main>
@@ -387,8 +387,8 @@ function SidebarItem({
     <Link
       href={href}
       title={isCollapsed ? label : ""}
-      className={`group/item relative flex h-[26px] w-full items-center gap-1.5 rounded-[5px] px-1.5 text-[11px] transition-colors duration-150 ${isCollapsed ? "justify-center px-1" : ""} ${active
-        ? "bg-violet-100/90 font-semibold text-violet-950 shadow-[inset_2px_0_0_#7c3aed,inset_0_0_0_1px_rgba(124,58,237,0.1)]"
+      className={`group/item relative flex h-[26px] w-full items-center gap-1.5 rounded px-1.5 text-[11px] transition-colors duration-150 ${isCollapsed ? "justify-center px-1" : ""} ${active
+        ? "bg-violet-100 font-semibold text-violet-950 shadow-[inset_2px_0_0_#7c3aed,inset_0_0_0_1px_rgba(124,58,237,0.12)]"
         : "text-zinc-600 hover:bg-white hover:text-zinc-900"
         }`}
     >
@@ -403,8 +403,8 @@ function SidebarItem({
 function SectionTitle({ title, isCollapsed = false }: { title: string, isCollapsed?: boolean }) {
   if (isCollapsed) return <div className="mx-2 my-1 h-px bg-zinc-200" />;
   return (
-    <div className="mb-px mt-1.5 px-1.5">
-      <h3 className="text-[8px] font-semibold uppercase tracking-wide text-zinc-400">
+    <div className="mb-px mt-1 flex h-4 items-center px-1.5">
+      <h3 className="text-[9px] font-medium uppercase tracking-wide text-zinc-400">
         {title}
       </h3>
     </div>
