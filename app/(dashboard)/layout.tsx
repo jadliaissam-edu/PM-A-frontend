@@ -332,7 +332,63 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             </div>
 
             <div className="min-h-0 flex-1 overflow-y-auto">
-            {children}
+              <div aria-hidden="true" className="border-b border-zinc-200 bg-white">
+                {[
+                  {
+                    title: "Refine workspace navigation",
+                    meta: "PM-142",
+                    status: "In progress",
+                    statusClass: "border-sky-200 bg-sky-50 text-sky-700",
+                    assignee: "AA",
+                    due: "Today",
+                  },
+                  {
+                    title: "Review sprint backlog priorities",
+                    meta: "PM-136",
+                    status: "Review",
+                    statusClass: "border-amber-200 bg-amber-50 text-amber-700",
+                    assignee: "MK",
+                    due: "May 8",
+                  },
+                  {
+                    title: "Prepare release checklist",
+                    meta: "PM-128",
+                    status: "To do",
+                    statusClass: "border-zinc-200 bg-zinc-50 text-zinc-600",
+                    assignee: "YS",
+                    due: "Next week",
+                  },
+                ].map((row) => (
+                  <div
+                    key={row.meta}
+                    className="grid h-9 grid-cols-[minmax(220px,1fr)_120px_120px_100px] items-center border-b border-zinc-100 px-2.5 text-[11px] last:border-b-0 hover:bg-[#fbfbfc]"
+                  >
+                    <div className="flex min-w-0 items-center gap-2">
+                      <span className="h-3 w-3 shrink-0 border border-zinc-300 bg-white" />
+                      <div className="min-w-0">
+                        <div className="truncate font-medium text-zinc-800">{row.title}</div>
+                        <div className="text-[10px] font-medium text-zinc-400">{row.meta}</div>
+                      </div>
+                    </div>
+                    <div>
+                      <span className={`inline-flex h-5 items-center border px-1.5 text-[10px] font-semibold ${row.statusClass}`}>
+                        {row.status}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-zinc-900 text-[9px] font-semibold text-white">
+                        {row.assignee}
+                      </span>
+                      <span className="font-medium text-zinc-500">Assigned</span>
+                    </div>
+                    <div>
+                      <span className="font-medium text-zinc-500">{row.due}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {children}
             </div>
           </div>
         </main>
