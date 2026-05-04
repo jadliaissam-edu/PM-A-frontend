@@ -324,85 +324,109 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           </div>
 
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-white">
-            <div className="grid h-7 shrink-0 grid-cols-[minmax(240px,1fr)_118px_118px_104px] items-center border-b border-zinc-200 bg-white text-[10px] font-semibold uppercase tracking-wide text-zinc-400">
-              <div className="px-2.5">Task name</div>
-              <div className="border-l border-zinc-100 px-2">Status</div>
-              <div className="border-l border-zinc-100 px-2">Assignee</div>
-              <div className="border-l border-zinc-100 px-2">Due date</div>
+            <div className="grid h-[27px] shrink-0 grid-cols-[minmax(330px,1fr)_132px_128px_122px] items-center border-b border-[#dadce0] bg-[#fbfbfc] text-[10px] font-semibold text-[#7c828d] shadow-[0_1px_0_rgba(0,0,0,0.02)]">
+              <div className="flex h-full items-center gap-1.5 px-2.5">
+                <span className="h-3 w-3 rounded-[3px] border border-[#cfd3d8] bg-white" />
+                <span className="leading-none">Name</span>
+                <ChevronDown size={11} className="text-[#a7adb7]" />
+              </div>
+              <div className="flex h-full items-center border-l border-[#e3e5e8] px-2">
+                <span className="leading-none">Status</span>
+              </div>
+              <div className="flex h-full items-center border-l border-[#e3e5e8] px-2">
+                <span className="leading-none">Assignee</span>
+              </div>
+              <div className="flex h-full items-center border-l border-[#e3e5e8] px-2">
+                <span className="leading-none">Due date</span>
+              </div>
             </div>
 
             <div className="min-h-0 flex-1 overflow-y-auto">
-              <div aria-hidden="true" className="border-b border-zinc-200 bg-white">
-                <div className="flex h-7 items-center gap-1.5 border-b border-zinc-100 bg-[#fbfbfc] px-2.5 text-[11px] font-semibold text-zinc-700">
-                  <ChevronDown size={13} className="text-zinc-400" />
+              <div aria-hidden="true" className="border-b border-[#dadce0] bg-white">
+                <div className="flex h-[30px] items-center gap-1.5 border-b border-[#e6e8eb] bg-white px-2.5 text-[11px] font-semibold text-[#363a40]">
+                  <ChevronDown size={13} className="text-[#828894]" />
+                  <span className="h-2.5 w-2.5 rounded-[2px] bg-[#7b68ee]" />
                   <span>Sprint Backlog</span>
-                  <span className="border-l border-zinc-200 pl-1.5 text-[10px] font-medium text-zinc-400">3 tasks</span>
+                  <span className="rounded-full bg-[#f0f1f3] px-1.5 py-px text-[9px] font-semibold leading-none text-[#7c828d]">3</span>
+                  <span className="ml-1 h-1.5 w-24 overflow-hidden rounded-full bg-[#eef0f3]">
+                    <span className="block h-full w-2/3 bg-[#7b68ee]" />
+                  </span>
                 </div>
 
                 {[
                   {
                     title: "Refine workspace navigation",
                     meta: "PM-142",
-                    priorityClass: "bg-rose-500",
-                    status: "In progress",
-                    statusClass: "border-sky-200 bg-sky-50 text-sky-700 shadow-[inset_3px_0_0_#0ea5e9]",
+                    submeta: "UI polish",
+                    priorityClass: "bg-[#ff5252]",
+                    status: "IN PROGRESS",
+                    statusClass: "bg-[#1090e0] text-white",
                     assignee: "AA",
-                    assigneeClass: "bg-violet-600",
+                    assigneeName: "Aya",
+                    assigneeClass: "bg-[#7b68ee]",
                     due: "Today",
-                    dueClass: "text-rose-600",
+                    dueClass: "text-[#e5484d]",
                     selected: true,
                   },
                   {
                     title: "Review sprint backlog priorities",
                     meta: "PM-136",
-                    priorityClass: "bg-amber-500",
-                    status: "Review",
-                    statusClass: "border-amber-200 bg-amber-50 text-amber-700 shadow-[inset_3px_0_0_#f59e0b]",
+                    submeta: "Planning",
+                    priorityClass: "bg-[#ffab00]",
+                    status: "REVIEW",
+                    statusClass: "bg-[#f8ae00] text-white",
                     assignee: "MK",
-                    assigneeClass: "bg-emerald-600",
+                    assigneeName: "Maya",
+                    assigneeClass: "bg-[#00b884]",
                     due: "May 8",
-                    dueClass: "text-zinc-600",
+                    dueClass: "text-[#59606b]",
                   },
                   {
                     title: "Prepare release checklist",
                     meta: "PM-128",
-                    priorityClass: "bg-zinc-300",
-                    status: "To do",
-                    statusClass: "border-zinc-200 bg-zinc-50 text-zinc-600 shadow-[inset_3px_0_0_#d4d4d8]",
+                    submeta: "Release",
+                    priorityClass: "bg-[#c8ccd2]",
+                    status: "TO DO",
+                    statusClass: "bg-[#87909e] text-white",
                     assignee: "YS",
-                    assigneeClass: "bg-sky-600",
+                    assigneeName: "Yassine",
+                    assigneeClass: "bg-[#40bcff]",
                     due: "Next week",
-                    dueClass: "text-zinc-500",
+                    dueClass: "text-[#7c828d]",
                   },
                 ].map((row) => (
                   <div
                     key={row.meta}
-                    className={`group/row grid h-8 grid-cols-[minmax(240px,1fr)_118px_118px_104px] items-center border-b border-zinc-100 text-[11px] last:border-b-0 hover:bg-[#f8f9fb] ${row.selected ? "bg-violet-50/60 shadow-[inset_2px_0_0_#7c3aed]" : ""}`}
+                    className={`group/row grid h-[34px] grid-cols-[minmax(330px,1fr)_132px_128px_122px] items-center border-b border-[#eff1f4] text-[11px] last:border-b-0 hover:bg-[#f7f8fb] ${row.selected ? "bg-[#f5f1ff] shadow-[inset_0_0_0_1px_rgba(123,104,238,0.18),inset_3px_0_0_#7b68ee]" : ""}`}
                   >
-                    <div className="flex min-w-0 items-center gap-2 px-2.5">
-                      <span className={`flex h-3.5 w-3.5 shrink-0 items-center justify-center border bg-white ${row.selected ? "border-violet-500" : "border-zinc-300 group-hover/row:border-zinc-400"}`}>
-                        {row.selected && <span className="h-1.5 w-1.5 bg-violet-600" />}
+                    <div className="flex min-w-0 items-center gap-1.5 px-2.5">
+                      <span className={`flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-[3px] border bg-white text-[8px] leading-none transition ${row.selected ? "border-[#7b68ee] bg-[#7b68ee] text-white" : "border-[#cfd3d8] text-transparent group-hover/row:border-[#9aa1ad]"}`}>
+                        {row.selected ? "✓" : ""}
                       </span>
-                      <span className={`h-3.5 w-0.5 shrink-0 ${row.priorityClass}`} />
+                      <span className={`h-4 w-[3px] shrink-0 rounded-full ${row.priorityClass}`} />
                       <div className="flex min-w-0 items-baseline gap-1.5">
-                        <span className="truncate font-medium text-zinc-800">{row.title}</span>
-                        <span className="shrink-0 border border-zinc-200 bg-zinc-50 px-1 text-[9px] font-semibold leading-4 text-zinc-400">{row.meta}</span>
+                        <span className="truncate text-[12px] font-medium text-[#2f343c]">{row.title}</span>
+                        <span className="shrink-0 text-[9px] font-semibold uppercase text-[#9aa1ad]">{row.meta}</span>
+                        <span className="hidden shrink-0 text-[9px] font-medium text-[#b2b7c0] sm:inline">{row.submeta}</span>
                       </div>
+                      <span className="ml-auto hidden h-5 items-center rounded-[3px] border border-[#dfe2e6] bg-white px-1.5 text-[10px] font-semibold text-[#7c828d] opacity-0 shadow-sm transition group-hover/row:inline-flex group-hover/row:opacity-100">
+                        Open
+                      </span>
                     </div>
-                    <div className="border-l border-zinc-100 px-2">
-                      <span className={`inline-flex h-[18px] min-w-[78px] items-center justify-center border px-1.5 text-[10px] font-semibold leading-none ${row.statusClass}`}>
+                    <div className="flex h-full items-center border-l border-[#e6e8eb] px-2">
+                      <span className={`inline-flex h-[19px] min-w-[86px] items-center justify-center rounded-[3px] px-2 text-[9px] font-extrabold leading-none tracking-[0.02em] shadow-[inset_0_-1px_0_rgba(0,0,0,0.12)] ${row.statusClass}`}>
                         {row.status}
                       </span>
                     </div>
-                    <div className="flex items-center gap-1.5 border-l border-zinc-100 px-2">
-                      <span className={`flex h-[18px] w-[18px] items-center justify-center rounded-full text-[8px] font-semibold text-white ring-1 ring-white ${row.assigneeClass}`}>
+                    <div className="flex h-full items-center gap-1.5 border-l border-[#e6e8eb] px-2">
+                      <span className={`flex h-[20px] w-[20px] items-center justify-center rounded-full text-[8px] font-bold text-white ring-2 ring-white ${row.assigneeClass}`}>
                         {row.assignee}
                       </span>
-                      <span className="truncate text-[10px] font-medium text-zinc-500">Owner</span>
+                      <span className="truncate text-[10px] font-medium text-[#646b76]">{row.assigneeName}</span>
                     </div>
-                    <div className="border-l border-zinc-100 px-2">
-                      <span className={`inline-flex items-center gap-1 text-[10px] font-semibold ${row.dueClass}`}>
-                        {row.selected && <span className="h-1.5 w-1.5 rounded-full bg-rose-500" />}
+                    <div className="flex h-full items-center border-l border-[#e6e8eb] px-2">
+                      <span className={`inline-flex h-[20px] items-center gap-1 rounded-[3px] px-1 text-[10px] font-semibold transition group-hover/row:bg-white group-hover/row:shadow-[inset_0_0_0_1px_#dfe2e6] ${row.dueClass}`}>
+                        {row.selected && <span className="h-1.5 w-1.5 rounded-full bg-[#e5484d]" />}
                         {row.due}
                       </span>
                     </div>
