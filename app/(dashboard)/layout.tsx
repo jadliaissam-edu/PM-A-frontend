@@ -324,33 +324,39 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           </div>
 
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-white">
-            <div className="grid h-[27px] shrink-0 grid-cols-[minmax(330px,1fr)_132px_128px_122px] items-center border-b border-[#dadce0] bg-[#fbfbfc] text-[10px] font-semibold text-[#7c828d] shadow-[0_1px_0_rgba(0,0,0,0.02)]">
-              <div className="flex h-full items-center gap-1.5 px-2.5">
-                <span className="h-3 w-3 rounded-[3px] border border-[#cfd3d8] bg-white" />
+            <div className="grid h-[26px] shrink-0 grid-cols-[minmax(330px,1fr)_128px_124px_118px] items-center border-b border-[#d9dce1] bg-[#fbfbfc] text-[10px] font-semibold text-[#7c828d] shadow-[0_1px_0_rgba(0,0,0,0.025)]">
+              <div className="flex h-full items-center gap-1.5 px-2">
+                <span className="h-3 w-3 rounded-[3px] border border-[#c8cdd4] bg-white shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]" />
                 <span className="leading-none">Name</span>
                 <ChevronDown size={11} className="text-[#a7adb7]" />
+                <span className="ml-auto hidden rounded-[3px] px-1 text-[9px] font-medium text-[#a7adb7] lg:inline">3 tasks</span>
               </div>
-              <div className="flex h-full items-center border-l border-[#e3e5e8] px-2">
+              <div className="flex h-full items-center border-l border-[#e4e6ea] px-2">
                 <span className="leading-none">Status</span>
               </div>
-              <div className="flex h-full items-center border-l border-[#e3e5e8] px-2">
+              <div className="flex h-full items-center border-l border-[#e4e6ea] px-2">
                 <span className="leading-none">Assignee</span>
               </div>
-              <div className="flex h-full items-center border-l border-[#e3e5e8] px-2">
+              <div className="flex h-full items-center border-l border-[#e4e6ea] px-2">
                 <span className="leading-none">Due date</span>
               </div>
             </div>
 
             <div className="min-h-0 flex-1 overflow-y-auto">
               <div aria-hidden="true" className="border-b border-[#dadce0] bg-white">
-                <div className="flex h-[30px] items-center gap-1.5 border-b border-[#e6e8eb] bg-white px-2.5 text-[11px] font-semibold text-[#363a40]">
+                <div className="group/header flex h-[29px] items-center gap-1.5 border-b border-[#e6e8eb] bg-white px-2 text-[11px] font-semibold text-[#363a40] hover:bg-[#fafbfc]">
                   <ChevronDown size={13} className="text-[#828894]" />
-                  <span className="h-2.5 w-2.5 rounded-[2px] bg-[#7b68ee]" />
+                  <span className="h-2.5 w-2.5 rounded-[2px] bg-[#7b68ee] shadow-[0_0_0_1px_rgba(123,104,238,0.2)]" />
                   <span>Sprint Backlog</span>
                   <span className="rounded-full bg-[#f0f1f3] px-1.5 py-px text-[9px] font-semibold leading-none text-[#7c828d]">3</span>
-                  <span className="ml-1 h-1.5 w-24 overflow-hidden rounded-full bg-[#eef0f3]">
+                  <span className="ml-1 h-1.5 w-24 overflow-hidden rounded-full bg-[#eef0f3] shadow-[inset_0_0_0_1px_rgba(0,0,0,0.02)]">
                     <span className="block h-full w-2/3 bg-[#7b68ee]" />
                   </span>
+                  <span className="ml-1 hidden text-[10px] font-medium text-[#9aa1ad] group-hover/header:inline">2 active</span>
+                  <button type="button" className="ml-auto hidden h-5 items-center gap-1 rounded-[3px] border border-[#dfe2e6] bg-white px-1.5 text-[10px] font-semibold text-[#646b76] shadow-sm group-hover/header:flex">
+                    <CirclePlus size={11} />
+                    Add task
+                  </button>
                 </div>
 
                 {[
@@ -366,6 +372,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                     assigneeClass: "bg-[#7b68ee]",
                     due: "Today",
                     dueClass: "text-[#e5484d]",
+                    dueDotClass: "bg-[#e5484d]",
                     selected: true,
                   },
                   {
@@ -380,6 +387,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                     assigneeClass: "bg-[#00b884]",
                     due: "May 8",
                     dueClass: "text-[#59606b]",
+                    dueDotClass: "bg-[#b8bec7]",
                   },
                   {
                     title: "Prepare release checklist",
@@ -393,40 +401,50 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                     assigneeClass: "bg-[#40bcff]",
                     due: "Next week",
                     dueClass: "text-[#7c828d]",
+                    dueDotClass: "bg-[#c8ccd2]",
                   },
                 ].map((row) => (
                   <div
                     key={row.meta}
-                    className={`group/row grid h-[34px] grid-cols-[minmax(330px,1fr)_132px_128px_122px] items-center border-b border-[#eff1f4] text-[11px] last:border-b-0 hover:bg-[#f7f8fb] ${row.selected ? "bg-[#f5f1ff] shadow-[inset_0_0_0_1px_rgba(123,104,238,0.18),inset_3px_0_0_#7b68ee]" : ""}`}
+                    className={`group/row grid h-[32px] grid-cols-[minmax(330px,1fr)_128px_124px_118px] items-center border-b border-[#eef0f3] text-[11px] last:border-b-0 hover:bg-[#f7f8fb] hover:shadow-[inset_0_1px_0_#e8eaee,inset_0_-1px_0_#e8eaee] ${row.selected ? "bg-[#f4f0ff] shadow-[inset_0_1px_0_rgba(123,104,238,0.16),inset_0_-1px_0_rgba(123,104,238,0.16),inset_3px_0_0_#7b68ee]" : ""}`}
                   >
-                    <div className="flex min-w-0 items-center gap-1.5 px-2.5">
-                      <span className={`flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-[3px] border bg-white text-[8px] leading-none transition ${row.selected ? "border-[#7b68ee] bg-[#7b68ee] text-white" : "border-[#cfd3d8] text-transparent group-hover/row:border-[#9aa1ad]"}`}>
+                    <div className="flex min-w-0 items-center gap-1.5 px-2">
+                      <span className="flex h-4 w-2 shrink-0 items-center justify-center opacity-0 transition group-hover/row:opacity-100">
+                        <span className="h-3 w-[3px] rounded-full border-y border-[#cfd3d8]" />
+                      </span>
+                      <span className={`flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-[3px] border bg-white text-[8px] leading-none shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] transition ${row.selected ? "border-[#7b68ee] bg-[#7b68ee] text-white shadow-none" : "border-[#c8cdd4] text-transparent group-hover/row:border-[#7b68ee] group-hover/row:text-[#7b68ee]"}`}>
                         {row.selected ? "✓" : ""}
                       </span>
                       <span className={`h-4 w-[3px] shrink-0 rounded-full ${row.priorityClass}`} />
-                      <div className="flex min-w-0 items-baseline gap-1.5">
-                        <span className="truncate text-[12px] font-medium text-[#2f343c]">{row.title}</span>
-                        <span className="shrink-0 text-[9px] font-semibold uppercase text-[#9aa1ad]">{row.meta}</span>
+                      <div className="flex min-w-0 items-baseline gap-1.5 leading-none">
+                        <span className="truncate text-[11.5px] font-medium text-[#2f343c] group-hover/row:text-[#1f2329]">{row.title}</span>
+                        <span className="shrink-0 rounded-[3px] bg-[#f3f4f6] px-1 py-[2px] text-[9px] font-semibold uppercase leading-none text-[#8f96a3] group-hover/row:bg-white group-hover/row:text-[#7c828d]">{row.meta}</span>
                         <span className="hidden shrink-0 text-[9px] font-medium text-[#b2b7c0] sm:inline">{row.submeta}</span>
                       </div>
-                      <span className="ml-auto hidden h-5 items-center rounded-[3px] border border-[#dfe2e6] bg-white px-1.5 text-[10px] font-semibold text-[#7c828d] opacity-0 shadow-sm transition group-hover/row:inline-flex group-hover/row:opacity-100">
+                      <span className="ml-auto hidden h-5 items-center rounded-[3px] border border-[#dfe2e6] bg-white px-1.5 text-[10px] font-semibold text-[#646b76] opacity-0 shadow-sm transition group-hover/row:inline-flex group-hover/row:opacity-100">
                         Open
                       </span>
+                      <button type="button" className="hidden h-5 w-5 items-center justify-center rounded-[3px] border border-[#dfe2e6] bg-white text-[#8f96a3] opacity-0 shadow-sm transition hover:text-[#2f343c] group-hover/row:flex group-hover/row:opacity-100">
+                        <CirclePlus size={11} />
+                      </button>
                     </div>
-                    <div className="flex h-full items-center border-l border-[#e6e8eb] px-2">
-                      <span className={`inline-flex h-[19px] min-w-[86px] items-center justify-center rounded-[3px] px-2 text-[9px] font-extrabold leading-none tracking-[0.02em] shadow-[inset_0_-1px_0_rgba(0,0,0,0.12)] ${row.statusClass}`}>
+                    <div className="flex h-full items-center border-l border-[#e5e7eb] px-2 group-hover/row:border-[#dde0e5]">
+                      <span className={`inline-flex h-[18px] min-w-[82px] items-center justify-center rounded-[3px] px-2 text-[8.5px] font-extrabold leading-none tracking-[0.03em] shadow-[inset_0_-1px_0_rgba(0,0,0,0.16),inset_0_1px_0_rgba(255,255,255,0.18)] ${row.statusClass}`}>
                         {row.status}
                       </span>
                     </div>
-                    <div className="flex h-full items-center gap-1.5 border-l border-[#e6e8eb] px-2">
-                      <span className={`flex h-[20px] w-[20px] items-center justify-center rounded-full text-[8px] font-bold text-white ring-2 ring-white ${row.assigneeClass}`}>
+                    <div className="flex h-full items-center gap-1.5 border-l border-[#e5e7eb] px-2 group-hover/row:border-[#dde0e5]">
+                      <span className={`flex h-[19px] w-[19px] items-center justify-center rounded-full text-[8px] font-bold text-white ring-2 ring-white shadow-[0_1px_2px_rgba(31,35,41,0.14)] ${row.assigneeClass}`}>
                         {row.assignee}
                       </span>
-                      <span className="truncate text-[10px] font-medium text-[#646b76]">{row.assigneeName}</span>
+                      <span className="truncate text-[10px] font-medium text-[#646b76] group-hover/row:text-[#363a40]">{row.assigneeName}</span>
+                      <button type="button" className="ml-auto hidden h-4 w-4 items-center justify-center rounded-full border border-dashed border-[#c8cdd4] bg-white text-[#9aa1ad] group-hover/row:flex">
+                        <CirclePlus size={9} />
+                      </button>
                     </div>
-                    <div className="flex h-full items-center border-l border-[#e6e8eb] px-2">
-                      <span className={`inline-flex h-[20px] items-center gap-1 rounded-[3px] px-1 text-[10px] font-semibold transition group-hover/row:bg-white group-hover/row:shadow-[inset_0_0_0_1px_#dfe2e6] ${row.dueClass}`}>
-                        {row.selected && <span className="h-1.5 w-1.5 rounded-full bg-[#e5484d]" />}
+                    <div className="flex h-full items-center border-l border-[#e5e7eb] px-2 group-hover/row:border-[#dde0e5]">
+                      <span className={`inline-flex h-[19px] items-center gap-1 rounded-[3px] px-1.5 text-[10px] font-semibold transition group-hover/row:bg-white group-hover/row:shadow-[inset_0_0_0_1px_#dfe2e6] ${row.dueClass}`}>
+                        <span className={`h-1.5 w-1.5 rounded-full ${row.dueDotClass}`} />
                         {row.due}
                       </span>
                     </div>
