@@ -1,0 +1,312 @@
+import type {
+  DeadlineItem,
+  FavoriteLink,
+  IssueSummary,
+  ProjectSummary,
+  SpaceSummary,
+  WorkspaceActivity,
+} from "@/types/workspace";
+
+export const favoriteLinks: FavoriteLink[] = [
+  { label: "Workspace overview", href: "/dashboard" },
+  { label: "Platform migration", href: "/projects/platform-migration" },
+  { label: "Issue queue", href: "/issues" },
+  { label: "Identity refresh", href: "/projects/identity-revamp" },
+];
+
+export const recentLinks: FavoriteLink[] = [
+  { label: "Projects", href: "/projects" },
+  { label: "Open issues", href: "/issues" },
+  { label: "Design system", href: "/projects/design-system" },
+  { label: "Dashboard", href: "/dashboard" },
+];
+
+export const workspaceLinks: FavoriteLink[] = [
+  { label: "Product team", href: "/projects" },
+  { label: "Engineering squad", href: "/dashboard" },
+];
+
+export const spaces: SpaceSummary[] = [
+  {
+    id: "engineering",
+    name: "Engineering",
+    description: "Development tasks, bugs, sprint planning and technical delivery.",
+    members: 12,
+    taskCount: 24,
+    updatedLabel: "Updated 2h ago",
+    status: "Active",
+    accent: "blue",
+  },
+  {
+    id: "design",
+    name: "Design",
+    description: "UI/UX work, prototypes, component system and product visuals.",
+    members: 5,
+    taskCount: 13,
+    updatedLabel: "Updated 4h ago",
+    status: "Active",
+    accent: "pink",
+  },
+  {
+    id: "marketing",
+    name: "Marketing",
+    description: "Campaign planning, brand content and growth coordination.",
+    members: 7,
+    taskCount: 18,
+    updatedLabel: "Updated today",
+    status: "In progress",
+    accent: "emerald",
+  },
+  {
+    id: "product",
+    name: "Product",
+    description: "Roadmap definition, feedback analysis and feature planning.",
+    members: 4,
+    taskCount: 9,
+    updatedLabel: "Updated yesterday",
+    status: "Planning",
+    accent: "amber",
+  },
+];
+
+export const projects: ProjectSummary[] = [
+  {
+    id: "platform-migration",
+    name: "Platform migration",
+    code: "AF-PLT",
+    summary: "Move the core planning workspace into the new frontend architecture.",
+    status: "On track",
+    progress: 72,
+    issueCount: 18,
+    completedCount: 11,
+    lead: "Aya Achiban",
+    team: "Engineering",
+    dueLabel: "Due in 9 days",
+    accent: "blue",
+    tags: ["Frontend", "Migration", "Sprint 08"],
+    memberInitials: ["AA", "HK", "LB", "SN"],
+  },
+  {
+    id: "identity-revamp",
+    name: "Identity revamp",
+    code: "AF-ID",
+    summary: "Refresh onboarding, login, and account recovery flows for the workspace.",
+    status: "Planning",
+    progress: 34,
+    issueCount: 12,
+    completedCount: 4,
+    lead: "Lina Bensalem",
+    team: "Product Design",
+    dueLabel: "Due in 14 days",
+    accent: "amber",
+    tags: ["Auth", "UX", "Security"],
+    memberInitials: ["LB", "AA", "YM"],
+  },
+  {
+    id: "design-system",
+    name: "Design system",
+    code: "AF-DS",
+    summary: "Standardize cards, forms, navigation, and data display for the app shell.",
+    status: "On track",
+    progress: 58,
+    issueCount: 15,
+    completedCount: 8,
+    lead: "Yassine Mouline",
+    team: "Design",
+    dueLabel: "Due in 6 days",
+    accent: "pink",
+    tags: ["UI", "Components", "Tokens"],
+    memberInitials: ["YM", "AA", "LB"],
+  },
+  {
+    id: "ops-reporting",
+    name: "Operations reporting",
+    code: "AF-OPS",
+    summary: "Prepare workspace metrics and delivery summaries for internal reporting.",
+    status: "At risk",
+    progress: 41,
+    issueCount: 9,
+    completedCount: 3,
+    lead: "Hassine Karim",
+    team: "Operations",
+    dueLabel: "Due in 4 days",
+    accent: "emerald",
+    tags: ["Analytics", "Ops"],
+    memberInitials: ["HK", "SN", "AA"],
+  },
+];
+
+export const issues: IssueSummary[] = [
+  {
+    id: "issue-1",
+    key: "AF-101",
+    title: "Move the internal home screen into the workspace route group",
+    type: "Story",
+    status: "Done",
+    priority: "High",
+    projectId: "platform-migration",
+    projectName: "Platform migration",
+    assignee: "Aya Achiban",
+    reporter: "Hassine Karim",
+    sprint: "Sprint 08",
+    updatedLabel: "Updated 24 min ago",
+  },
+  {
+    id: "issue-2",
+    key: "AF-107",
+    title: "Create a reusable authenticated shell with shared navigation",
+    type: "Story",
+    status: "In progress",
+    priority: "Critical",
+    projectId: "platform-migration",
+    projectName: "Platform migration",
+    assignee: "Aya Achiban",
+    reporter: "Lina Bensalem",
+    sprint: "Sprint 08",
+    updatedLabel: "Updated 1h ago",
+  },
+  {
+    id: "issue-3",
+    key: "AF-112",
+    title: "Normalize auth card spacing and validation feedback",
+    type: "Task",
+    status: "Review",
+    priority: "Medium",
+    projectId: "identity-revamp",
+    projectName: "Identity revamp",
+    assignee: "Lina Bensalem",
+    reporter: "Aya Achiban",
+    sprint: "Sprint 08",
+    updatedLabel: "Updated 2h ago",
+  },
+  {
+    id: "issue-4",
+    key: "AF-118",
+    title: "Create project cards for the shared workspace views",
+    type: "Task",
+    status: "Backlog",
+    priority: "Medium",
+    projectId: "design-system",
+    projectName: "Design system",
+    assignee: "Yassine Mouline",
+    reporter: "Aya Achiban",
+    sprint: "Sprint 09",
+    updatedLabel: "Updated today",
+  },
+  {
+    id: "issue-5",
+    key: "AF-123",
+    title: "Add issue list states with priority and sprint metadata",
+    type: "Story",
+    status: "In progress",
+    priority: "High",
+    projectId: "design-system",
+    projectName: "Design system",
+    assignee: "Aya Achiban",
+    reporter: "Yassine Mouline",
+    sprint: "Sprint 08",
+    updatedLabel: "Updated today",
+  },
+  {
+    id: "issue-6",
+    key: "AF-129",
+    title: "Review reporting dependencies before milestone three",
+    type: "Bug",
+    status: "Backlog",
+    priority: "Low",
+    projectId: "ops-reporting",
+    projectName: "Operations reporting",
+    assignee: "Hassine Karim",
+    reporter: "Sana Naji",
+    sprint: "Sprint 09",
+    updatedLabel: "Updated yesterday",
+  },
+  {
+    id: "issue-7",
+    key: "AF-132",
+    title: "Document missing API contracts for project summaries",
+    type: "Task",
+    status: "Review",
+    priority: "High",
+    projectId: "platform-migration",
+    projectName: "Platform migration",
+    assignee: "Sana Naji",
+    reporter: "Aya Achiban",
+    sprint: "Sprint 08",
+    updatedLabel: "Updated yesterday",
+  },
+  {
+    id: "issue-8",
+    key: "AF-140",
+    title: "Refine recovery email UX copy for mobile layouts",
+    type: "Task",
+    status: "Done",
+    priority: "Medium",
+    projectId: "identity-revamp",
+    projectName: "Identity revamp",
+    assignee: "Lina Bensalem",
+    reporter: "Aya Achiban",
+    sprint: "Sprint 08",
+    updatedLabel: "Updated 2 days ago",
+  },
+];
+
+export const recentActivity: WorkspaceActivity[] = [
+  {
+    id: "activity-1",
+    title: "Workspace shell extraction started",
+    meta: "Aya · 24 min ago",
+    projectId: "platform-migration",
+  },
+  {
+    id: "activity-2",
+    title: "Auth card foundation reviewed",
+    meta: "Lina · 1h ago",
+    projectId: "identity-revamp",
+  },
+  {
+    id: "activity-3",
+    title: "Issue list tokens aligned with design system",
+    meta: "Yassine · 2h ago",
+    projectId: "design-system",
+  },
+  {
+    id: "activity-4",
+    title: "Project metadata prepared for API integration",
+    meta: "Team · Today",
+    projectId: "platform-migration",
+  },
+];
+
+export const deadlines: DeadlineItem[] = [
+  {
+    id: "deadline-1",
+    title: "Platform migration review",
+    dateLabel: "Today",
+    projectId: "platform-migration",
+  },
+  {
+    id: "deadline-2",
+    title: "Auth UX feedback session",
+    dateLabel: "Tomorrow",
+    projectId: "identity-revamp",
+  },
+  {
+    id: "deadline-3",
+    title: "Project list design handoff",
+    dateLabel: "Friday",
+    projectId: "design-system",
+  },
+];
+
+export function getProjectById(projectId: string) {
+  return projects.find((project) => project.id === projectId);
+}
+
+export function getIssuesByProjectId(projectId: string) {
+  return issues.filter((issue) => issue.projectId === projectId);
+}
+
+export function getActivityByProjectId(projectId: string) {
+  return recentActivity.filter((item) => item.projectId === projectId);
+}
