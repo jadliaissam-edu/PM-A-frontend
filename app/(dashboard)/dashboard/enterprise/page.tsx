@@ -1,56 +1,71 @@
 "use client";
-import React, { useEffect, useState } from "react";
-import { authService, UserProfile } from "@/services/auth.service";
-import { dashboardService, DashboardStats, ActivityItem, AssignedTask } from "@/services/dashboard.service";
-import SpacesSection from "@/components/SpacesSection";
-import {
-  CirclePlus,
-  Star,
-  CheckCircle2,
-  CalendarDays,
-  Activity,
-} from "lucide-react";
 
-const favorites = [
-  "Frontend space",
-  "Sprint board",
-  "Auth project",
-  "Design system",
+import { type ReactNode, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { authService, type UserProfile } from "@/services/auth.service";
+import { dashboardService, type ActivityItem, type AssignedTask, type DashboardStats } from "@/services/dashboard.service";
+import { Activity, CalendarDays, CheckCircle2, CirclePlus, FolderKanban, MoreHorizontal, Search, Star, Users, Workflow } from "lucide-react";
+
+type FocusItem = {
+  id: string;
+  title: string;
+  status: "IN PROGRESS" | "REVIEW" | "TO DO";
+  owner: string;
+  due: string;
+  priority: string;
+};
+
+type DashboardPanel = "customize" | "task" | "invite" | "view";
+
+const focusItems: FocusItem[] = [
+  { id: "PM-142", title: "Refine ClickUp-style workspace shell", status: "IN PROGRESS", owner: "AA", due: "Today", priority: "Urgent" },
+  { id: "PM-136", title: "Review sprint backlog priorities", status: "REVIEW", owner: "MK", due: "May 8", priority: "High" },
+  { id: "PM-128", title: "Prepare release checklist", status: "TO DO", owner: "YS", due: "Next week", priority: "Low" },
+  { id: "PM-119", title: "QA task drawer interactions", status: "IN PROGRESS", owner: "HA", due: "Tomorrow", priority: "Medium" },
 ];
 
-const quickActions = [
-  "Create new space",
-  "Open project board",
-  "Invite team members",
-  "Create task",
+const overviewColumns = [
+  { title: "To Do", filter: "TO DO" as const, count: 8, color: "bg-[#87909e]", width: "w-[54%]" },
+  { title: "Doing", filter: "IN PROGRESS" as const, count: 5, color: "bg-[#1090e0]", width: "w-[42%]" },
+  { title: "Review", filter: "REVIEW" as const, count: 3, color: "bg-[#f8ae00]", width: "w-[28%]" },
+  { title: "Done", filter: "All" as const, count: 12, color: "bg-[#00b884]", width: "w-[76%]" },
 ];
 
-const deadlines = [
-  { title: "Homepage review", date: "Today" },
-  { title: "Frontend auth polish", date: "Tomorrow" },
-  { title: "Team sync meeting", date: "Friday" },
-];
+const quickActions = ["Create task", "Open board", "Invite teammate", "Add view"];
 
 export default function EnterpriseDashboardPage() {
+  const router = useRouter();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [tasks, setTasks] = useState<AssignedTask[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [panel, setPanel] = useState<DashboardPanel | null>(null);
+  const [localFocusItems, setLocalFocusItems] = useState<FocusItem[]>(focusItems);
+  const [statusFilter, setStatusFilter] = useState<"All" | FocusItem["status"]>("All");
+  const [completedFocus, setCompletedFocus] = useState<Set<string>>(new Set());
+  const [hiddenWidgets, setHiddenWidgets] = useState<Set<string>>(new Set());
+  const [newTaskTitle, setNewTaskTitle] = useState("");
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [notice, setNotice] = useState("");
+  const [selectedFocus, setSelectedFocus] = useState<FocusItem | null>(null);
+  const [selectedActivity, setSelectedActivity] = useState<ActivityItem | null>(null);
+  const [doneUpcoming, setDoneUpcoming] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [prof, st, act, tsk] = await Promise.all([
+        const [profileData, statsData, activityData, taskData] = await Promise.all([
           authService.getProfile(),
           dashboardService.getStats(),
           dashboardService.getRecentActivity(),
           dashboardService.getAssignedTasks(),
         ]);
-        setProfile(prof);
-        setStats(st);
-        setActivities(act);
-        setTasks(tsk);
+        setProfile(profileData);
+        setStats(statsData);
+        setActivities(activityData);
+        setTasks(taskData);
       } catch (error) {
         console.error("Failed to fetch dashboard data", error);
       } finally {
@@ -60,145 +75,463 @@ export default function EnterpriseDashboardPage() {
     fetchData();
   }, []);
 
+  const filteredFocusItems = localFocusItems.filter((item) => {
+    const matchesSearch = `${item.title} ${item.id} ${item.owner} ${item.priority}`.toLowerCase().includes(search.toLowerCase());
+    const matchesStatus = statusFilter === "All" || item.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+  const visibleActivities = activities.filter((item) => `${item.title} ${item.meta}`.toLowerCase().includes(search.toLowerCase()));
+  const visibleAssignedTasks = (tasks.length > 0 ? tasks.slice(0, 4) : localFocusItems).filter((task) => task.title.toLowerCase().includes(search.toLowerCase()));
+  const isWidgetVisible = (widget: string) => !hiddenWidgets.has(widget);
+  const addLocalTask = () => {
+    const title = newTaskTitle.trim();
+    if (!title) return;
+    const nextTask: FocusItem = {
+      id: `PM-${Math.floor(Date.now() / 1000)}`,
+      title,
+      status: "TO DO",
+      owner: profile?.username?.slice(0, 2).toUpperCase() || "AA",
+      due: "Tomorrow",
+      priority: "Medium",
+    };
+    setLocalFocusItems((current) => [nextTask, ...current]);
+    setSelectedFocus(nextTask);
+    setNewTaskTitle("");
+    setPanel(null);
+    setNotice("Local task added to the focus list.");
+  };
+  const inviteTeammate = () => {
+    if (!inviteEmail.trim()) return;
+    setNotice(`Invite staged for ${inviteEmail.trim()}.`);
+    setInviteEmail("");
+    setPanel(null);
+  };
+
   return (
-    <>
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold tracking-tight text-zinc-900">
-          Welcome back, {profile?.username || "loading..."}
-        </h1>
-        <p className="mt-1 text-sm text-zinc-500">
-          Manage your spaces, follow recent activity, and keep track of your work.
-        </p>
-      </div>
-
-      <section className="mb-8 grid gap-4 xl:grid-cols-4">
-        <MetricCard title="Total projects" value={stats?.total_projects.toString() || "0"} subtitle="Active projects" />
-        <MetricCard title="Owned projects" value={stats?.owned_projects.toString() || "0"} subtitle="Projects created by you" />
-        <MetricCard title="Member projects" value={stats?.member_projects.toString() || "0"} subtitle="Collaborations" />
-        <MetricCard title="Archived" value={stats?.archived_projects.toString() || "0"} subtitle="Inactive projects" />
-      </section>
-
-      <section className="mb-8">
-        <div className="mb-4 flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-semibold">Spaces</h2>
-            <p className="text-sm text-zinc-500">Organize work by teams and functional areas.</p>
+    <main className="min-h-full bg-[#f7f8fb] p-4">
+      {notice && (
+        <div className="mb-3 flex items-center justify-between rounded-[9px] border border-[#d7f4e8] bg-[#ecfff6] px-3 py-2 text-xs font-black text-[#008f65]">
+          <span>{notice}</span>
+          <button onClick={() => setNotice("")} className="text-[#008f65]/70 hover:text-[#008f65]">Dismiss</button>
+        </div>
+      )}
+      <section className="mb-4 rounded-[11px] border border-[#dfe3e8] bg-white shadow-sm">
+        <div className="flex flex-col gap-3 border-b border-[#edf0f3] px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <h1 className="truncate text-[21px] font-black text-[#20242a]">Good morning, {profile?.username || "Aya"}</h1>
+              <span className="rounded-full bg-[#f3efff] px-2 py-0.5 text-[10px] font-black text-[#7b68ee]">Product workspace</span>
+            </div>
+            <p className="mt-0.5 text-xs font-semibold text-[#7c828d]">A dense command center for active sprint delivery, review queues, and team activity.</p>
           </div>
-          <div className="flex items-center gap-3">
-            <button className="rounded-xl border border-zinc-300 bg-white px-4 py-2 text-sm font-medium transition hover:bg-zinc-50">
-              View all
-            </button>
-            <button className="rounded-xl bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-zinc-800">
-              Create space
-            </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="hidden h-8 w-64 items-center gap-2 rounded-[7px] border border-[#dfe3e8] bg-[#f7f8fb] px-2.5 xl:flex">
+              <Search size={14} className="text-[#8f96a3]" />
+              <input value={search} onChange={(event) => setSearch(event.target.value)} className="min-w-0 flex-1 bg-transparent text-[12px] font-semibold outline-none placeholder:text-[#9aa1ad]" placeholder="Search dashboard..." />
+            </div>
+            <button onClick={() => setPanel("customize")} className="rounded-[7px] border border-[#dfe3e8] bg-white px-3 py-1.5 text-xs font-black text-[#68707d] shadow-sm transition hover:bg-[#f7f8fb] focus:outline-none focus:ring-2 focus:ring-[#d7d1ff]">Customize</button>
+            <button onClick={() => setPanel("task")} className="rounded-[7px] bg-[#7b68ee] px-3.5 py-1.5 text-xs font-black text-white shadow-sm transition hover:bg-[#6d56ea] focus:outline-none focus:ring-2 focus:ring-[#d7d1ff]">New task</button>
           </div>
         </div>
-        <SpacesSection />
+        <div className="grid divide-y divide-[#edf0f3] md:grid-cols-4 md:divide-x md:divide-y-0">
+          <MetricStrip title="Total projects" value={stats?.total_projects.toString() || "0"} subtitle="workspace projects" color="bg-[#7b68ee]" onClick={() => router.push("/project")} />
+          <MetricStrip title="Owned projects" value={stats?.owned_projects.toString() || "0"} subtitle="created by you" color="bg-[#1090e0]" onClick={() => router.push("/project")} />
+          <MetricStrip title="Collaborations" value={stats?.member_projects.toString() || "0"} subtitle="shared spaces" color="bg-[#f8ae00]" onClick={() => router.push("/chat")} />
+          <MetricStrip title="Archived" value={stats?.archived_projects.toString() || "0"} subtitle="inactive work" color="bg-[#87909e]" onClick={() => setNotice("Archived project filter is staged locally.")} />
+        </div>
       </section>
 
-      <section className="mb-4">
-        <h2 className="text-xl font-semibold">Your work</h2>
-        <p className="text-sm text-zinc-500">Quick access to important items, ongoing tasks, and team activity.</p>
-      </section>
+      <div className="grid gap-4 2xl:grid-cols-[minmax(0,1fr)_370px]">
+        <section className="space-y-4">
+          <Panel title="Workspace overview" icon={<FolderKanban size={16} />} action={<button onClick={() => router.push("/Board/kanban")} className="flex h-7 items-center gap-1 rounded-[6px] border border-[#dfe3e8] bg-white px-2 text-[11px] font-black text-[#68707d]">Open board</button>}>
+            <div className="mb-3 flex flex-wrap gap-1">
+              {["All", "TO DO", "IN PROGRESS", "REVIEW"].map((item) => (
+                <button key={item} onClick={() => setStatusFilter(item as "All" | FocusItem["status"])} className={`h-7 rounded-[7px] px-2.5 text-[11px] font-black ${statusFilter === item ? "border border-[#dfe3e8] bg-white text-[#20242a] shadow-sm" : "text-[#68707d] hover:bg-white"}`}>{item}</button>
+              ))}
+            </div>
+            <div className="grid gap-3 lg:grid-cols-4">
+              {overviewColumns.map((column) => (
+                <button key={column.title} onClick={() => setStatusFilter(column.filter)} className={`rounded-[9px] border p-3 text-left transition hover:-translate-y-0.5 hover:bg-white hover:shadow-sm ${statusFilter === column.filter ? "border-[#d7d1ff] bg-[#f3efff]" : "border-[#dfe3e8] bg-[#f7f8fb]"}`}>
+                  <div className="mb-3 flex items-center gap-2">
+                    <span className={`h-2.5 w-2.5 rounded-[3px] ${column.color}`} />
+                    <span className="text-xs font-black text-[#20242a]">{column.title}</span>
+                    <span className="ml-auto rounded-full bg-white px-2 py-0.5 text-[10px] font-black text-[#68707d]">{column.count}</span>
+                  </div>
+                  <div className="mb-3 h-1.5 rounded-full bg-[#e4e7ec]">
+                    <div className={`h-full rounded-full ${column.color} ${column.width}`} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <MiniCard strong />
+                    <MiniCard />
+                    {column.title === "Doing" && <MiniCard />}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </Panel>
 
-      <div className="grid gap-6 2xl:grid-cols-12 pb-12">
-        <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm transition duration-200 hover:shadow-md 2xl:col-span-4">
-          <BlockTitle icon={<Star size={18} />} title="Favorites" />
-          <div className="space-y-3">
-            {favorites.map((item) => (
-              <RowCard key={item} text={item} />
-            ))}
-          </div>
-        </section>
+          <Panel title="Focus list" icon={<CheckCircle2 size={16} />} action={<button onClick={() => setPanel("task")} className="flex h-7 items-center gap-1 rounded-[6px] bg-[#7b68ee] px-2.5 text-[11px] font-black text-white"><CirclePlus size={13} />Task</button>}>
+            <FocusTable
+              items={filteredFocusItems}
+              completed={completedFocus}
+              onOpen={setSelectedFocus}
+              onToggleComplete={(itemId) => setCompletedFocus((current) => {
+                const next = new Set(current);
+                if (next.has(itemId)) next.delete(itemId);
+                else next.add(itemId);
+                return next;
+              })}
+            />
+          </Panel>
 
-        <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm transition duration-200 hover:shadow-md 2xl:col-span-4">
-          <BlockTitle icon={<Activity size={18} />} title="Recent activity" />
-          <div className="space-y-3">
-            {loading ? (
-              [1, 2, 3].map(i => <div key={i} className="h-12 bg-zinc-50 animate-pulse rounded-xl" />)
-            ) : activities.length > 0 ? (
-              activities.map((item) => (
-                <div key={item.id} className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3">
-                  <p className="text-sm font-medium text-zinc-800">{item.title}</p>
-                  <p className="mt-1 text-xs text-zinc-500">{item.meta}</p>
-                </div>
-              ))
-            ) : (
-              <p className="text-xs text-zinc-400">No recent activity.</p>
-            )}
-          </div>
-        </section>
-
-        <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm transition duration-200 hover:shadow-md 2xl:col-span-4">
-          <BlockTitle icon={<CheckCircle2 size={18} />} title="Assigned to me" />
-          <div className="space-y-3">
-            {loading ? (
-              [1, 2, 3].map(i => <div key={i} className="h-12 bg-zinc-50 animate-pulse rounded-xl" />)
-            ) : tasks.length > 0 ? (
-              tasks.map((task) => (
-                <div key={task.id} className="flex items-center justify-between rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3">
-                  <p className="text-sm text-zinc-800">{task.title}</p>
-                  <span className="rounded-full bg-zinc-200 px-2.5 py-1 text-[10px] font-bold text-zinc-700 uppercase tracking-tight">
-                    {task.priority || "Medium"}
-                  </span>
-                </div>
-              ))
-            ) : (
-              <p className="text-xs text-zinc-400">All caught up!</p>
-            )}
-          </div>
-        </section>
-
-        <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm transition duration-200 hover:shadow-md 2xl:col-span-6">
-          <BlockTitle icon={<CirclePlus size={18} />} title="Quick actions" />
-          <div className="grid gap-3 sm:grid-cols-2">
-            {quickActions.map((action) => (
-              <button key={action} className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-4 text-left text-sm font-medium text-zinc-800 transition hover:bg-zinc-100">
-                {action}
-              </button>
-            ))}
-          </div>
-        </section>
-
-        <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm transition duration-200 hover:shadow-md 2xl:col-span-6">
-          <BlockTitle icon={<CalendarDays size={18} />} title="Upcoming deadlines" />
-          <div className="space-y-3">
-            {deadlines.map((item) => (
-              <div key={item.title} className="flex items-center justify-between rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3">
-                <p className="text-sm font-medium text-zinc-800">{item.title}</p>
-                <span className="text-xs text-zinc-500">{item.date}</span>
+          <div className="grid gap-4 xl:grid-cols-2">
+            {isWidgetVisible("sprint") && <Panel title="Sprint pulse" icon={<Workflow size={16} />}>
+              <div className="grid gap-2">
+                {[
+                  { label: "Design review", value: "67%", bar: "w-[67%] bg-[#7b68ee]" },
+                  { label: "API integration", value: "42%", bar: "w-[42%] bg-[#1090e0]" },
+                  { label: "Auth polish", value: "81%", bar: "w-[81%] bg-[#00b884]" },
+                ].map((item) => (
+                  <div key={item.label} className="rounded-[8px] border border-[#edf0f3] bg-[#f7f8fb] p-3">
+                    <div className="mb-2 flex items-center justify-between">
+                      <p className="text-sm font-black text-[#20242a]">{item.label}</p>
+                      <span className="text-[10px] font-black text-[#8f96a3]">{item.value}</span>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-[#e4e7ec]">
+                      <div className={`h-full rounded-full ${item.bar}`} />
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
+            </Panel>}
+
+            {isWidgetVisible("team") && <Panel title="Team load" icon={<Users size={16} />}>
+              <div className="space-y-2">
+                {[
+                  { initials: "AA", width: "w-[82%]", count: 5 },
+                  { initials: "MK", width: "w-[58%]", count: 3 },
+                  { initials: "YS", width: "w-[38%]", count: 2 },
+                  { initials: "HA", width: "w-[64%]", count: 4 },
+                ].map((member) => (
+                  <div key={member.initials} className="flex items-center gap-2 rounded-[8px] border border-[#edf0f3] bg-[#f7f8fb] px-3 py-2">
+                    <Avatar initials={member.initials} />
+                    <div className="min-w-0 flex-1">
+                      <div className="mb-1 flex items-center justify-between">
+                        <span className="text-xs font-black text-[#20242a]">{member.initials}</span>
+                        <span className="text-[10px] font-black text-[#8f96a3]">{member.count} tasks</span>
+                      </div>
+                      <div className="h-1.5 rounded-full bg-[#e4e7ec]">
+                        <div className={`h-full rounded-full bg-[#7b68ee] ${member.width}`} />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Panel>}
           </div>
         </section>
+
+        <aside className="space-y-4">
+          <Panel title="Quick actions" icon={<CirclePlus size={16} />} action={<MoreHorizontal size={15} className="text-[#a2a9b5]" />}>
+            <div className="grid gap-2">
+              {quickActions.map((action) => (
+                <button key={action} onClick={() => {
+                  if (action === "Open board") router.push("/Board/kanban");
+                  else if (action === "Create task") setPanel("task");
+                  else if (action === "Invite teammate") setPanel("invite");
+                  else setPanel("view");
+                }} className="flex h-10 items-center justify-between rounded-[8px] border border-[#dfe3e8] bg-[#f7f8fb] px-3 text-left text-sm font-black text-[#20242a] transition hover:border-[#c8cdd4] hover:bg-white">
+                  {action}
+                  <CirclePlus size={14} className="text-[#7b68ee]" />
+                </button>
+              ))}
+            </div>
+          </Panel>
+
+          {isWidgetVisible("activity") && <Panel title="Recent activity" icon={<Activity size={16} />}>
+            <ActivityList activities={visibleActivities} loading={loading} onOpen={setSelectedActivity} />
+          </Panel>}
+
+          {isWidgetVisible("assigned") && <Panel title="Assigned to me" icon={<Star size={16} />}>
+            <AssignedList tasks={visibleAssignedTasks} onOpen={() => router.push("/tickets")} />
+          </Panel>}
+
+          {isWidgetVisible("upcoming") && <Panel title="Upcoming" icon={<CalendarDays size={16} />}>
+            <div className="space-y-2">
+              {["Homepage review", "Frontend auth polish", "Team sync meeting"].map((title, index) => (
+                <button key={title} onClick={() => setDoneUpcoming((current) => {
+                  const next = new Set(current);
+                  if (next.has(title)) next.delete(title);
+                  else next.add(title);
+                  return next;
+                })} className="flex w-full items-center justify-between rounded-[8px] border border-[#edf0f3] bg-[#f7f8fb] px-3 py-2 text-left hover:bg-white">
+                  <p className={`text-sm font-black text-[#20242a] ${doneUpcoming.has(title) ? "text-[#8f96a3] line-through" : ""}`}>{title}</p>
+                  <span className={`text-xs font-black ${index === 0 ? "text-[#e5484d]" : "text-[#8f96a3]"}`}>{index === 0 ? "Today" : index === 1 ? "Tomorrow" : "Friday"}</span>
+                </button>
+              ))}
+            </div>
+          </Panel>}
+        </aside>
       </div>
-    </>
+      {panel && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#20242a]/35 px-4 backdrop-blur-sm" onMouseDown={() => setPanel(null)}>
+          <section onMouseDown={(event) => event.stopPropagation()} className="w-full max-w-md rounded-[12px] border border-[#dfe3e8] bg-white p-4 shadow-2xl">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-base font-black text-[#20242a]">{panel === "customize" ? "Customize dashboard" : panel === "task" ? "Create local task" : panel === "invite" ? "Invite teammate" : "Add view"}</h2>
+              <button onClick={() => setPanel(null)} className="h-7 w-7 rounded-[7px] bg-[#f7f8fb] text-sm font-black text-[#68707d]">x</button>
+            </div>
+            {panel === "customize" && <CustomizePanel hiddenWidgets={hiddenWidgets} setHiddenWidgets={setHiddenWidgets} />}
+            {panel === "view" && <ViewPanel onOpen={(href) => { router.push(href); setPanel(null); }} />}
+            {panel === "invite" && (
+              <div className="space-y-3">
+                <input value={inviteEmail} onChange={(event) => setInviteEmail(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") inviteTeammate(); }} autoFocus placeholder="teammate@company.com" className="h-10 w-full rounded-[8px] border border-[#dfe3e8] bg-[#f7f8fb] px-3 text-sm font-semibold outline-none focus:border-[#7b68ee]" />
+                <div className="flex justify-end gap-2">
+                  <button onClick={() => setPanel(null)} className="h-8 rounded-[7px] border border-[#dfe3e8] px-3 text-xs font-black text-[#68707d]">Cancel</button>
+                  <button onClick={inviteTeammate} className="h-8 rounded-[7px] bg-[#7b68ee] px-3.5 text-xs font-black text-white">Invite</button>
+                </div>
+              </div>
+            )}
+            {panel === "task" && (
+              <div className="space-y-3">
+                <input value={newTaskTitle} onChange={(event) => setNewTaskTitle(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") addLocalTask(); }} autoFocus placeholder="Task title" className="h-10 w-full rounded-[8px] border border-[#dfe3e8] bg-[#f7f8fb] px-3 text-sm font-semibold outline-none focus:border-[#7b68ee]" />
+                <div className="grid grid-cols-2 gap-2">
+                  {["Assignee: You", "Status: To Do", "Due: Tomorrow", "Priority: Medium"].map((item) => <div key={item} className="rounded-[8px] border border-[#edf0f3] bg-[#f7f8fb] p-3 text-xs font-black text-[#68707d]">{item}</div>)}
+                </div>
+                <div className="flex justify-end gap-2">
+                  <button onClick={() => setPanel(null)} className="h-8 rounded-[7px] border border-[#dfe3e8] px-3 text-xs font-black text-[#68707d]">Cancel</button>
+                  <button onClick={addLocalTask} className="h-8 rounded-[7px] bg-[#7b68ee] px-3.5 text-xs font-black text-white">Create</button>
+                </div>
+              </div>
+            )}
+          </section>
+        </div>
+      )}
+      {(selectedFocus || selectedActivity) && (
+        <div className="fixed inset-0 z-50 flex items-center justify-end bg-[#20242a]/35 backdrop-blur-sm" onMouseDown={() => { setSelectedFocus(null); setSelectedActivity(null); }}>
+          <aside onMouseDown={(event) => event.stopPropagation()} className="h-full w-full max-w-lg overflow-y-auto border-l border-[#dfe3e8] bg-white p-5 shadow-2xl">
+            <div className="mb-4 flex items-start justify-between gap-3">
+              <div>
+                <p className="text-[11px] font-black uppercase text-[#8f96a3]">{selectedFocus?.id || "Activity"}</p>
+                <h2 className="mt-1 text-xl font-black text-[#20242a]">{selectedFocus?.title || selectedActivity?.title}</h2>
+              </div>
+              <button onClick={() => { setSelectedFocus(null); setSelectedActivity(null); }} className="h-8 w-8 rounded-[7px] bg-[#f7f8fb] text-sm font-black text-[#68707d]">x</button>
+            </div>
+            {selectedFocus ? (
+              <div className="grid grid-cols-2 gap-2">
+                <SummaryCell label="Status" value={selectedFocus.status} />
+                <SummaryCell label="Owner" value={selectedFocus.owner} />
+                <SummaryCell label="Due" value={selectedFocus.due} />
+                <SummaryCell label="Priority" value={selectedFocus.priority} />
+              </div>
+            ) : (
+              <div className="rounded-[9px] border border-[#edf0f3] bg-[#f7f8fb] p-3 text-sm font-semibold leading-6 text-[#59606b]">{selectedActivity?.meta}</div>
+            )}
+            <button onClick={() => router.push("/tickets")} className="mt-4 h-9 rounded-[7px] bg-[#7b68ee] px-4 text-sm font-black text-white">Open task list</button>
+          </aside>
+        </div>
+      )}
+    </main>
   );
 }
 
-function BlockTitle({ icon, title }: { icon: React.ReactNode; title: string }) {
+function Panel({ title, icon, action, children }: { title: string; icon: ReactNode; action?: ReactNode; children: ReactNode }) {
   return (
-    <div className="mb-4 flex items-center gap-2">
-      <div className="text-zinc-500">{icon}</div>
-      <h3 className="text-lg font-semibold text-zinc-800">{title}</h3>
+    <section className="rounded-[10px] border border-[#dfe3e8] bg-white p-3.5 shadow-sm">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <div className="text-[#7b68ee]">{icon}</div>
+          <h2 className="text-sm font-black text-[#20242a]">{title}</h2>
+        </div>
+        {action}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function MetricStrip({ title, value, subtitle, color, onClick }: { title: string; value: string; subtitle: string; color: string; onClick: () => void }) {
+  return (
+    <button onClick={onClick} className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-[#f7f8fb]">
+      <span className={`h-9 w-1 rounded-full ${color}`} />
+      <div className="min-w-0">
+        <p className="text-[11px] font-black uppercase text-[#8f96a3]">{title}</p>
+        <div className="mt-1 flex items-baseline gap-2">
+          <p className="text-2xl font-black text-[#20242a]">{value}</p>
+          <p className="truncate text-xs font-semibold text-[#7c828d]">{subtitle}</p>
+        </div>
+      </div>
+    </button>
+  );
+}
+
+function FocusTable({
+  items,
+  completed,
+  onOpen,
+  onToggleComplete,
+}: {
+  items: FocusItem[];
+  completed: Set<string>;
+  onOpen: (item: FocusItem) => void;
+  onToggleComplete: (itemId: string) => void;
+}) {
+  return (
+    <div className="overflow-x-auto rounded-[8px] border border-[#dfe3e8]">
+      <div className="min-w-[720px]">
+      <div className="grid h-8 grid-cols-[42px_minmax(280px,1fr)_126px_92px_92px_86px] items-center bg-[#f8f9fb] text-[10px] font-black uppercase tracking-[0.02em] text-[#68707d]">
+        <div className="flex h-full items-center justify-center border-r border-[#e4e6ea]">
+          <span className="h-3.5 w-3.5 rounded-[3px] border border-[#c8cdd4] bg-white" />
+        </div>
+        <div className="px-3">Task</div>
+        <div className="border-l border-[#e4e6ea] px-3">Status</div>
+        <div className="border-l border-[#e4e6ea] px-3">Owner</div>
+        <div className="border-l border-[#e4e6ea] px-3">Due</div>
+        <div className="border-l border-[#e4e6ea] px-3">Priority</div>
+      </div>
+      {items.length === 0 && <div className="px-3 py-6 text-center text-sm font-bold text-[#8f96a3]">No matching focus items.</div>}
+      {items.map((item, index) => (
+        <button key={item.id} onClick={() => onOpen(item)} className={`group grid h-10 grid-cols-[42px_minmax(280px,1fr)_126px_92px_92px_86px] items-center border-t border-[#edf0f3] text-left text-xs hover:bg-[#f5f7fa] ${index === 0 ? "bg-[#f3efff] shadow-[inset_4px_0_0_#7b68ee]" : "bg-white"}`}>
+          <div className="flex h-full items-center justify-center border-r border-[#e5e7eb]">
+            <span onClick={(event) => { event.stopPropagation(); onToggleComplete(item.id); }} className={`flex h-4 w-4 items-center justify-center rounded-[3px] border ${completed.has(item.id) ? "border-[#7b68ee] bg-[#7b68ee] text-white" : "border-[#c8cdd4] bg-white text-transparent group-hover:border-[#7b68ee]"}`}>
+              <CheckCircle2 size={12} />
+            </span>
+          </div>
+          <div className="flex min-w-0 items-center gap-2 px-3">
+            <span className={`truncate font-black text-[#20242a] ${completed.has(item.id) ? "text-[#8f96a3] line-through" : ""}`}>{item.title}</span>
+            <span className="rounded-[3px] bg-[#f3f4f6] px-1 py-[2px] text-[9px] font-black text-[#8f96a3]">{item.id}</span>
+          </div>
+          <div className="border-l border-[#e5e7eb] px-3"><StatusPill status={item.status} /></div>
+          <div className="flex items-center gap-1.5 border-l border-[#e5e7eb] px-3"><Avatar initials={item.owner} /></div>
+          <div className={`border-l border-[#e5e7eb] px-3 font-black ${item.due === "Today" ? "text-[#e5484d]" : "text-[#68707d]"}`}>{item.due}</div>
+          <div className="border-l border-[#e5e7eb] px-3 font-black text-[#8f96a3]">{item.priority}</div>
+        </button>
+      ))}
+      </div>
     </div>
   );
 }
 
-function MetricCard({ title, value, subtitle }: { title: string; value: string; subtitle: string }) {
+function ActivityList({ activities, loading, onOpen }: { activities: ActivityItem[]; loading: boolean; onOpen: (item: ActivityItem) => void }) {
+  if (loading) {
+    return (
+      <div className="space-y-2">
+        {[1, 2, 3].map((item) => (
+          <div key={item} className="h-12 animate-pulse rounded-[8px] bg-[#f7f8fb]" />
+        ))}
+      </div>
+    );
+  }
+
+  if (activities.length === 0) {
+    return <p className="text-xs font-semibold text-[#8f96a3]">No recent activity.</p>;
+  }
+
   return (
-    <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm hover:border-zinc-300 transition">
-      <p className="text-sm font-medium text-zinc-500">{title}</p>
-      <p className="mt-2 text-3xl font-bold text-zinc-900">{value}</p>
-      <p className="mt-1 text-xs text-zinc-500">{subtitle}</p>
+    <div className="space-y-2">
+      {activities.slice(0, 4).map((item) => (
+        <button key={item.id} onClick={() => onOpen(item)} className="w-full rounded-[8px] border border-[#edf0f3] bg-[#f7f8fb] px-3 py-2 text-left hover:bg-white">
+          <p className="text-sm font-black text-[#20242a]">{item.title}</p>
+          <p className="mt-0.5 text-xs font-semibold text-[#8f96a3]">{item.meta}</p>
+        </button>
+      ))}
     </div>
   );
 }
 
-function RowCard({ text }: { text: string }) {
+function AssignedList({ tasks, onOpen }: { tasks: Array<AssignedTask | FocusItem>; onOpen: () => void }) {
   return (
-    <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm font-medium text-zinc-800 hover:bg-zinc-100 transition cursor-pointer">
-      {text}
+    <div className="space-y-2">
+      {tasks.map((task, index) => (
+        <button key={task.id || index} onClick={onOpen} className="flex w-full items-center justify-between gap-2 rounded-[8px] border border-[#edf0f3] bg-[#f7f8fb] px-3 py-2 text-left hover:bg-white">
+          <p className="truncate text-sm font-black text-[#20242a]">{task.title}</p>
+          <span className="shrink-0 rounded-[3px] bg-white px-1.5 py-0.5 text-[10px] font-black text-[#8f96a3]">{task.priority || "Med"}</span>
+        </button>
+      ))}
+      {tasks.length === 0 && <p className="text-xs font-semibold text-[#8f96a3]">No matching assigned work.</p>}
     </div>
   );
+}
+
+function CustomizePanel({
+  hiddenWidgets,
+  setHiddenWidgets,
+}: {
+  hiddenWidgets: Set<string>;
+  setHiddenWidgets: (updater: (current: Set<string>) => Set<string>) => void;
+}) {
+  const widgets = [
+    { id: "sprint", label: "Sprint pulse" },
+    { id: "team", label: "Team load" },
+    { id: "activity", label: "Recent activity" },
+    { id: "assigned", label: "Assigned to me" },
+    { id: "upcoming", label: "Upcoming" },
+  ];
+
+  return (
+    <div className="space-y-2">
+      {widgets.map((widget) => (
+        <button
+          key={widget.id}
+          onClick={() => setHiddenWidgets((current) => {
+            const next = new Set(current);
+            if (next.has(widget.id)) next.delete(widget.id);
+            else next.add(widget.id);
+            return next;
+          })}
+          className="flex h-10 w-full items-center justify-between rounded-[8px] border border-[#edf0f3] bg-[#f7f8fb] px-3 text-sm font-black text-[#20242a] hover:bg-white"
+        >
+          {widget.label}
+          <span className={hiddenWidgets.has(widget.id) ? "text-[#8f96a3]" : "text-[#00b884]"}>{hiddenWidgets.has(widget.id) ? "Hidden" : "Visible"}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function ViewPanel({ onOpen }: { onOpen: (href: string) => void }) {
+  return (
+    <div className="space-y-2">
+      {[
+        { label: "List", href: "/tickets" },
+        { label: "Board", href: "/Board/kanban" },
+        { label: "Timeline", href: "/Board/Timeline" },
+        { label: "Reports", href: "/reports" },
+      ].map((view) => (
+        <button key={view.href} onClick={() => onOpen(view.href)} className="flex h-10 w-full items-center justify-between rounded-[8px] border border-[#edf0f3] bg-[#f7f8fb] px-3 text-sm font-black text-[#20242a] hover:bg-white">
+          {view.label}
+          <span className="text-[#7b68ee]">Open</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function SummaryCell({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-[8px] border border-[#edf0f3] bg-[#f7f8fb] p-3">
+      <p className="mb-1 text-[10px] font-black uppercase text-[#8f96a3]">{label}</p>
+      <p className="text-sm font-black text-[#20242a]">{value}</p>
+    </div>
+  );
+}
+
+function MiniCard({ strong = false }: { strong?: boolean }) {
+  return (
+    <div className={`rounded-[6px] border border-[#dfe3e8] bg-white p-2 shadow-sm ${strong ? "h-10" : "h-8"}`}>
+      <div className="flex gap-1.5">
+        <span className="h-1.5 w-12 rounded-full bg-[#c8cdd4]" />
+        <span className="h-1.5 w-6 rounded-full bg-[#e4e7ec]" />
+      </div>
+      {strong && <div className="mt-2 h-1.5 w-20 rounded-full bg-[#edf0f3]" />}
+    </div>
+  );
+}
+
+function StatusPill({ status }: { status: FocusItem["status"] }) {
+  const className = status === "IN PROGRESS" ? "bg-[#1090e0]" : status === "REVIEW" ? "bg-[#f8ae00]" : "bg-[#87909e]";
+  return <span className={`inline-flex h-5 min-w-[92px] items-center justify-center rounded-[3px] px-2 text-[9px] font-black text-white ${className}`}>{status}</span>;
+}
+
+function Avatar({ initials }: { initials: string }) {
+  return <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#7b68ee] text-[10px] font-black text-white ring-2 ring-white">{initials}</span>;
 }
