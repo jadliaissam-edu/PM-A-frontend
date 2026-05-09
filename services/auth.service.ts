@@ -35,12 +35,12 @@ export const authService = {
   },
 
   getProfile: async (): Promise<UserProfile> => {
-    const response = await api.get("/auth/profile/");
+    const response = await api.get("/users/me/");
     return response.data;
   },
 
   updateProfile: async (data: Partial<UserProfile>): Promise<UserProfile> => {
-    const response = await api.patch("/auth/profile/", data);
+    const response = await api.patch("/users/me/", data);
     return response.data;
   },
 
@@ -58,8 +58,18 @@ export const authService = {
     const response = await api.post("/auth/confirm-reset/", data);
     return response.data;
   },
+  refreshToken: async (refreshToken: string) => {
+    // primary refresh endpoint under auth
+    const response = await api.post("/auth/token/refresh/", { refresh: refreshToken });
+    return response.data;
+  },
 
   logout: async () => {
+    try {
+      await api.post("/auth/logout/");
+    } catch (e) {
+      // ignore network errors during logout
+    }
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
   },

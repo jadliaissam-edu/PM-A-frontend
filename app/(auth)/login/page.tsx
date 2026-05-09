@@ -20,17 +20,17 @@ export default function LoginPage() {
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      username: "",
+      email: "",
       password: "",
     },
   });
 
   const onSubmit = async (data: LoginFormData) => {
     try {
-      const response = await authService.login(data);
+      const response = await authService.login({ email: data.email, password: data.password });
 
       setAuth({
-        user: { username: data.username },
+        user: { username: response.username, email: response.email },
         accessToken: response.access,
         refreshToken: response.refresh,
       });
@@ -38,7 +38,7 @@ export default function LoginPage() {
       localStorage.setItem("accessToken", response.access);
       localStorage.setItem("refreshToken", response.refresh);
 
-      router.push("/dashboard");
+      router.push("/dashboard/enterprise");
     } catch (error) {
       console.error("Login error:", error);
       alert("Unable to sign in with the current credentials.");
@@ -68,19 +68,19 @@ export default function LoginPage() {
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-3" noValidate>
         <div>
           <label className="mb-1 flex items-center justify-between text-[10px] font-black uppercase text-[#8f96a3]">
-            Username
+            Email
             <span className="normal-case text-[10px] font-bold text-[#a2a9b5]">Required</span>
           </label>
           <input
-            type="text"
-            {...register("username")}
-            aria-invalid={Boolean(errors.username)}
+            type="email"
+            {...register("email")}
+            aria-invalid={Boolean(errors.email)}
             className="h-9 w-full rounded-[7px] border border-[#dfe3e8] bg-[#f7f8fb] px-3 text-xs font-black text-[#20242a] outline-none transition placeholder:text-[#9aa1ad] hover:bg-white focus:border-[#7b68ee] focus:bg-white focus:ring-2 focus:ring-[#d7d1ff] aria-[invalid=true]:border-[#ffd6d6] aria-[invalid=true]:bg-[#fffafa]"
-            placeholder="team.member"
+            placeholder="you@company.com"
           />
-          {!errors.username && <p className="mt-1 text-[10px] font-bold text-[#8f96a3]">Use your workspace username.</p>}
-          {errors.username && (
-            <p className="mt-1 rounded-[4px] border border-[#ffd6d6] bg-[#fff1f1] px-2 py-1 text-[10px] font-black text-[#e5484d]">{errors.username.message}</p>
+          {!errors.email && <p className="mt-1 text-[10px] font-bold text-[#8f96a3]">Use your work email to sign in.</p>}
+          {errors.email && (
+            <p className="mt-1 rounded-[4px] border border-[#ffd6d6] bg-[#fff1f1] px-2 py-1 text-[10px] font-black text-[#e5484d]">{errors.email.message}</p>
           )}
         </div>
 

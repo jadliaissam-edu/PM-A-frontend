@@ -6,12 +6,23 @@ import { WorkspacePageHeader } from "@/features/workspace/components/workspace-p
 import { WorkspacePanel } from "@/features/workspace/components/workspace-panel";
 import { WorkspaceListRow } from "@/features/workspace/components/workspace-list-row";
 import { ProjectStatusBadge } from "@/features/workspace/components/workspace-badges";
-import { issues, projects } from "@/features/workspace/data/mock-workspace";
-
-const activeProjects = projects.filter((project) => project.status !== "Completed");
-const totalIssues = issues.length;
+import { useEffect, useState } from "react";
+import { projectService, type ProjectSummary } from "@/services/project.service";
 
 export default function ProjectsPage() {
+  const [projects, setProjects] = useState<ProjectSummary[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    projectService
+      .getProjects()
+      .then((data) => setProjects(data))
+      .catch(() => setProjects([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const activeProjects = projects.filter((project) => project.status !== "Completed");
+  const totalIssues = projects.reduce((sum, p) => sum + (p.issueCount || 0), 0);
   return (
     <>
       <WorkspacePageHeader
@@ -31,27 +42,31 @@ export default function ProjectsPage() {
         }
       />
 
-      <section className="mb-8 grid gap-4 xl:grid-cols-4">
+        <section className="mb-8 grid gap-4 xl:grid-cols-4">
         <WorkspaceMetricCard
           title="Active projects"
-          value={activeProjects.length.toString()}
+            value={loading ? "—" : activeProjects.length.toString()}
           subtitle="Delivery streams currently open"
         />
         <WorkspaceMetricCard
           title="Total issues"
-          value={totalIssues.toString()}
+            value={loading ? "—" : totalIssues.toString()}
           subtitle="Work items linked to current projects"
         />
         <WorkspaceMetricCard
           title="Average progress"
-          value={`${Math.round(
-            projects.reduce((sum, project) => sum + project.progress, 0) / projects.length,
-          )}%`}
+            value={
+              loading
+                ? "—"
+                : `${Math.round(
+                    projects.reduce((sum, project) => sum + (project.progress || 0), 0) / Math.max(projects.length, 1),
+                  )}%`
+            }
           subtitle="Progress across listed projects"
         />
         <WorkspaceMetricCard
           title="Teams involved"
-          value={new Set(projects.map((project) => project.team)).size.toString()}
+            value={loading ? "—" : new Set(projects.map((project) => project.team)).size.toString()}
           subtitle="Cross-functional groups represented"
         />
       </section>
@@ -59,7 +74,7 @@ export default function ProjectsPage() {
       <div className="grid gap-6 2xl:grid-cols-[1.2fr_0.8fr]">
         <section className="grid gap-4 md:grid-cols-2">
           {projects.map((project) => (
-            <ProjectCard key={project.id} project={project} />
+            <ProjectCard key={project.id} project={project as any} />
           ))}
         </section>
 

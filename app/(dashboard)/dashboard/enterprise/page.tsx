@@ -134,10 +134,10 @@ export default function EnterpriseDashboardPage() {
           </div>
         </div>
         <div className="grid divide-y divide-[#edf0f3] md:grid-cols-4 md:divide-x md:divide-y-0">
-          <MetricStrip title="Total projects" value={stats?.total_projects.toString() || "0"} subtitle="workspace projects" color="bg-[#7b68ee]" onClick={() => router.push("/project")} />
-          <MetricStrip title="Owned projects" value={stats?.owned_projects.toString() || "0"} subtitle="created by you" color="bg-[#1090e0]" onClick={() => router.push("/project")} />
-          <MetricStrip title="Collaborations" value={stats?.member_projects.toString() || "0"} subtitle="shared spaces" color="bg-[#f8ae00]" onClick={() => router.push("/chat")} />
-          <MetricStrip title="Archived" value={stats?.archived_projects.toString() || "0"} subtitle="inactive work" color="bg-[#87909e]" onClick={() => setNotice("Archived project filter is staged locally.")} />
+          <MetricStrip title="Total projects" value={(stats?.total_projects ?? 0).toString()} subtitle="workspace projects" color="bg-[#7b68ee]" onClick={() => router.push("/project")} />
+          <MetricStrip title="Owned projects" value={(stats?.owned_projects ?? 0).toString()} subtitle="created by you" color="bg-[#1090e0]" onClick={() => router.push("/project")} />
+          <MetricStrip title="Collaborations" value={(stats?.member_projects ?? 0).toString()} subtitle="shared spaces" color="bg-[#f8ae00]" onClick={() => router.push("/chat")} />
+          <MetricStrip title="Archived" value={(stats?.archived_projects ?? 0).toString()} subtitle="inactive work" color="bg-[#87909e]" onClick={() => setNotice("Archived project filter is staged locally.")} />
         </div>
       </section>
 

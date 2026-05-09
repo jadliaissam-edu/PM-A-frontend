@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { authService, type UserProfile } from "@/services/auth.service";
+import { useAuthStore } from "@/store";
 import { useSidebarStore } from "@/store/sidebar.store";
 import {
   BarChart3,
@@ -66,6 +67,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const signOut = async () => {
     try {
       await authService.logout();
+      // clear local auth state and navigate to login
+      useAuthStore.getState().clearAuth();
       router.push("/login");
     } catch (error) {
       console.error("Logout failed", error);

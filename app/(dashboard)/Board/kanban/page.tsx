@@ -1,7 +1,8 @@
 "use client";
 
-import { type DragEvent, useState } from "react";
+import { type DragEvent, useEffect, useState } from "react";
 import { useAuthStore } from "../../../../store";
+import { dashboardService } from "@/services/dashboard.service";
 import { CheckCircle2, CirclePlus, MoreHorizontal, Search, SlidersHorizontal } from "lucide-react";
 
 type BoardTask = {
@@ -24,52 +25,16 @@ type BoardColumn = {
 };
 
 const initialColumns: BoardColumn[] = [
-  {
-    title: "TO DO",
-    tone: "bg-[#87909e]",
-    soft: "bg-[#f0f2f5]",
-    wip: "8 / 12",
-    tasks: [
-      { id: "PM-101", content: "Definir architecture API", priority: "High", due: "May 8", points: 8, subtasks: "2/6", comments: 3, label: "Backend" },
-      { id: "PM-102", content: "Creer maquettes Figma", priority: "Normal", due: "May 9", points: 5, subtasks: "1/4", comments: 1, label: "Design" },
-      { id: "PM-103", content: "Installer Tailwind", priority: "Low", due: "Next week", points: 2, subtasks: "0/2", comments: 0, label: "Setup" },
-    ],
-  },
-  {
-    title: "IN PROGRESS",
-    tone: "bg-[#1090e0]",
-    soft: "bg-[#eaf5ff]",
-    wip: "5 / 6",
-    tasks: [
-      { id: "PM-142", content: "Developpement de la sidebar ClickUp", priority: "Urgent", due: "Today", points: 13, subtasks: "4/8", comments: 6, label: "Frontend" },
-      { id: "PM-118", content: "Integration d'Axios", priority: "High", due: "Tomorrow", points: 5, subtasks: "2/3", comments: 2, label: "API" },
-    ],
-  },
-  {
-    title: "REVIEW",
-    tone: "bg-[#f8ae00]",
-    soft: "bg-[#fff8e8]",
-    wip: "3 / 5",
-    tasks: [
-      { id: "PM-88", content: "Authentification JWT", priority: "High", due: "May 6", points: 8, subtasks: "5/5", comments: 5, label: "Security" },
-      { id: "PM-94", content: "Validation responsive desktop", priority: "Normal", due: "May 7", points: 3, subtasks: "3/4", comments: 2, label: "QA" },
-    ],
-  },
-  {
-    title: "DONE",
-    tone: "bg-[#00b884]",
-    soft: "bg-[#e8fff6]",
-    wip: "12 done",
-    tasks: [
-      { id: "PM-77", content: "Initier le projet Next.js", priority: "Low", due: "May 3", points: 2, subtasks: "2/2", comments: 1, label: "Setup" },
-      { id: "PM-81", content: "Configuration du backend Django", priority: "Normal", due: "May 4", points: 5, subtasks: "3/3", comments: 4, label: "Backend" },
-    ],
-  },
+  { title: "TO DO", tone: "bg-[#87909e]", soft: "bg-[#f0f2f5]", wip: "", tasks: [] },
+  { title: "IN PROGRESS", tone: "bg-[#1090e0]", soft: "bg-[#eaf5ff]", wip: "", tasks: [] },
+  { title: "REVIEW", tone: "bg-[#f8ae00]", soft: "bg-[#fff8e8]", wip: "", tasks: [] },
+  { title: "DONE", tone: "bg-[#00b884]", soft: "bg-[#e8fff6]", wip: "", tasks: [] },
 ];
 
 export default function KanbanBoardPage() {
   const user = useAuthStore((state) => state.user);
   const [columns, setColumns] = useState<BoardColumn[]>(initialColumns);
+  const [loading, setLoading] = useState(true);
   const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [compact, setCompact] = useState(false);
@@ -184,6 +149,42 @@ export default function KanbanBoardPage() {
     setPriorityFilter("All");
     setHideDone(false);
   };
+
+  useEffect(() => {
+    let mounted = true;
+    dashboardService
+      .getAssignedTasks()
+      .then((tasks) => {
+        if (!mounted) return;
+        // Map incoming tasks into columns by status
+        const cols = initialColumns.map((c) => ({ ...c, tasks: [] }));
+        tasks.forEach((t: any) => {
+          const task: BoardTask = {
+            id: t.id,
+            content: t.title || t.content || "Untitled",
+            priority: (t.priority as any) || "Normal",
+            due: t.due || "",
+            points: t.points || 0,
+            subtasks: t.subtasks || "0/0",
+            comments: t.comments || 0,
+            label: t.label || t.project || "",
+          };
+          const status = (t.status || "TO DO").toUpperCase();
+          if (status.includes("DONE") || status === "DONE") cols[3].tasks.push(task);
+          else if (status.includes("REVIEW")) cols[2].tasks.push(task);
+          else if (status.includes("IN PROGRESS") || status.includes("PROGRESS")) cols[1].tasks.push(task);
+          else cols[0].tasks.push(task);
+        });
+        setColumns(cols);
+      })
+      .catch(() => {
+        setColumns(initialColumns);
+      })
+      .finally(() => setLoading(false));
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   return (
     <main className="flex min-h-full flex-col bg-[#f7f8fb]">

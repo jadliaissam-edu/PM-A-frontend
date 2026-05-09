@@ -7,3 +7,34 @@ export const api = axios.create({
     "Content-Type": "application/json",
   },
 });
+
+// Attach Authorization header from localStorage for client requests
+if (typeof window !== "undefined") {
+  api.interceptors.request.use((config) => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      if (token && config.headers) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    } catch (e) {
+      // ignore
+    }
+    return config;
+  });
+
+  api.interceptors.response.use(
+    (res) => res,
+    (error) => {
+      const status = error?.response?.status;
+      if (status === 401 || status === 403) {
+        try {
+          localStorage.removeItem("accessToken");
+          localStorage.removeItem("refreshToken");
+        } catch (e) {}
+        // Force navigation to login page
+        if (typeof window !== "undefined") window.location.href = "/login";
+      }
+      return Promise.reject(error);
+    }
+  );
+}
