@@ -30,28 +30,38 @@ export const ticketsService = {
     return response.data;
   },
 
-  getTicket: async (id: string): Promise<TicketDetail> => {
-    const response = await api.get(`/tickets/${id}/`);
+  getTicket: async (id: string, projectId?: string): Promise<TicketDetail> => {
+    const url = projectId ? `/projects/${projectId}/tickets/${id}/` : `/tickets/${id}/`;
+    const response = await api.get(url);
     return response.data;
   },
 
-  createTicket: async (payload: Partial<TicketDetail>): Promise<TicketDetail> => {
-    const response = await api.post(`/tickets/`, payload);
+  createTicket: async (payload: Partial<TicketDetail>, projectId?: string): Promise<TicketDetail> => {
+    const url = projectId ? `/projects/${projectId}/tickets/` : `/tickets/`;
+    const response = await api.post(url, payload);
     return response.data;
   },
 
-  updateTicket: async (id: string, patch: Partial<TicketDetail>): Promise<TicketDetail> => {
-    const response = await api.patch(`/tickets/${id}/`, patch);
+  updateTicket: async (id: string, patch: Partial<TicketDetail>, projectId?: string): Promise<TicketDetail> => {
+    const url = projectId ? `/projects/${projectId}/tickets/${id}/` : `/tickets/${id}/`;
+    const response = await api.patch(url, patch);
     return response.data;
   },
 
-  listComments: async (ticketId: string): Promise<CommentItem[]> => {
-    const response = await api.get(`/tickets/${ticketId}/comments/`);
+  updateStatus: async (id: string, projectId: string, payload: { status: string }) => {
+    const response = await api.post(`/projects/${projectId}/tickets/${id}/status/`, payload);
     return response.data;
   },
 
-  addComment: async (ticketId: string, payload: { body: string }): Promise<CommentItem> => {
-    const response = await api.post(`/tickets/${ticketId}/comments/`, payload);
+  listComments: async (ticketId: string, projectId?: string): Promise<CommentItem[]> => {
+    const url = projectId ? `/projects/${projectId}/tickets/${ticketId}/comments/` : `/tickets/${ticketId}/comments/`;
+    const response = await api.get(url);
+    return response.data;
+  },
+
+  addComment: async (ticketId: string, payload: { body: string }, projectId?: string): Promise<CommentItem> => {
+    const url = projectId ? `/projects/${projectId}/tickets/${ticketId}/comments/` : `/tickets/${ticketId}/comments/`;
+    const response = await api.post(url, payload);
     return response.data;
   },
 };

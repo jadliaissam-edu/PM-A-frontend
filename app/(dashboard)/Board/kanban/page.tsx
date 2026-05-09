@@ -14,6 +14,7 @@ type BoardTask = {
   points: number;
   subtasks: string;
   comments: number;
+  project?: string | null;
   label: string;
 };
 
@@ -98,7 +99,16 @@ export default function KanbanBoardPage() {
       try {
         const statusMap = ["TO DO", "IN PROGRESS", "REVIEW", "DONE"];
         const newStatus = statusMap[targetColumnIndex] || statusMap[0];
-        await ticketsService.updateTicket(taskId, { status: newStatus });
+        // find project id for ticket if available so we call the project-scoped endpoint
+        const sourceTasks = columns[sourceColumnIndex]?.tasks || [];
+        const moved = sourceTasks.find((t) => t.id === taskId);
+        const projectId = (moved as any)?.project;
+        if (projectId) {
+          // Use the project-scoped status endpoint to avoid global /tickets/ POST issues
+          await ticketsService.updateStatus(taskId, projectId, { status: newStatus });
+        } else {
+          await ticketsService.updateTicket(taskId, { status: newStatus });
+        }
         setNotice(`Moved card to ${newStatus}.`);
       } catch (e) {
         console.error("Failed to persist moved card", e);
@@ -122,7 +132,19 @@ export default function KanbanBoardPage() {
           status: statusMap[targetColumn] || statusMap[0],
           label: newLabel.trim() || "Local",
         };
-        const created = await ticketsService.createTicket(payload);
+        // Try to infer a project context for ticket creation. The backend expects
+        // creation to be under a project: POST /projects/{project_id}/tickets/
+        const inferredProject =
+          (columns[targetColumn]?.tasks && columns[targetColumn].tasks[0]?.project) ||
+          columns.flatMap((c) => c.tasks).find((t) => (t as any).project)?.project ||
+          null;
+
+        if (!inferredProject) {
+          setNotice("Cannot create ticket: no project context. Create a ticket from a project page.");
+          return;
+        }
+
+        const created = await ticketsService.createTicket(payload, inferredProject);
         const task: BoardTask = {
           id: created.id,
           content: created.title || title,
@@ -132,6 +154,7 @@ export default function KanbanBoardPage() {
           subtasks: created.subtasks || "0/0",
           comments: created.comments_count || 0,
           label: created.label || payload.label,
+          project: (created.project as any) || null,
         };
         setColumns((current) => current.map((column, index) => index === targetColumn ? { ...column, tasks: [task, ...column.tasks] } : column));
         setNewCardTitle("");
@@ -147,9 +170,10 @@ export default function KanbanBoardPage() {
     })();
   };
 
-  async function fetchTicketDetail(ticketId: string) {
+  async function fetchTicketDetail(ticketId: string, projectId?: string) {
     try {
-      const detail = await ticketsService.getTicket(ticketId);
+      // accept optional project id to call project-scoped detail endpoint
+      const detail = await ticketsService.getTicket(ticketId, projectId);
       const task: BoardTask = {
         id: detail.id,
         content: detail.title || detail.description || "Untitled",
@@ -159,6 +183,7 @@ export default function KanbanBoardPage() {
         subtasks: "0/0",
         comments: detail.comments_count || 0,
         label: detail.project || "",
+        project: (detail.project as any) || null,
       };
       setSelectedTask(task);
     } catch (e) {
@@ -481,7 +506,7 @@ function BoardLane({
               showSubtasks={showSubtasks}
               isComplete={completed.has(task.id)}
               toggleComplete={() => toggleComplete(task.id)}
-                  openTask={() => fetchTicketDetail(task.id)}
+                  openTask={() => fetchTicketDetail(task.id, task.project)}
               onDragStart={(event) => onDragStart(event, task.id, columnIndex)}
               onDragEnd={onDragEnd}
             />

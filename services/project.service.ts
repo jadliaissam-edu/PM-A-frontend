@@ -18,8 +18,8 @@ export interface ProjectSummary {
 }
 
 export const projectService = {
-  getProjects: async (): Promise<ProjectSummary[]> => {
-    const response = await api.get("/projects/");
+  getProjects: async (params?: any): Promise<ProjectSummary[]> => {
+    const response = await api.get("/projects/", { params });
     return response.data;
   },
 

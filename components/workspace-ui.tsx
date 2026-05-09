@@ -1,7 +1,11 @@
 import { type ButtonHTMLAttributes, type ReactNode } from "react";
 
 export function WorkspacePage({ children }: { children: ReactNode }) {
-  return <main className="min-h-full bg-[#f7f8fb] p-4 text-[#20242a]">{children}</main>;
+  return (
+    <main className="min-h-full bg-[#f7f8fb] p-4 text-[#20242a]">
+      <div className="mx-auto w-full rounded-[10px] border border-[#dfe3e8] bg-white p-4 shadow-sm">{children}</div>
+    </main>
+  );
 }
 
 export function WorkspaceHeader({

@@ -143,6 +143,7 @@ export default function EnterpriseDashboardPage() {
             <button onClick={() => fetchData()} disabled={loading} className="rounded-[7px] border border-[#dfe3e8] bg-white px-3 py-1.5 text-xs font-black text-[#68707d] shadow-sm transition hover:bg-[#f7f8fb] focus:outline-none focus:ring-2 focus:ring-[#d7d1ff]">
               {loading ? "Refreshing..." : "Refresh"}
             </button>
+              <button onClick={() => router.push('/organization')} className="rounded-[7px] border border-[#dfe3e8] bg-white px-3 py-1.5 text-xs font-black text-[#68707d] shadow-sm transition hover:bg-[#f7f8fb] focus:outline-none focus:ring-2 focus:ring-[#d7d1ff]">Organizations</button>
             <button onClick={() => setPanel("customize")} className="rounded-[7px] border border-[#dfe3e8] bg-white px-3 py-1.5 text-xs font-black text-[#68707d] shadow-sm transition hover:bg-[#f7f8fb] focus:outline-none focus:ring-2 focus:ring-[#d7d1ff]">Customize</button>
             <button onClick={() => setPanel("task")} className="rounded-[7px] bg-[var(--primary-color)] px-3.5 py-1.5 text-xs font-black text-white shadow-sm transition hover:bg-[var(--primary-color-hover)] focus:outline-none focus:ring-2 focus:ring-[#d7d1ff]">New task</button>
           </div>
@@ -209,7 +210,7 @@ export default function EnterpriseDashboardPage() {
                       <p className="text-xs font-black uppercase text-[#8f96a3]">Organization</p>
                       <p className="mt-1 text-sm font-black text-[#20242a]">{organizations.length > 0 ? organizations[0].name : profile?.username || "Your organization"}</p>
                     </div>
-                    <button onClick={() => router.push("/orgs")} className="h-8 rounded-[7px] border border-[#dfe3e8] bg-white px-3 text-sm font-black text-[#68707d]">Open</button>
+                    <button onClick={() => router.push("/organization")} className="h-8 rounded-[7px] border border-[#dfe3e8] bg-white px-3 text-sm font-black text-[#68707d]">Open</button>
                   </div>
                   <div className="grid grid-cols-3 gap-2">
                     <button onClick={() => router.push("/workspaces")} className="rounded-[7px] border border-[#edf0f3] bg-white p-2 text-xs font-black">Workspaces ({workspaces.length})</button>
