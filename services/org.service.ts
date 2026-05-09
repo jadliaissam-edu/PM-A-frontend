@@ -61,6 +61,11 @@ export const orgService = {
     return response.data;
   },
 
+  acceptInvitationByWorkspace: async (workspaceId: string, email: string) => {
+    const response = await api.post(`/orgs/invitations/accept/`, { workspace: workspaceId, email });
+    return response.data;
+  },
+
   deleteInvitation: async (id: string) => {
     const response = await api.delete(`/orgs/invitations/${id}/`);
     return response.data;

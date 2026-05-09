@@ -317,6 +317,13 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 </div>
               </div>
               <div className="mb-2 border-b border-[#e4e7ec] pb-2">
+                <p className="mb-1 flex h-5 items-center px-1.5 text-[10px] font-black uppercase text-[#8f96a3]">Teams</p>
+                <Link href="/chat" className={`flex h-[31px] items-center gap-2 rounded-[7px] px-2 text-[12px] ${pathname === "/chat" ? "bg-white font-black text-[#2f343c] shadow-sm ring-1 ring-[#dfe3e8]" : "font-bold text-[#68707d] hover:bg-white hover:text-[#2f343c]"}`}>
+                  <span className={pathname === "/chat" ? "text-[#7b68ee]" : "text-[#9aa1ad]"}><Users size={15} /></span>
+                  <span className="truncate">Teams</span>
+                </Link>
+              </div>
+              <div className="mb-2 border-b border-[#e4e7ec] pb-2">
                 <p className="mb-1 flex h-5 items-center px-1.5 text-[10px] font-black uppercase text-[#8f96a3]">Everything</p>
                 {[
                   { href: "/import", label: "Import", active: pathname === "/import", icon: <Download size={15} /> },
