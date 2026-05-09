@@ -47,15 +47,17 @@ export default function ReleaseManagementPage() {
 
       try {
         setLoading(true);
-        const payload = { version, notes: "Created from frontend", items: ["Draft"] };
+        // Backend expects { tag, target_date, description, status }
+        const today = new Date().toISOString().slice(0, 10);
+        const payload = { tag: version, target_date: today, description: "Created from frontend", status: "planned" };
         const created = await projectService.createRelease(projectIdQuery, payload);
         const mapped: Release = {
           id: created.id || String(created.pk || created.uuid || created.tag || created.version || ""),
-          version: created.version || created.tag || created.name || String(created.id || ""),
-          status: created.status || "Draft",
-          date: created.date || created.published_at || created.created_at || "Today",
+          version: created.tag || created.version || created.name || String(created.id || ""),
+          status: (created.status || created.state || "Draft").charAt(0).toUpperCase() + (created.status || created.state || "Draft").slice(1),
+          date: created.target_date || created.date || created.published_at || created.created_at || "Today",
           owner: created.owner || created.lead || (created.author && created.author.initials) || "",
-          notes: created.notes || created.summary || created.description || "",
+          notes: created.description || created.notes || created.summary || "",
           items: created.items || created.features || [],
         };
         setItems((current) => [mapped, ...current]);

@@ -1,3 +1,5 @@
+"use client";
+
 import { CalendarDays, CirclePlus, Filter, MoreHorizontal, Search } from "lucide-react";
 import { Avatar, Chip, GhostButton, Panel, PrimaryButton, WorkspaceHeader, WorkspacePage } from "@/components/workspace-ui";
 import { useState, type ReactNode, useEffect } from "react";

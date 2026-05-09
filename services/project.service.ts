@@ -1,4 +1,5 @@
 import { api } from "../lib/api";
+import { ticketsService } from "./tickets.service";
 
 export interface ProjectSummary {
   id: string;
@@ -20,6 +21,11 @@ export interface ProjectSummary {
 export const projectService = {
   getProjects: async (params?: any): Promise<ProjectSummary[]> => {
     const response = await api.get("/projects/", { params });
+    return response.data;
+  },
+
+  createProject: async (data: any): Promise<ProjectSummary> => {
+    const response = await api.post("/projects/", data);
     return response.data;
   },
 
@@ -101,8 +107,26 @@ export const projectService = {
   },
 
   moveTicketOnBoard: async (projectId: string, ticketId: string, payload: any) => {
-    const response = await api.post(`/projects/${projectId}/board/tickets/${ticketId}/move/`, payload);
-    return response.data;
+    try {
+      const response = await api.post(`/projects/${projectId}/board/tickets/${ticketId}/move/`, payload);
+      return response.data;
+    } catch (err: any) {
+      const status = err?.response?.status;
+      // If the project-board move endpoint is not found, fallback to updating
+      // the ticket status via the tickets API (safer and more widely supported).
+      if (status === 404) {
+        try {
+          if (payload && payload.status) {
+            return await ticketsService.updateStatus(ticketId, projectId, { status: payload.status });
+          }
+          return await ticketsService.updateTicket(ticketId, { status: payload.status || "todo" }, projectId);
+        } catch (fallbackErr) {
+          console.error("projectService.moveTicketOnBoard fallback failed", { fallbackErr });
+          throw err;
+        }
+      }
+      throw err;
+    }
   },
 
   getTicketMovements: async (projectId: string, ticketId: string) => {

@@ -42,6 +42,12 @@ export const ticketsService = {
     return response.data;
   },
 
+  deleteTicket: async (id: string, projectId?: string) => {
+    const url = projectId ? `/projects/${projectId}/tickets/${id}/` : `/tickets/${id}/`;
+    const response = await api.delete(url);
+    return response.data;
+  },
+
   updateTicket: async (id: string, patch: Partial<TicketDetail>, projectId?: string): Promise<TicketDetail> => {
     const projectUrl = `/projects/${projectId}/tickets/${id}/`;
     const globalUrl = `/tickets/${id}/`;

@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useState } from "react";
 import { projectService } from "@/services/project.service";
 import { useSearchParams } from "next/navigation";
