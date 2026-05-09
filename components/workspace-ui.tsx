@@ -51,7 +51,7 @@ export function GhostButton({ children, className = "", ...props }: ButtonHTMLAt
 }
 
 export function PrimaryButton({ children, className = "", ...props }: ButtonHTMLAttributes<HTMLButtonElement> & { children: ReactNode }) {
-  return <button {...props} className={`inline-flex h-8 items-center justify-center rounded-[7px] bg-[#7b68ee] px-3.5 text-xs font-black text-white shadow-sm transition hover:bg-[#6d56ea] focus:outline-none focus:ring-2 focus:ring-[#d7d1ff] disabled:cursor-not-allowed disabled:opacity-55 ${className}`}>{children}</button>;
+  return <button {...props} className={`inline-flex h-8 items-center justify-center rounded-[7px] bg-[var(--primary-color)] px-3.5 text-xs font-black text-white shadow-sm transition hover:bg-[var(--primary-color-hover)] focus:outline-none focus:ring-2 focus:ring-[#d7d1ff] disabled:cursor-not-allowed disabled:opacity-55 ${className}`}>{children}</button>;
 }
 
 export function Chip({ children, tone = "neutral" }: { children: ReactNode; tone?: "neutral" | "purple" | "green" | "blue" | "red" | "yellow" }) {

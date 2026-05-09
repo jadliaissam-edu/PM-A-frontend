@@ -3,6 +3,7 @@
 import { type DragEvent, useEffect, useState } from "react";
 import { useAuthStore } from "../../../../store";
 import { dashboardService } from "@/services/dashboard.service";
+import { ticketsService } from "@/services/tickets.service";
 import { CheckCircle2, CirclePlus, MoreHorizontal, Search, SlidersHorizontal } from "lucide-react";
 
 type BoardTask = {
@@ -92,31 +93,79 @@ export default function KanbanBoardPage() {
       return nextColumns;
     });
     setDraggedTaskId(null);
+    // Persist status change to backend
+    (async () => {
+      try {
+        const statusMap = ["TO DO", "IN PROGRESS", "REVIEW", "DONE"];
+        const newStatus = statusMap[targetColumnIndex] || statusMap[0];
+        await ticketsService.updateTicket(taskId, { status: newStatus });
+        setNotice(`Moved card to ${newStatus}.`);
+      } catch (e) {
+        console.error("Failed to persist moved card", e);
+        setNotice("Failed to persist card move.");
+        // Optionally refresh board to revert optimistic change
+        void fetchData();
+      }
+    })();
   };
   const addCard = () => {
-    const title = newCardTitle.trim();
-    if (!title) return;
-    const task: BoardTask = {
-      id: `PM-${Math.floor(Date.now() / 1000)}`,
-      content: title,
-      priority: "Normal",
-      due: "Tomorrow",
-      points: 3,
-      subtasks: "0/3",
-      comments: 0,
-      label: newLabel.trim() || "Local",
-    };
-    task.priority = newPriority;
-    task.due = newDue;
-    setColumns((current) => current.map((column, index) => index === targetColumn ? { ...column, tasks: [task, ...column.tasks] } : column));
-    setNewCardTitle("");
-    setNewPriority("Normal");
-    setNewDue("Tomorrow");
-    setNewLabel("Local");
-    setDialog(null);
-    setSelectedTask(task);
-    setNotice(`Added ${task.id} to ${columns[targetColumn]?.title || "board"}.`);
+    (async () => {
+      const title = newCardTitle.trim();
+      if (!title) return;
+      setDialog(null);
+      try {
+        const statusMap = ["TO DO", "IN PROGRESS", "REVIEW", "DONE"];
+        const payload: any = {
+          title,
+          priority: newPriority,
+          due: newDue,
+          status: statusMap[targetColumn] || statusMap[0],
+          label: newLabel.trim() || "Local",
+        };
+        const created = await ticketsService.createTicket(payload);
+        const task: BoardTask = {
+          id: created.id,
+          content: created.title || title,
+          priority: (created.priority as any) || newPriority,
+          due: created.due || newDue,
+          points: (created.points as any) || 0,
+          subtasks: created.subtasks || "0/0",
+          comments: created.comments_count || 0,
+          label: created.label || payload.label,
+        };
+        setColumns((current) => current.map((column, index) => index === targetColumn ? { ...column, tasks: [task, ...column.tasks] } : column));
+        setNewCardTitle("");
+        setNewPriority("Normal");
+        setNewDue("Tomorrow");
+        setNewLabel("Local");
+        setSelectedTask(task);
+        setNotice(`Created ${task.id} in ${columns[targetColumn]?.title || "board"}.`);
+      } catch (e) {
+        console.error("Failed to create ticket", e);
+        setNotice("Failed to create ticket.");
+      }
+    })();
   };
+
+  async function fetchTicketDetail(ticketId: string) {
+    try {
+      const detail = await ticketsService.getTicket(ticketId);
+      const task: BoardTask = {
+        id: detail.id,
+        content: detail.title || detail.description || "Untitled",
+        priority: (detail.priority as any) || "Normal",
+        due: detail.updated_at || "",
+        points: 0,
+        subtasks: "0/0",
+        comments: detail.comments_count || 0,
+        label: detail.project || "",
+      };
+      setSelectedTask(task);
+    } catch (e) {
+      console.error("Failed to load ticket details", e);
+      setNotice("Failed to load ticket details.");
+    }
+  }
   const updateTask = (taskId: string, patch: Partial<BoardTask>) => {
     setColumns((current) => current.map((column) => ({
       ...column,
@@ -151,40 +200,43 @@ export default function KanbanBoardPage() {
   };
 
   useEffect(() => {
-    let mounted = true;
-    dashboardService
-      .getAssignedTasks()
-      .then((tasks) => {
-        if (!mounted) return;
-        // Map incoming tasks into columns by status
-        const cols = initialColumns.map((c) => ({ ...c, tasks: [] }));
-        tasks.forEach((t: any) => {
-          const task: BoardTask = {
-            id: t.id,
-            content: t.title || t.content || "Untitled",
-            priority: (t.priority as any) || "Normal",
-            due: t.due || "",
-            points: t.points || 0,
-            subtasks: t.subtasks || "0/0",
-            comments: t.comments || 0,
-            label: t.label || t.project || "",
-          };
-          const status = (t.status || "TO DO").toUpperCase();
-          if (status.includes("DONE") || status === "DONE") cols[3].tasks.push(task);
-          else if (status.includes("REVIEW")) cols[2].tasks.push(task);
-          else if (status.includes("IN PROGRESS") || status.includes("PROGRESS")) cols[1].tasks.push(task);
-          else cols[0].tasks.push(task);
-        });
-        setColumns(cols);
-      })
-      .catch(() => {
-        setColumns(initialColumns);
-      })
-      .finally(() => setLoading(false));
-    return () => {
-      mounted = false;
-    };
+    // use the shared fetchData below for mount and manual refresh
+    fetchData();
+    // no cleanup needed since fetchData uses local state handling
   }, []);
+
+  // fetchData: reusable loader so Refresh button can re-fetch board tasks
+  async function fetchData() {
+    setLoading(true);
+    try {
+      const tasks = await dashboardService.getAssignedTasks();
+      // Map incoming tasks into columns by status
+      const cols = initialColumns.map((c) => ({ ...c, tasks: [] }));
+      tasks.forEach((t: any) => {
+        const task: BoardTask = {
+          id: t.id,
+          content: t.title || t.content || "Untitled",
+          priority: (t.priority as any) || "Normal",
+          due: t.due || "",
+          points: t.points || 0,
+          subtasks: t.subtasks || "0/0",
+          comments: t.comments || 0,
+          label: t.label || t.project || "",
+        };
+        const status = (t.status || "TO DO").toUpperCase();
+        if (status.includes("DONE") || status === "DONE") cols[3].tasks.push(task);
+        else if (status.includes("REVIEW")) cols[2].tasks.push(task);
+        else if (status.includes("IN PROGRESS") || status.includes("PROGRESS")) cols[1].tasks.push(task);
+        else cols[0].tasks.push(task);
+      });
+      setColumns(cols);
+    } catch (e) {
+      setColumns(initialColumns);
+      setNotice("Failed to load board data.");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <main className="flex min-h-full flex-col bg-[#f7f8fb]">
@@ -208,6 +260,8 @@ export default function KanbanBoardPage() {
         clearFilters={clearBoardFilters}
         openSettings={() => setDialog("settings")}
         openAddTask={() => { setTargetColumn(0); setDialog("add"); }}
+        fetchData={fetchData}
+        loading={loading}
       />
       <div className="min-h-0 flex-1 overflow-x-auto p-4">
         <div className="flex min-h-full min-w-max gap-3">
@@ -312,6 +366,8 @@ function BoardToolbar({
   clearFilters,
   openSettings,
   openAddTask,
+  fetchData,
+  loading,
 }: {
   query: string;
   setQuery: (value: string) => void;
@@ -327,6 +383,8 @@ function BoardToolbar({
   clearFilters: () => void;
   openSettings: () => void;
   openAddTask: () => void;
+  fetchData: () => Promise<void>;
+  loading: boolean;
 }) {
   return (
       <div className="border-b border-[#dfe3e8] bg-white px-5 py-3">
@@ -335,7 +393,7 @@ function BoardToolbar({
           <div className="flex items-center gap-2">
             <h1 className="text-[19px] font-black text-[#20242a]">Active Board</h1>
             <span className="rounded-full bg-[#edf0f5] px-2 py-0.5 text-[10px] font-black text-[#68707d]">4 statuses</span>
-            <span className="rounded-full bg-[#f3efff] px-2 py-0.5 text-[10px] font-black text-[#7b68ee]">{visibleTaskCount} cards</span>
+            <span className="rounded-full bg-[#f3efff] px-2 py-0.5 text-[10px] font-black text-[var(--primary-color)]">{visibleTaskCount} cards</span>
           </div>
           <p className="mt-0.5 text-xs font-semibold text-[#7c828d]">Sprint Backlog / Board view / grouped by status</p>
         </div>
@@ -344,11 +402,14 @@ function BoardToolbar({
             <Search size={14} className="text-[#8f96a3]" />
             <input value={query} onChange={(event) => setQuery(event.target.value)} className="min-w-0 flex-1 bg-transparent text-[12px] font-semibold outline-none placeholder:text-[#9aa1ad]" placeholder="Search cards..." />
           </div>
+          <button onClick={() => fetchData()} disabled={loading} className="flex h-8 items-center gap-1.5 rounded-[7px] border border-[#dfe3e8] bg-white px-3 text-xs font-black text-[#68707d] shadow-sm transition hover:bg-[#f7f8fb] focus:outline-none focus:ring-2 focus:ring-[#d7d1ff]">
+            {loading ? "Refreshing..." : "Refresh"}
+          </button>
           <button onClick={openSettings} className="flex h-8 items-center gap-1.5 rounded-[7px] border border-[#dfe3e8] bg-white px-3 text-xs font-black text-[#68707d] shadow-sm transition hover:bg-[#f7f8fb] focus:outline-none focus:ring-2 focus:ring-[#d7d1ff]">
             <SlidersHorizontal size={14} />
             Board settings
           </button>
-          <button onClick={openAddTask} className="rounded-[7px] bg-[#7b68ee] px-3.5 py-1.5 text-xs font-black text-white shadow-sm transition hover:bg-[#6d56ea] focus:outline-none focus:ring-2 focus:ring-[#d7d1ff]">Add task</button>
+          <button onClick={openAddTask} className="rounded-[7px] bg-[var(--primary-color)] px-3.5 py-1.5 text-xs font-black text-white shadow-sm transition hover:bg-[var(--primary-color)] focus:outline-none focus:ring-2 focus:ring-[#d7d1ff]">Add task</button>
         </div>
       </div>
       <div className="mt-3 flex flex-wrap gap-1">
@@ -359,7 +420,7 @@ function BoardToolbar({
         {(["All", "Urgent", "High", "Normal", "Low"] as Array<"All" | BoardTask["priority"]>).map((priority) => (
           <button key={priority} onClick={() => setPriorityFilter(priority)} className={`h-7 rounded-[7px] px-2.5 text-[11px] font-black ${priorityFilter === priority ? "border border-[#dfe3e8] bg-[#f7f8fb] text-[#20242a]" : "text-[#68707d] hover:bg-[#f7f8fb]"}`}>{priority}</button>
         ))}
-        {(query || priorityFilter !== "All" || hideDone) && <button onClick={clearFilters} className="h-7 rounded-[7px] px-2.5 text-[11px] font-black text-[#7b68ee] hover:bg-[#f3efff]">Clear</button>}
+        {(query || priorityFilter !== "All" || hideDone) && <button onClick={clearFilters} className="h-7 rounded-[7px] px-2.5 text-[11px] font-black text-[var(--primary-color)] hover:bg-[var(--primary-color)]">Clear</button>}
       </div>
     </div>
   );
@@ -410,7 +471,7 @@ function BoardLane({
           onDrop={(event) => onDrop(event, columnIndex)}
         >
           {column.tasks.map((task) => (
-            <TaskCard
+                  <TaskCard
               key={task.id}
               task={task}
               columnTone={column.tone}
@@ -420,7 +481,7 @@ function BoardLane({
               showSubtasks={showSubtasks}
               isComplete={completed.has(task.id)}
               toggleComplete={() => toggleComplete(task.id)}
-              openTask={() => openTask(task)}
+                  openTask={() => fetchTicketDetail(task.id)}
               onDragStart={(event) => onDragStart(event, task.id, columnIndex)}
               onDragEnd={onDragEnd}
             />

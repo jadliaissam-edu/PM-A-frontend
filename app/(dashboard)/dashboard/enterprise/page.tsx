@@ -4,6 +4,7 @@ import { type ReactNode, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { authService, type UserProfile } from "@/services/auth.service";
 import { dashboardService, type ActivityItem, type AssignedTask, type DashboardStats } from "@/services/dashboard.service";
+import { orgService, type Organization, type Workspace } from "@/services/org.service";
 import { Activity, CalendarDays, CheckCircle2, CirclePlus, FolderKanban, MoreHorizontal, Search, Star, Users, Workflow } from "lucide-react";
 
 type FocusItem = {
@@ -40,6 +41,8 @@ export default function EnterpriseDashboardPage() {
   const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [tasks, setTasks] = useState<AssignedTask[]>([]);
   const [loading, setLoading] = useState(true);
+  const [organizations, setOrganizations] = useState<Organization[]>([]);
+  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [search, setSearch] = useState("");
   const [panel, setPanel] = useState<DashboardPanel | null>(null);
   const [localFocusItems, setLocalFocusItems] = useState<FocusItem[]>(focusItems);
@@ -54,26 +57,35 @@ export default function EnterpriseDashboardPage() {
   const [doneUpcoming, setDoneUpcoming] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [profileData, statsData, activityData, taskData] = await Promise.all([
-          authService.getProfile(),
-          dashboardService.getStats(),
-          dashboardService.getRecentActivity(),
-          dashboardService.getAssignedTasks(),
-        ]);
-        setProfile(profileData);
-        setStats(statsData);
-        setActivities(activityData);
-        setTasks(taskData);
-      } catch (error) {
-        console.error("Failed to fetch dashboard data", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+    // fetchData is defined below and used on mount and via the Refresh button
     fetchData();
   }, []);
+
+  // fetchData: reusable loader for initial mount and manual refresh
+  async function fetchData() {
+    setLoading(true);
+    try {
+      const [profileData, statsData, activityData, taskData, orgsData, workspacesData] = await Promise.all([
+        authService.getProfile(),
+        dashboardService.getStats(),
+        dashboardService.getRecentActivity(),
+        dashboardService.getAssignedTasks(),
+        orgService.getOrganizations(),
+        orgService.getWorkspaces(),
+      ]);
+      setProfile(profileData);
+      setStats(statsData);
+      setActivities(activityData);
+      setTasks(taskData);
+      setOrganizations(orgsData || []);
+      setWorkspaces(workspacesData || []);
+    } catch (error) {
+      console.error("Failed to fetch dashboard data", error);
+      setNotice("Failed to load dashboard data.");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   const filteredFocusItems = localFocusItems.filter((item) => {
     const matchesSearch = `${item.title} ${item.id} ${item.owner} ${item.priority}`.toLowerCase().includes(search.toLowerCase());
@@ -120,17 +132,19 @@ export default function EnterpriseDashboardPage() {
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <h1 className="truncate text-[21px] font-black text-[#20242a]">Good morning, {profile?.username || "Aya"}</h1>
-              <span className="rounded-full bg-[#f3efff] px-2 py-0.5 text-[10px] font-black text-[#7b68ee]">Product workspace</span>
-            </div>
+          </div>
             <p className="mt-0.5 text-xs font-semibold text-[#7c828d]">A dense command center for active sprint delivery, review queues, and team activity.</p>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
             <div className="hidden h-8 w-64 items-center gap-2 rounded-[7px] border border-[#dfe3e8] bg-[#f7f8fb] px-2.5 xl:flex">
               <Search size={14} className="text-[#8f96a3]" />
               <input value={search} onChange={(event) => setSearch(event.target.value)} className="min-w-0 flex-1 bg-transparent text-[12px] font-semibold outline-none placeholder:text-[#9aa1ad]" placeholder="Search dashboard..." />
             </div>
+            <button onClick={() => fetchData()} disabled={loading} className="rounded-[7px] border border-[#dfe3e8] bg-white px-3 py-1.5 text-xs font-black text-[#68707d] shadow-sm transition hover:bg-[#f7f8fb] focus:outline-none focus:ring-2 focus:ring-[#d7d1ff]">
+              {loading ? "Refreshing..." : "Refresh"}
+            </button>
             <button onClick={() => setPanel("customize")} className="rounded-[7px] border border-[#dfe3e8] bg-white px-3 py-1.5 text-xs font-black text-[#68707d] shadow-sm transition hover:bg-[#f7f8fb] focus:outline-none focus:ring-2 focus:ring-[#d7d1ff]">Customize</button>
-            <button onClick={() => setPanel("task")} className="rounded-[7px] bg-[#7b68ee] px-3.5 py-1.5 text-xs font-black text-white shadow-sm transition hover:bg-[#6d56ea] focus:outline-none focus:ring-2 focus:ring-[#d7d1ff]">New task</button>
+            <button onClick={() => setPanel("task")} className="rounded-[7px] bg-[var(--primary-color)] px-3.5 py-1.5 text-xs font-black text-white shadow-sm transition hover:bg-[var(--primary-color-hover)] focus:outline-none focus:ring-2 focus:ring-[#d7d1ff]">New task</button>
           </div>
         </div>
         <div className="grid divide-y divide-[#edf0f3] md:grid-cols-4 md:divide-x md:divide-y-0">
@@ -185,49 +199,26 @@ export default function EnterpriseDashboardPage() {
           </Panel>
 
           <div className="grid gap-4 xl:grid-cols-2">
-            {isWidgetVisible("sprint") && <Panel title="Sprint pulse" icon={<Workflow size={16} />}>
-              <div className="grid gap-2">
-                {[
-                  { label: "Design review", value: "67%", bar: "w-[67%] bg-[#7b68ee]" },
-                  { label: "API integration", value: "42%", bar: "w-[42%] bg-[#1090e0]" },
-                  { label: "Auth polish", value: "81%", bar: "w-[81%] bg-[#00b884]" },
-                ].map((item) => (
-                  <div key={item.label} className="rounded-[8px] border border-[#edf0f3] bg-[#f7f8fb] p-3">
-                    <div className="mb-2 flex items-center justify-between">
-                      <p className="text-sm font-black text-[#20242a]">{item.label}</p>
-                      <span className="text-[10px] font-black text-[#8f96a3]">{item.value}</span>
-                    </div>
-                    <div className="h-1.5 rounded-full bg-[#e4e7ec]">
-                      <div className={`h-full rounded-full ${item.bar}`} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </Panel>}
-
-            {isWidgetVisible("team") && <Panel title="Team load" icon={<Users size={16} />}>
+            {/* Removed demo-only sprint and team widgets to keep dashboard focused. */}
+            <Panel title="Workspace overview" icon={<FolderKanban size={16} />}>
               <div className="space-y-2">
-                {[
-                  { initials: "AA", width: "w-[82%]", count: 5 },
-                  { initials: "MK", width: "w-[58%]", count: 3 },
-                  { initials: "YS", width: "w-[38%]", count: 2 },
-                  { initials: "HA", width: "w-[64%]", count: 4 },
-                ].map((member) => (
-                  <div key={member.initials} className="flex items-center gap-2 rounded-[8px] border border-[#edf0f3] bg-[#f7f8fb] px-3 py-2">
-                    <Avatar initials={member.initials} />
-                    <div className="min-w-0 flex-1">
-                      <div className="mb-1 flex items-center justify-between">
-                        <span className="text-xs font-black text-[#20242a]">{member.initials}</span>
-                        <span className="text-[10px] font-black text-[#8f96a3]">{member.count} tasks</span>
-                      </div>
-                      <div className="h-1.5 rounded-full bg-[#e4e7ec]">
-                        <div className={`h-full rounded-full bg-[#7b68ee] ${member.width}`} />
-                      </div>
+                <p className="text-sm font-black text-[#20242a]">Organization</p>
+                <div className="rounded-[8px] border border-[#edf0f3] bg-[#f7f8fb] p-3">
+                  <div className="mb-2 flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-black uppercase text-[#8f96a3]">Organization</p>
+                      <p className="mt-1 text-sm font-black text-[#20242a]">{organizations.length > 0 ? organizations[0].name : profile?.username || "Your organization"}</p>
                     </div>
+                    <button onClick={() => router.push("/orgs")} className="h-8 rounded-[7px] border border-[#dfe3e8] bg-white px-3 text-sm font-black text-[#68707d]">Open</button>
                   </div>
-                ))}
+                  <div className="grid grid-cols-3 gap-2">
+                    <button onClick={() => router.push("/workspaces")} className="rounded-[7px] border border-[#edf0f3] bg-white p-2 text-xs font-black">Workspaces ({workspaces.length})</button>
+                    <button onClick={() => router.push("/project")} className="rounded-[7px] border border-[#edf0f3] bg-white p-2 text-xs font-black">Projects ({stats?.total_projects ?? 0})</button>
+                    <button onClick={() => router.push(workspaces[0] ? `/workspaces/${workspaces[0].id}` : "/workspaces")} className="rounded-[7px] border border-[#edf0f3] bg-white p-2 text-xs font-black">Open workspace</button>
+                  </div>
+                </div>
               </div>
-            </Panel>}
+            </Panel>
           </div>
         </section>
 
@@ -242,7 +233,7 @@ export default function EnterpriseDashboardPage() {
                   else setPanel("view");
                 }} className="flex h-10 items-center justify-between rounded-[8px] border border-[#dfe3e8] bg-[#f7f8fb] px-3 text-left text-sm font-black text-[#20242a] transition hover:border-[#c8cdd4] hover:bg-white">
                   {action}
-                  <CirclePlus size={14} className="text-[#7b68ee]" />
+                  <CirclePlus size={14} className="text-[var(--primary-color)]" />
                 </button>
               ))}
             </div>
@@ -284,22 +275,22 @@ export default function EnterpriseDashboardPage() {
             {panel === "view" && <ViewPanel onOpen={(href) => { router.push(href); setPanel(null); }} />}
             {panel === "invite" && (
               <div className="space-y-3">
-                <input value={inviteEmail} onChange={(event) => setInviteEmail(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") inviteTeammate(); }} autoFocus placeholder="teammate@company.com" className="h-10 w-full rounded-[8px] border border-[#dfe3e8] bg-[#f7f8fb] px-3 text-sm font-semibold outline-none focus:border-[#7b68ee]" />
+                <input value={inviteEmail} onChange={(event) => setInviteEmail(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") inviteTeammate(); }} autoFocus placeholder="teammate@company.com" className="h-10 w-full rounded-[8px] border border-[#dfe3e8] bg-[#f7f8fb] px-3 text-sm font-semibold outline-none focus:border-[var(--primary-color)]" />
                 <div className="flex justify-end gap-2">
                   <button onClick={() => setPanel(null)} className="h-8 rounded-[7px] border border-[#dfe3e8] px-3 text-xs font-black text-[#68707d]">Cancel</button>
-                  <button onClick={inviteTeammate} className="h-8 rounded-[7px] bg-[#7b68ee] px-3.5 text-xs font-black text-white">Invite</button>
+                  <button onClick={inviteTeammate} className="h-8 rounded-[7px] bg-[var(--primary-color)] px-3.5 text-xs font-black text-white">Invite</button>
                 </div>
               </div>
             )}
             {panel === "task" && (
               <div className="space-y-3">
-                <input value={newTaskTitle} onChange={(event) => setNewTaskTitle(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") addLocalTask(); }} autoFocus placeholder="Task title" className="h-10 w-full rounded-[8px] border border-[#dfe3e8] bg-[#f7f8fb] px-3 text-sm font-semibold outline-none focus:border-[#7b68ee]" />
+                <input value={newTaskTitle} onChange={(event) => setNewTaskTitle(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") addLocalTask(); }} autoFocus placeholder="Task title" className="h-10 w-full rounded-[8px] border border-[#dfe3e8] bg-[#f7f8fb] px-3 text-sm font-semibold outline-none focus:border-[var(--primary-color)]" />
                 <div className="grid grid-cols-2 gap-2">
                   {["Assignee: You", "Status: To Do", "Due: Tomorrow", "Priority: Medium"].map((item) => <div key={item} className="rounded-[8px] border border-[#edf0f3] bg-[#f7f8fb] p-3 text-xs font-black text-[#68707d]">{item}</div>)}
                 </div>
                 <div className="flex justify-end gap-2">
                   <button onClick={() => setPanel(null)} className="h-8 rounded-[7px] border border-[#dfe3e8] px-3 text-xs font-black text-[#68707d]">Cancel</button>
-                  <button onClick={addLocalTask} className="h-8 rounded-[7px] bg-[#7b68ee] px-3.5 text-xs font-black text-white">Create</button>
+                  <button onClick={addLocalTask} className="h-8 rounded-[7px] bg-[var(--primary-color)] px-3.5 text-xs font-black text-white">Create</button>
                 </div>
               </div>
             )}
@@ -326,7 +317,7 @@ export default function EnterpriseDashboardPage() {
             ) : (
               <div className="rounded-[9px] border border-[#edf0f3] bg-[#f7f8fb] p-3 text-sm font-semibold leading-6 text-[#59606b]">{selectedActivity?.meta}</div>
             )}
-            <button onClick={() => router.push("/tickets")} className="mt-4 h-9 rounded-[7px] bg-[#7b68ee] px-4 text-sm font-black text-white">Open task list</button>
+            <button onClick={() => router.push("/tickets")} className="mt-4 h-9 rounded-[7px] bg-[var(--primary-color)] px-4 text-sm font-black text-white">Open task list</button>
           </aside>
         </div>
       )}
@@ -339,7 +330,7 @@ function Panel({ title, icon, action, children }: { title: string; icon: ReactNo
     <section className="rounded-[10px] border border-[#dfe3e8] bg-white p-3.5 shadow-sm">
       <div className="mb-3 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <div className="text-[#7b68ee]">{icon}</div>
+          <div className="text-[var(--primary-color)]">{icon}</div>
           <h2 className="text-sm font-black text-[#20242a]">{title}</h2>
         </div>
         {action}
@@ -392,7 +383,7 @@ function FocusTable({
       {items.map((item, index) => (
         <button key={item.id} onClick={() => onOpen(item)} className={`group grid h-10 grid-cols-[42px_minmax(280px,1fr)_126px_92px_92px_86px] items-center border-t border-[#edf0f3] text-left text-xs hover:bg-[#f5f7fa] ${index === 0 ? "bg-[#f3efff] shadow-[inset_4px_0_0_#7b68ee]" : "bg-white"}`}>
           <div className="flex h-full items-center justify-center border-r border-[#e5e7eb]">
-            <span onClick={(event) => { event.stopPropagation(); onToggleComplete(item.id); }} className={`flex h-4 w-4 items-center justify-center rounded-[3px] border ${completed.has(item.id) ? "border-[#7b68ee] bg-[#7b68ee] text-white" : "border-[#c8cdd4] bg-white text-transparent group-hover:border-[#7b68ee]"}`}>
+            <span onClick={(event) => { event.stopPropagation(); onToggleComplete(item.id); }} className={`flex h-4 w-4 items-center justify-center rounded-[3px] border ${completed.has(item.id) ? "border-[var(--primary-color)] bg-[var(--primary-color)] text-white" : "border-[#c8cdd4] bg-white text-transparent group-hover:border-[var(--primary-color)]"}`}>
               <CheckCircle2 size={12} />
             </span>
           </div>
@@ -499,7 +490,7 @@ function ViewPanel({ onOpen }: { onOpen: (href: string) => void }) {
       ].map((view) => (
         <button key={view.href} onClick={() => onOpen(view.href)} className="flex h-10 w-full items-center justify-between rounded-[8px] border border-[#edf0f3] bg-[#f7f8fb] px-3 text-sm font-black text-[#20242a] hover:bg-white">
           {view.label}
-          <span className="text-[#7b68ee]">Open</span>
+          <span className="text-[var(--primary-color)]">Open</span>
         </button>
       ))}
     </div>
@@ -533,5 +524,5 @@ function StatusPill({ status }: { status: FocusItem["status"] }) {
 }
 
 function Avatar({ initials }: { initials: string }) {
-  return <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#7b68ee] text-[10px] font-black text-white ring-2 ring-white">{initials}</span>;
+  return <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--primary-color)] text-[10px] font-black text-white ring-2 ring-white">{initials}</span>;
 }

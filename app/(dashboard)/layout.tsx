@@ -64,6 +64,63 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     authService.getProfile().then(setProfile).catch((error) => console.error("Failed to fetch dashboard profile", error));
   }, []);
 
+  // Apply user's preferred color (if provided in profile) as a CSS variable and theme-color meta
+  // Apply persisted appearance first (from localStorage) so user selections take effect immediately
+  useEffect(() => {
+    try {
+      if (typeof window === "undefined") return;
+      const storedAccent = localStorage.getItem("af:accent");
+      const storedDensity = localStorage.getItem("af:density");
+      if (storedAccent) {
+        document.documentElement.style.setProperty("--primary-color", storedAccent);
+        let meta = document.querySelector('meta[name="theme-color"]') as HTMLMetaElement | null;
+        if (!meta) {
+          meta = document.createElement("meta");
+          meta.name = "theme-color";
+          document.head.appendChild(meta);
+        }
+        meta.content = storedAccent;
+      }
+      if (storedDensity) {
+        document.documentElement.setAttribute("data-density", storedDensity.toLowerCase());
+      }
+    } catch (e) {
+      // ignore
+    }
+  }, []);
+
+  // Apply user's preferred color (if provided in profile) as a CSS variable and theme-color meta
+  useEffect(() => {
+    if (!profile) return;
+    // Try several common fields where a color might be stored
+    const pref = (profile as any).preferences_json || {};
+    // Prefer locally stored accent (user-set in UI) over profile values
+    const storedAccent = typeof window !== "undefined" ? localStorage.getItem("af:accent") : null;
+    const color = storedAccent || (profile as any).color || pref.primaryColor || pref.themeColor || pref.color || "[var(--primary-color)]";
+    try {
+      document.documentElement.style.setProperty("--primary-color", color);
+      document.documentElement.style.setProperty("--primary-color-hover", color);
+      let meta = document.querySelector('meta[name="theme-color"]') as HTMLMetaElement | null;
+      if (!meta) {
+        meta = document.createElement("meta");
+        meta.name = "theme-color";
+        document.head.appendChild(meta);
+      }
+      meta.content = color;
+    } catch (e) {
+      // ignore in non-browser environments
+    }
+    // also apply density preference from profile if local choice not present
+    try {
+      const storedDensity = typeof window !== "undefined" ? localStorage.getItem("af:density") : null;
+      const profileDensity = (pref && (pref.density || pref.workspaceDensity)) || null;
+      const densityToApply = storedDensity || profileDensity;
+      if (densityToApply) document.documentElement.setAttribute("data-density", densityToApply.toLowerCase());
+    } catch (e) {
+      // ignore
+    }
+  }, [profile]);
+
   const signOut = async () => {
     try {
       await authService.logout();
@@ -87,7 +144,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   };
 
   const avatar = profile?.username?.charAt(0).toUpperCase() || "A";
-  const avatarStyle = profile?.avatar_url ? { backgroundImage: `url(${profile.avatar_url})` } : undefined;
+  const avatarStyle = profile?.avatar_url ? { backgroundImage: `url(${profile.avatar_url})` } : ((profile && ((profile as any).color || (profile as any).preferences_json?.color)) ? { backgroundColor: (profile as any).color || (profile as any).preferences_json?.color } : undefined);
   const searchResults = [
     { label: "Overview", href: "/dashboard/enterprise", meta: "Workspace home" },
     { label: "Tasks", href: "/tickets", meta: "List view" },
@@ -133,7 +190,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         {!collapsed && (
           <div className="flex min-h-0 w-[288px] flex-col bg-[#f4f6fa]">
             <div ref={sidebarDropdownRef} className="relative flex h-[58px] shrink-0 items-center gap-2.5 border-b border-[#dfe3e8] px-3.5">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[9px] bg-[#7b68ee] text-[12px] font-black text-white">{avatar}</span>
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[9px] bg-[var(--primary-color)] text-[12px] font-black text-white">{avatar}</span>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-[13px] font-black leading-4 text-[#24272d]">AgileFlow</p>
                 <p className="truncate text-[11px] font-semibold leading-4 text-[#7b828f]">Free Forever</p>

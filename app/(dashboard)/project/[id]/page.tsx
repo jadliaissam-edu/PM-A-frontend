@@ -1,36 +1,56 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Activity, CheckCircle2, Gauge, Users } from "lucide-react";
 import { Avatar, Chip, GhostButton, Panel, PrimaryButton, WorkspaceHeader, WorkspacePage } from "@/components/workspace-ui";
+import { projectService, type ProjectSummary } from "@/services/project.service";
 
 export default function ProjectDashboardPage() {
   const params = useParams();
   const projectId = String(params.id || "commerce");
   const [dialog, setDialog] = useState<"settings" | "sprint" | null>(null);
   const [done, setDone] = useState<Set<string>>(new Set());
+  const [project, setProject] = useState<ProjectSummary | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      setLoading(true);
+      try {
+        const data = await projectService.getProjectById(projectId);
+        if (!mounted) return;
+        setProject(data);
+      } catch (e) {
+        console.error("Failed to load project", e);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    })();
+    return () => { mounted = false; };
+  }, [projectId]);
 
   return (
     <WorkspacePage>
       <WorkspaceHeader
-        title="Refonte E-commerce 2024"
+        title={project?.name || "Project"}
         subtitle={`Product / Projects / ${projectId}`}
-        badge="Stable"
+        badge={project?.status || "Stable"}
         actions={<><GhostButton onClick={() => setDialog("settings")}>Project settings</GhostButton><PrimaryButton onClick={() => setDialog("sprint")}>Launch sprint</PrimaryButton></>}
       />
 
       <section className="mb-4 grid gap-3 xl:grid-cols-4">
         {[
-          { title: "Progress", value: "68%", meta: "+12% this month", tone: "purple" as const },
-          { title: "Open tasks", value: "24", meta: "86 total", tone: "blue" as const },
-          { title: "Time left", value: "12d", meta: "deadline May 2", tone: "yellow" as const },
-          { title: "Velocity", value: "42", meta: "pts / sprint", tone: "green" as const },
+          { title: "Progress", value: project?.progress != null ? `${project.progress}%` : "—", meta: "+12% this month", tone: "purple" as const },
+          { title: "Open tasks", value: project?.issueCount != null ? String(project.issueCount) : "—", meta: project?.issueCount ? `${project.issueCount} total` : "", tone: "blue" as const },
+          { title: "Time left", value: project?.dueLabel || "—", meta: project?.dueLabel ? `deadline ${project.dueLabel}` : "", tone: "yellow" as const },
+          { title: "Velocity", value: project && (project as any).velocity != null ? String((project as any).velocity) : "—", meta: "pts / sprint", tone: "green" as const },
         ].map((item) => (
           <div key={item.title} className="rounded-[10px] border border-[#dfe3e8] bg-white p-3.5 shadow-sm">
             <div className="mb-3 flex items-center justify-between"><p className="text-[11px] font-black uppercase text-[#8f96a3]">{item.title}</p><Chip tone={item.tone}>{item.meta}</Chip></div>
             <p className="text-3xl font-black text-[#20242a]">{item.value}</p>
-            <div className="mt-3 h-1.5 rounded-full bg-[#e4e7ec]"><div className="h-full w-[68%] rounded-full bg-[#7b68ee]" /></div>
+            <div className="mt-3 h-1.5 rounded-full bg-[#e4e7ec]"><div className="h-full w-[68%] rounded-full bg-[var(--primary-color)]" style={{ width: project?.progress ? `${project.progress}%` : "0%" }} /></div>
           </div>
         ))}
       </section>
@@ -38,7 +58,15 @@ export default function ProjectDashboardPage() {
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_330px]">
         <Panel title="Recent activity" icon={<Activity size={16} />}>
           <div className="space-y-2">
-            {[
+            {project && (project as any).recent_activity ? (project as any).recent_activity.map((item: any) => (
+              <div key={item.text} className="flex items-center gap-3 rounded-[8px] border border-[#edf0f3] bg-[#f7f8fb] p-3">
+                <Avatar initials={item.user || (item.user_initials || "") } />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-black text-[#20242a]">{item.text}</p>
+                  <p className="text-xs font-semibold text-[#8f96a3]">{item.time}</p>
+                </div>
+              </div>
+            )) : [
               { user: "HT", text: "pushed 3 commits to feature/auth", time: "2h" },
               { user: "AP", text: "commented on ticket PM-12", time: "5h" },
               { user: "SN", text: "moved PM-88 into Done", time: "Yesterday" },
@@ -63,12 +91,12 @@ export default function ProjectDashboardPage() {
             </div>
           </Panel>
           <Panel title="Active members" icon={<Users size={16} />}>
-            <div className="flex -space-x-2">
-              {["HT", "AP", "SN", "JD"].map((member) => <Avatar key={member} initials={member} />)}
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#20242a] text-[10px] font-black text-white ring-2 ring-white">+12</span>
+              <div className="flex -space-x-2">
+              {project?.memberInitials && project.memberInitials.length > 0 ? project.memberInitials.slice(0,4).map((member) => <Avatar key={member} initials={member} />) : ["HT","AP","SN","JD"].map((member) => <Avatar key={member} initials={member} />)}
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#20242a] text-[10px] font-black text-white ring-2 ring-white">+{project && (project as any).member_count ? (project as any).member_count - (project.memberInitials ? project.memberInitials.length : 4) : 12}</span>
             </div>
             <div className="mt-4 flex items-center justify-between text-xs font-black text-[#68707d]"><span>Capacity</span><span>85%</span></div>
-            <div className="mt-1 h-1.5 rounded-full bg-[#e4e7ec]"><div className="h-full w-[85%] rounded-full bg-[#7b68ee]" /></div>
+            <div className="mt-1 h-1.5 rounded-full bg-[#e4e7ec]"><div className="h-full w-[85%] rounded-full bg-[var(--primary-color)]" style={{ width: project?.progress ? `${project.progress}%` : '0%' }} /></div>
           </Panel>
           <Panel title="Next actions" icon={<CheckCircle2 size={16} />}>
             <div className="space-y-2">
