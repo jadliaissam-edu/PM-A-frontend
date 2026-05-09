@@ -1,136 +1,199 @@
 "use client";
 
-import React, { useState } from "react";
-import { useAuthStore } from "@/store";
+import { useState } from "react";
+
+type BacklogItem = {
+  id: string;
+  title: string;
+  priority: "High" | "Medium" | "Low";
+  points: number;
+};
+
+type SprintItem = {
+  id: string;
+  title: string;
+  status: "In Progress" | "Done";
+  points: number;
+};
+
+const initialBacklog: BacklogItem[] = [
+  { id: "PM-101", title: "Payment API integration", priority: "High", points: 8 },
+  { id: "PM-102", title: "Mobile menu redesign", priority: "Medium", points: 3 },
+  { id: "PM-103", title: "Image loading optimization", priority: "Low", points: 2 },
+  { id: "PM-104", title: "Reports PDF export", priority: "High", points: 5 },
+];
+
+const sprintItems: SprintItem[] = [
+  { id: "PM-45", title: "MFA setup", status: "In Progress", points: 5 },
+  { id: "PM-48", title: "Enterprise dashboard", status: "Done", points: 13 },
+];
+
+const priorityStyle = {
+  High: "bg-red-50 text-red-600",
+  Medium: "bg-orange-50 text-orange-600",
+  Low: "bg-zinc-100 text-zinc-600",
+} as const;
 
 export default function SprintPlanningPage() {
-  const user = useAuthStore((state) => state.user);
   const [isSprintActive, setIsSprintActive] = useState(true);
+  const [backlog, setBacklog] = useState(initialBacklog);
+  const [notice, setNotice] = useState("");
+  const [createOpen, setCreateOpen] = useState(false);
 
-  // Example data
-  const backlogItems = [
-    { id: "PM-101", title: "Intégration API de paiement", priority: "High", points: 8 },
-    { id: "PM-102", title: "Refonte du menu mobile", priority: "Medium", points: 3 },
-    { id: "PM-103", title: "Optimisation des images", priority: "Low", points: 2 },
-    { id: "PM-104", title: "Export PDF des rapports", priority: "High", points: 5 },
-  ];
-
-  const activeSprintItems = [
-    { id: "PM-45", title: "Mise en place de MFA", status: "In Progress", points: 5 },
-    { id: "PM-48", title: "Dashboard Enterprise", status: "Done", points: 13 },
-  ];
+  const addBacklogItem = () => {
+    const nextNumber = backlog.length + 105;
+    setBacklog((items) => [
+      ...items,
+      {
+        id: `PM-${nextNumber}`,
+        title: "New backlog task",
+        priority: "Medium",
+        points: 3,
+      },
+    ]);
+    setNotice("Backlog item added locally.");
+  };
 
   return (
-    <main className="min-h-screen bg-zinc-100 p-8">
-      {/* Header */}
-      <div className="mb-8 flex items-center justify-between">
+    <main className="min-h-full bg-[#f7f8fb] p-4">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-zinc-900">Sprint & Backlog</h1>
-          <p className="text-sm text-zinc-500">Planifiez vos cycles de travail et gérez vos priorités</p>
+          <h1 className="text-[18px] font-black text-[#20242a]">Sprint & Backlog</h1>
+          <p className="text-xs font-medium text-[#7c828d]">Plan cycles, balance capacity, and keep upcoming work ready.</p>
         </div>
-        <div className="flex gap-3">
-          <button className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 transition">
-            Importer des tickets
+        <div className="flex gap-2">
+          <button
+            onClick={() => setNotice("Import preview opened locally. Backend import is not connected on this page.")}
+            className="rounded-[6px] border border-[#dfe3e8] bg-white px-3 py-1.5 text-xs font-bold text-[#68707d] transition hover:bg-[#f7f8fb]"
+          >
+            Import tickets
           </button>
-          <button className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 transition">
-            + Créer un sprint
+          <button
+            onClick={() => setCreateOpen(true)}
+            className="rounded-[6px] bg-[#7b68ee] px-3 py-1.5 text-xs font-bold text-white transition hover:bg-[#6a56e8]"
+          >
+            Create sprint
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-        {/* Left Column: Active Sprint or Empty State */}
-        <div className="space-y-6">
-          <div className="flex items-center justify-between items-baseline mb-2">
-            <h2 className="text-lg font-bold text-zinc-900">Sprint Actif</h2>
-            <span className="text-xs font-medium text-zinc-500">Cycle : 2 semaines</span>
+      {notice && (
+        <div className="mb-4 flex items-center justify-between rounded-[8px] border border-[#d7d1ff] bg-[#f3efff] px-3 py-2 text-xs font-black text-[#5f4bd8]">
+          <span>{notice}</span>
+          <button onClick={() => setNotice("")} className="text-[#7b68ee]">Dismiss</button>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <section className="space-y-3">
+          <div className="flex items-baseline justify-between">
+            <h2 className="text-sm font-black text-[#20242a]">Active sprint</h2>
+            <span className="text-xs font-semibold text-[#8f96a3]">2 week cycle</span>
           </div>
 
-          <div className="rounded-2xl bg-white p-6 shadow-md border border-zinc-200">
+          <div className="rounded-[8px] border border-[#dfe3e8] bg-white p-4 shadow-sm">
             {isSprintActive ? (
-              <div className="space-y-6">
-                <div className="flex items-center justify-between border-b border-zinc-100 pb-4">
+              <div className="space-y-5">
+                <div className="flex items-center justify-between border-b border-[#edf0f3] pb-3">
                   <div>
-                    <h3 className="font-bold text-zinc-900">Sprint 4 : Security & UI</h3>
-                    <p className="text-xs text-zinc-400 mt-1">12 - 26 Avril • 18 tickets restants</p>
+                    <h3 className="font-black text-[#20242a]">Sprint 4: Security & UI</h3>
+                    <p className="mt-1 text-xs font-medium text-[#8f96a3]">Apr 12 - Apr 26 · 18 tickets remaining</p>
                   </div>
-                  <button className="rounded-lg bg-zinc-100 px-3 py-1.5 text-xs font-bold text-zinc-900 hover:bg-zinc-200 transition">
-                    Terminer
+                  <button
+                    onClick={() => {
+                      setIsSprintActive(false);
+                      setNotice("Sprint completed locally.");
+                    }}
+                    className="rounded-[6px] bg-[#f3efff] px-3 py-1.5 text-xs font-bold text-[#7b68ee] transition hover:bg-[#ebe8ff]"
+                  >
+                    Complete
                   </button>
                 </div>
 
-                <div className="space-y-3">
-                  {activeSprintItems.map((item) => (
-                    <div key={item.id} className="group flex items-center justify-between bg-zinc-50 rounded-xl p-3 border border-transparent hover:border-zinc-200 transition cursor-pointer">
-                      <div className="flex items-center gap-3">
-                        <span className="text-[10px] font-mono font-bold text-zinc-400">{item.id}</span>
-                        <p className="text-sm font-medium text-zinc-900">{item.title}</p>
-                      </div>
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${item.status === 'Done' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
+                <div className="space-y-2">
+                  {sprintItems.map((item) => (
+                    <button key={item.id} onClick={() => setNotice(`${item.id} selected.`)} className="group flex w-full items-center justify-between rounded-[7px] border border-transparent bg-[#f7f8fb] p-2.5 text-left transition hover:border-[#dfe3e8] hover:bg-white">
+                      <span className="flex min-w-0 items-center gap-3">
+                        <span className="text-[10px] font-bold text-[#8f96a3]">{item.id}</span>
+                        <span className="truncate text-sm font-semibold text-[#20242a]">{item.title}</span>
+                      </span>
+                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${item.status === "Done" ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"}`}>
                         {item.status}
                       </span>
-                    </div>
+                    </button>
                   ))}
                 </div>
 
-                <div className="pt-2">
-                  <div className="flex justify-between text-xs mb-1.5">
-                    <span className="text-zinc-500">Progression globale</span>
-                    <span className="font-bold text-zinc-900">45%</span>
+                <div className="pt-1">
+                  <div className="mb-1.5 flex justify-between text-xs">
+                    <span className="font-semibold text-[#68707d]">Sprint progress</span>
+                    <span className="font-black text-[#20242a]">45%</span>
                   </div>
-                  <div className="h-1.5 w-full bg-zinc-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-zinc-900 w-[45%]"></div>
+                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#edf0f3]">
+                    <div className="h-full w-[45%] bg-[#7b68ee]" />
                   </div>
                 </div>
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center py-12">
-                <span className="text-4xl mb-4">🧊</span>
-                <p className="text-sm font-medium text-zinc-700">Aucun sprint actif</p>
-                <p className="text-xs text-zinc-500 mt-1">Faites glisser des tickets depuis le backlog pour démarrer.</p>
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <span className="mb-3 flex h-10 w-10 items-center justify-center rounded-[10px] bg-[#f3efff] text-sm font-black text-[#7b68ee]">SP</span>
+                <p className="text-sm font-black text-[#20242a]">No active sprint</p>
+                <p className="mt-1 text-xs font-medium text-[#8f96a3]">Create a sprint or pull tasks from the backlog to start planning.</p>
               </div>
             )}
           </div>
-        </div>
+        </section>
 
-        {/* Right Column: Backlog */}
-        <div className="space-y-6">
-          <div className="flex items-center justify-between items-baseline mb-2">
-            <h2 className="text-lg font-bold text-zinc-900">Backlog de Produit</h2>
-            <span className="text-xs font-medium text-zinc-500">{backlogItems.length} items</span>
+        <section className="space-y-3">
+          <div className="flex items-baseline justify-between">
+            <h2 className="text-sm font-black text-[#20242a]">Product backlog</h2>
+            <span className="text-xs font-semibold text-[#8f96a3]">{backlog.length} items</span>
           </div>
 
-          <div className="rounded-2xl bg-zinc-200/50 p-4 space-y-3 min-h-[500px]">
-            {backlogItems.map((item) => (
-              <div key={item.id} className="bg-white rounded-xl p-4 shadow-sm border border-zinc-200 hover:shadow-md transition cursor-grab active:cursor-grabbing">
-                <div className="flex justify-between items-start mb-2">
-                  <span className="text-[10px] font-mono font-bold text-zinc-400">{item.id}</span>
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${item.priority === 'High' ? 'bg-red-50 text-red-600' :
-                      item.priority === 'Medium' ? 'bg-orange-50 text-orange-600' :
-                        'bg-zinc-100 text-zinc-600'
-                    }`}>
+          <div className="min-h-[420px] space-y-2 rounded-[8px] border border-[#dfe3e8] bg-[#eef0f4] p-3">
+            {backlog.map((item) => (
+              <button key={item.id} onClick={() => setNotice(`${item.id} selected.`)} className="w-full cursor-pointer rounded-[7px] border border-[#dfe3e8] bg-white p-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                <div className="mb-2 flex items-start justify-between gap-3">
+                  <span className="text-[10px] font-bold text-[#8f96a3]">{item.id}</span>
+                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${priorityStyle[item.priority]}`}>
                     {item.priority}
                   </span>
                 </div>
-                <p className="text-sm font-semibold text-zinc-900">{item.title}</p>
+                <p className="text-sm font-bold text-[#20242a]">{item.title}</p>
                 <div className="mt-4 flex items-center justify-between">
-                  <div className="flex -space-x-1.5">
-                    <div className="h-5 w-5 rounded-full bg-zinc-100 ring-2 ring-white flex items-center justify-center text-[10px] font-bold text-zinc-600">
-                      JS
-                    </div>
-                  </div>
-                  <span className="text-[10px] font-bold text-zinc-400 bg-zinc-50 px-1.5 py-0.5 rounded">
-                    {item.points} pts
-                  </span>
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-zinc-100 text-[10px] font-bold text-zinc-600 ring-2 ring-white">JS</span>
+                  <span className="rounded bg-zinc-50 px-1.5 py-0.5 text-[10px] font-bold text-zinc-400">{item.points} pts</span>
                 </div>
-              </div>
+              </button>
             ))}
-            <button className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-zinc-300 rounded-xl text-sm font-medium text-zinc-500 hover:border-zinc-900 hover:text-zinc-900 transition mt-2">
-              + Ajouter au backlog
+            <button onClick={addBacklogItem} className="mt-2 flex w-full items-center justify-center gap-2 rounded-[8px] border border-dashed border-zinc-300 py-3 text-sm font-black text-zinc-500 transition hover:border-[#7b68ee] hover:bg-white hover:text-[#7b68ee]">
+              Add backlog item
             </button>
           </div>
-        </div>
+        </section>
       </div>
+
+      {createOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#20242a]/35 px-4 backdrop-blur-sm" onMouseDown={() => setCreateOpen(false)}>
+          <section onMouseDown={(event) => event.stopPropagation()} className="w-full max-w-sm rounded-[12px] border border-[#dfe3e8] bg-white p-4 shadow-2xl">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-base font-black text-[#20242a]">Create sprint</h2>
+              <button onClick={() => setCreateOpen(false)} className="h-7 w-7 rounded-[7px] bg-[#f7f8fb] text-sm font-black text-[#68707d]">x</button>
+            </div>
+            <p className="mb-4 text-sm font-medium text-[#68707d]">Sprint creation is local on this page. Backend persistence is not connected.</p>
+            <button
+              onClick={() => {
+                setIsSprintActive(true);
+                setCreateOpen(false);
+                setNotice("Sprint created locally.");
+              }}
+              className="h-9 w-full rounded-[7px] bg-[#7b68ee] text-xs font-black text-white"
+            >
+              Start local sprint
+            </button>
+          </section>
+        </div>
+      )}
     </main>
   );
 }

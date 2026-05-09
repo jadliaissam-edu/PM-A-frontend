@@ -1,363 +1,146 @@
 import Link from "next/link";
-import {
-  ArrowRight,
-  BarChart3,
-  CheckCircle2,
-  Clock3,
-  Layers3,
-  ShieldCheck,
-  Sparkles,
-  Users,
-} from "lucide-react";
+import { ArrowRight, BarChart3, CalendarDays, CheckCircle2, Layers3, MessageSquare, PanelsTopLeft, Search, ShieldCheck } from "lucide-react";
 
-const pillars = [
-  {
-    title: "Plan with clarity",
-    description:
-      "Create roadmaps, break work into delivery streams, and keep stakeholders aligned.",
-    icon: Layers3,
-  },
-  {
-    title: "Track execution",
-    description:
-      "Move from backlog to active delivery with issue views, boards, and team ownership.",
-    icon: CheckCircle2,
-  },
-  {
-    title: "Report progress",
-    description:
-      "Surface sprint health, workload balance, and release readiness without extra busywork.",
-    icon: BarChart3,
-  },
+const columns = [
+  { title: "TO DO", color: "bg-[#87909e]", tasks: ["Plan import mapping", "Review auth states"] },
+  { title: "IN PROGRESS", color: "bg-[#1090e0]", tasks: ["Polish list density", "Update workspace shell"] },
+  { title: "REVIEW", color: "bg-[#f8ae00]", tasks: ["Board fidelity pass"] },
 ];
 
-const highlights = [
-  "Project spaces for delivery teams",
-  "Auth and MFA ready frontend flows",
-  "Board, issue, and reporting foundations",
-  "API-ready service layer for backend integration",
+const views = [
+  { href: "/tickets", icon: <CheckCircle2 size={18} />, title: "List", text: "Dense grouped tasks with real PM-tool hierarchy." },
+  { href: "/Board/kanban", icon: <PanelsTopLeft size={18} />, title: "Board", text: "Status lanes, cards, metadata, and drag cues." },
+  { href: "/Board/Timeline", icon: <CalendarDays size={18} />, title: "Timeline", text: "Planning bands, milestones, and release timing." },
+  { href: "/reports", icon: <BarChart3 size={18} />, title: "Reports", text: "Velocity, workload, and delivery health surfaces." },
 ];
 
-const stats = [
-  { label: "Teams", value: "24" },
-  { label: "Open issues", value: "186" },
-  { label: "Sprint velocity", value: "92%" },
+const productRoutes = [
+  { href: "/dashboard/enterprise", label: "Workspace home", meta: "Dashboard" },
+  { href: "/project", label: "Projects", meta: "Portfolio" },
+  { href: "/release", label: "Releases", meta: "Delivery" },
+  { href: "/chat", label: "Team chat", meta: "Collaboration" },
 ];
 
 export default function LandingPage() {
   return (
-    <main className="min-h-screen overflow-hidden bg-[var(--background)] text-slate-950">
-      <div className="absolute inset-x-0 top-0 -z-10 h-[34rem] bg-[radial-gradient(circle_at_top_left,_rgba(245,158,11,0.18),_transparent_42%),radial-gradient(circle_at_top_right,_rgba(20,184,166,0.2),_transparent_38%),linear-gradient(180deg,_#fffdf8_0%,_#f5f7fb_72%,_#eef3f8_100%)]" />
-
-      <header className="mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-6 lg:px-8">
-        <Link href="/" className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-950 text-sm font-semibold text-white">
-            AF
-          </div>
+    <main className="min-h-screen bg-[#f7f8fb] text-[#20242a]">
+      <header className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
+        <Link href="/" className="flex items-center gap-2">
+          <span className="grid h-9 w-9 grid-cols-2 gap-0.5 rounded-[10px] bg-[#24113f] p-2">
+            <span className="rounded-[2px] bg-[#7b68ee]" />
+            <span className="rounded-[2px] bg-[#ffcc00]" />
+            <span className="rounded-[2px] bg-[#00b884]" />
+            <span className="rounded-[2px] bg-[#1090e0]" />
+          </span>
           <div>
-            <p className="text-base font-semibold">AgileFlow</p>
-            <p className="text-xs text-slate-500">Project delivery workspace</p>
+            <p className="text-sm font-black">AgileFlow</p>
+            <p className="text-[11px] font-bold text-[#7c828d]">Project workspace</p>
           </div>
         </Link>
-
-        <nav className="hidden items-center gap-8 text-sm text-slate-600 md:flex">
-          <a href="#product" className="transition hover:text-slate-950">
-            Product
-          </a>
-          <a href="#workflow" className="transition hover:text-slate-950">
-            Workflow
-          </a>
-          <a href="#reports" className="transition hover:text-slate-950">
-            Reports
-          </a>
+        <nav className="hidden items-center gap-6 text-sm font-bold text-[#68707d] md:flex">
+          <Link href="#workspace" className="hover:text-[#20242a]">Workspace</Link>
+          <Link href="#views" className="hover:text-[#20242a]">Views</Link>
+          <Link href="#security" className="hover:text-[#20242a]">Security</Link>
         </nav>
-
-        <div className="flex items-center gap-3">
-          <Link
-            href="/login"
-            className="rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-950 hover:text-slate-950"
-          >
-            Sign in
-          </Link>
-          <Link
-            href="/register"
-            className="rounded-full bg-slate-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
-          >
-            Start free
-          </Link>
+        <div className="flex items-center gap-2">
+          <Link href="/login" className="h-8 rounded-[7px] border border-[#dfe3e8] bg-white px-3 py-2 text-xs font-black text-[#68707d] shadow-sm transition hover:bg-[#f7f8fb] focus:outline-none focus:ring-2 focus:ring-[#d7d1ff]">Sign in</Link>
+          <Link href="/register" className="h-8 rounded-[7px] bg-[#7b68ee] px-3.5 py-2 text-xs font-black text-white shadow-sm transition hover:bg-[#6d56ea] focus:outline-none focus:ring-2 focus:ring-[#d7d1ff]">Start free</Link>
         </div>
       </header>
 
-      <section className="mx-auto grid w-full max-w-7xl gap-12 px-6 pb-16 pt-8 lg:grid-cols-[1.15fr_0.85fr] lg:px-8 lg:pb-24 lg:pt-14">
-        <div className="max-w-3xl">
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-amber-200 bg-white/80 px-4 py-2 text-sm text-slate-700 shadow-sm backdrop-blur">
-            <Sparkles size={16} className="text-amber-500" />
-            Graduation project frontend for modern delivery teams
-          </div>
-
-          <h1 className="max-w-4xl text-5xl font-semibold tracking-tight text-slate-950 md:text-6xl">
-            Coordinate projects, issues, and sprints in one structured workspace.
-          </h1>
-
-          <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-600">
-            AgileFlow gives product, engineering, and admin teams a shared frontend
-            for planning, execution, authentication, and reporting. The structure is
-            inspired by proven Jira workflows, but the interface stays clean, calm,
-            and original.
-          </p>
-
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Link
-              href="/register"
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-slate-950 px-6 py-3 text-sm font-medium text-white transition hover:bg-slate-800"
-            >
-              Create account
+      <section className="mx-auto grid max-w-7xl gap-8 px-6 py-10 xl:grid-cols-[0.92fr_1.08fr] xl:py-16">
+        <div className="self-center">
+          <span className="inline-flex h-7 items-center rounded-full border border-[#d7d1ff] bg-[#f3efff] px-3 text-xs font-black text-[#7b68ee]">ClickUp-inspired delivery workspace</span>
+          <h1 className="mt-5 max-w-3xl text-4xl font-black tracking-tight text-[#20242a] md:text-6xl">Plan, track, and ship work in one compact product surface.</h1>
+          <p className="mt-5 max-w-2xl text-base font-semibold leading-8 text-[#68707d]">AgileFlow brings project dashboards, task lists, boards, timelines, reports, imports, audit logs, chat, and settings into one coherent PM workspace.</p>
+          <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+            <Link href="/register" className="inline-flex h-10 items-center justify-center gap-2 rounded-[8px] bg-[#7b68ee] px-5 text-sm font-black text-white shadow-sm transition hover:bg-[#6d56ea] focus:outline-none focus:ring-2 focus:ring-[#d7d1ff]">
+              Create workspace
               <ArrowRight size={16} />
             </Link>
-            <Link
-              href="/dashboard"
-              className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-6 py-3 text-sm font-medium text-slate-700 transition hover:border-slate-950 hover:text-slate-950"
-            >
-              View workspace preview
-            </Link>
+            <Link href="/dashboard/enterprise" className="inline-flex h-10 items-center justify-center rounded-[8px] border border-[#dfe3e8] bg-white px-5 text-sm font-black text-[#68707d] shadow-sm transition hover:bg-[#f7f8fb] focus:outline-none focus:ring-2 focus:ring-[#d7d1ff]">View dashboard</Link>
           </div>
-
-          <div className="mt-10 grid gap-3 sm:grid-cols-2">
-            {highlights.map((item) => (
-              <div
-                key={item}
-                className="rounded-2xl border border-white/70 bg-white/70 px-4 py-4 text-sm text-slate-700 shadow-sm backdrop-blur"
-              >
-                {item}
-              </div>
+          <div className="mt-5 grid max-w-xl grid-cols-2 gap-2 sm:grid-cols-4">
+            {productRoutes.map((route) => (
+              <Link key={route.href} href={route.href} className="rounded-[8px] border border-[#dfe3e8] bg-white px-3 py-2 shadow-sm transition hover:-translate-y-0.5 hover:border-[#d7d1ff] hover:bg-[#f3efff]">
+                <p className="truncate text-[11px] font-black text-[#20242a]">{route.label}</p>
+                <p className="text-[10px] font-bold text-[#8f96a3]">{route.meta}</p>
+              </Link>
             ))}
           </div>
         </div>
 
-        <div className="rounded-[2rem] border border-white/70 bg-white/80 p-4 shadow-[0_30px_90px_rgba(15,23,42,0.14)] backdrop-blur">
-          <div className="rounded-[1.6rem] border border-slate-200 bg-slate-950 p-5 text-white">
-            <div className="flex items-center justify-between border-b border-white/10 pb-4">
-              <div>
-                <p className="text-sm text-slate-300">Delivery center</p>
-                <h2 className="text-xl font-semibold">Platform migration</h2>
-              </div>
-              <span className="rounded-full bg-white/10 px-3 py-1 text-xs text-slate-200">
-                Sprint 08
-              </span>
+        <div id="workspace" className="rounded-[14px] border border-[#dfe3e8] bg-white shadow-[0_30px_90px_rgba(31,35,43,0.14)]">
+          <div className="flex h-12 items-center justify-between border-b border-[#dfe3e8] px-4">
+            <div className="flex items-center gap-2">
+              <span className="h-3 w-3 rounded-full bg-[#7b68ee]" />
+              <span className="text-sm font-black">Sprint Backlog</span>
+              <span className="rounded-[5px] border border-[#e1e4e8] bg-[#f7f8fb] px-2 py-0.5 text-[10px] font-bold text-[#8f96a3]">Private</span>
             </div>
-
-            <div className="mt-5 grid gap-4 sm:grid-cols-3">
-              {stats.map((item) => (
-                <div key={item.label} className="rounded-2xl bg-white/5 p-4">
-                  <p className="text-xs uppercase tracking-[0.18em] text-slate-400">
-                    {item.label}
-                  </p>
-                  <p className="mt-2 text-2xl font-semibold">{item.value}</p>
+            <Link href="/tickets" className="hidden h-8 w-72 items-center gap-2 rounded-[7px] border border-[#dfe3e8] bg-[#f7f8fb] px-2.5 transition hover:bg-white md:flex">
+              <Search size={14} className="text-[#8f96a3]" />
+              <span className="text-xs font-semibold text-[#9aa1ad]">Search or jump to...</span>
+            </Link>
+          </div>
+          <div className="grid gap-3 bg-[#f7f8fb] p-4 md:grid-cols-3">
+            {columns.map((column) => (
+              <div key={column.title} className="rounded-[10px] border border-[#dfe3e8] bg-[#eef0f4] p-2">
+                <div className="mb-2 flex h-8 items-center justify-between rounded-[8px] border border-[#dfe3e8] bg-white px-2">
+                  <div className="flex items-center gap-2"><span className={`h-2.5 w-2.5 rounded-[3px] ${column.color}`} /><span className="text-[11px] font-black">{column.title}</span></div>
+                  <span className="rounded-full bg-[#eef0f4] px-2 text-[10px] font-black text-[#68707d]">{column.tasks.length}</span>
                 </div>
-              ))}
-            </div>
-
-            <div className="mt-5 rounded-[1.4rem] bg-white p-4 text-slate-900">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-semibold">Sprint board snapshot</p>
-                  <p className="text-xs text-slate-500">
-                    Backlog, active work, review, and done status at a glance
-                  </p>
+                <div className="space-y-2">
+                  {column.tasks.map((task) => (
+                    <div key={task} className="rounded-[8px] border border-[#dfe3e8] bg-white p-3 shadow-sm">
+                      <p className="text-xs font-black">{task}</p>
+                      <div className="mt-3 flex items-center justify-between"><span className="rounded-[4px] bg-[#f7f8fb] px-1.5 py-0.5 text-[10px] font-black text-[#8f96a3]">PM</span><span className="h-6 w-6 rounded-full bg-[#7b68ee]" /></div>
+                    </div>
+                  ))}
                 </div>
-                <Clock3 size={18} className="text-slate-400" />
               </div>
-
-              <div className="mt-4 grid gap-3 md:grid-cols-3">
-                <BoardColumn
-                  title="Backlog"
-                  tone="bg-amber-50 text-amber-700"
-                  items={["Landing page polish", "Issue detail states"]}
-                />
-                <BoardColumn
-                  title="In progress"
-                  tone="bg-sky-50 text-sky-700"
-                  items={["Auth route cleanup", "Dashboard move"]}
-                />
-                <BoardColumn
-                  title="Done"
-                  tone="bg-emerald-50 text-emerald-700"
-                  items={["API client setup", "Validation baseline"]}
-                />
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </section>
 
-      <section
-        id="product"
-        className="mx-auto grid w-full max-w-7xl gap-6 px-6 py-16 lg:grid-cols-3 lg:px-8"
-      >
-        {pillars.map((pillar) => {
-          const Icon = pillar.icon;
-
-          return (
-            <article
-              key={pillar.title}
-              className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-sm"
-            >
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-950 text-white">
-                <Icon size={20} />
-              </div>
-              <h2 className="mt-5 text-xl font-semibold text-slate-950">
-                {pillar.title}
-              </h2>
-              <p className="mt-3 text-sm leading-7 text-slate-600">
-                {pillar.description}
-              </p>
-            </article>
-          );
-        })}
-      </section>
-
-      <section
-        id="workflow"
-        className="mx-auto grid w-full max-w-7xl gap-8 px-6 py-8 lg:grid-cols-[0.95fr_1.05fr] lg:px-8"
-      >
-        <div className="rounded-[2rem] border border-slate-200 bg-[#fff7ed] p-8">
-          <p className="text-sm font-medium uppercase tracking-[0.22em] text-amber-700">
-            Workflow
-          </p>
-          <h2 className="mt-4 text-3xl font-semibold text-slate-950">
-            Keep every role inside one coherent system.
-          </h2>
-          <p className="mt-4 text-sm leading-7 text-slate-600">
-            Public pages attract users, auth pages secure access, and workspace views
-            handle projects, tickets, boards, reports, and settings without breaking
-            the navigation model.
-          </p>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-2">
-          <FeatureTile
-            icon={<Users size={18} />}
-            title="Team workspaces"
-            description="Separate views for contributors, project leads, and admins."
-          />
-          <FeatureTile
-            icon={<ShieldCheck size={18} />}
-            title="Secure onboarding"
-            description="Login, registration, password recovery, and MFA-ready flows."
-          />
-          <FeatureTile
-            icon={<Layers3 size={18} />}
-            title="Project structure"
-            description="Support backlog, sprint planning, board work, and issue detail."
-          />
-          <FeatureTile
-            icon={<BarChart3 size={18} />}
-            title="Report visibility"
-            description="Prepare the frontend for productivity and delivery analytics."
-          />
-        </div>
-      </section>
-
-      <section
-        id="reports"
-        className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-6 py-16 lg:px-8"
-      >
-        <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
+      <section id="views" className="mx-auto max-w-7xl px-6 py-10">
+        <div className="mb-4 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
           <div>
-            <p className="text-sm font-medium uppercase tracking-[0.22em] text-teal-700">
-              Ready for integration
-            </p>
-            <h2 className="mt-3 text-3xl font-semibold text-slate-950">
-              Frontend architecture prepared for backend growth.
-            </h2>
+            <h2 className="text-2xl font-black text-[#20242a]">Workspace views that match the app</h2>
+            <p className="mt-1 text-sm font-semibold text-[#68707d]">Every card below opens the matching dashboard route.</p>
           </div>
-          <Link
-            href="/login"
-            className="inline-flex items-center gap-2 text-sm font-medium text-slate-700 transition hover:text-slate-950"
-          >
-            Explore authentication
-            <ArrowRight size={16} />
-          </Link>
+          <Link href="/tickets" className="inline-flex h-9 items-center justify-center rounded-[8px] border border-[#dfe3e8] bg-white px-4 text-xs font-black text-[#68707d] shadow-sm hover:bg-[#f7f8fb]">Open task list</Link>
         </div>
+        <div className="grid gap-4 md:grid-cols-4">
+        {views.map((item) => (
+          <Link href={item.href} key={item.title} className="rounded-[10px] border border-[#dfe3e8] bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-[#d7d1ff] hover:shadow-md">
+            <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-[8px] bg-[#f3efff] text-[#7b68ee]">{item.icon}</div>
+            <h2 className="text-sm font-black">{item.title}</h2>
+            <p className="mt-2 text-xs font-semibold leading-5 text-[#68707d]">{item.text}</p>
+          </Link>
+        ))}
+        </div>
+      </section>
 
-        <div className="grid gap-4 lg:grid-cols-3">
-          <InfoCard
-            title="React Query provider"
-            description="Shared async state foundation is already in place for server data."
-          />
-          <InfoCard
-            title="Zod form validation"
-            description="Auth inputs already validate cleanly and can grow with backend rules."
-          />
-          <InfoCard
-            title="Typed service layer"
-            description="Axios services and shared types can expand without changing route UX."
-          />
+      <section id="security" className="mx-auto max-w-7xl px-6 pb-16">
+        <div className="rounded-[12px] border border-[#dfe3e8] bg-white p-5 shadow-sm">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center">
+            <div className="flex h-10 w-10 items-center justify-center rounded-[9px] bg-[#ecfff6] text-[#00b884]"><ShieldCheck size={20} /></div>
+            <div className="min-w-0">
+              <h2 className="text-lg font-black">Frontend ready for secure integration</h2>
+              <p className="text-sm font-semibold text-[#68707d]">Auth flows, typed services, validation, and dashboard surfaces are prepared for backend growth.</p>
+            </div>
+            <div className="hidden items-center gap-2 md:ml-auto md:flex">
+              <Layers3 size={16} className="text-[#7b68ee]" />
+              <span className="text-xs font-black text-[#8f96a3]">Workspace-grade UI</span>
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row md:ml-4">
+              <Link href="/register" className="inline-flex h-9 items-center justify-center rounded-[8px] bg-[#7b68ee] px-4 text-xs font-black text-white shadow-sm hover:bg-[#6d56ea]">Start free</Link>
+              <Link href="/chat" className="inline-flex h-9 items-center justify-center gap-1 rounded-[8px] border border-[#dfe3e8] bg-white px-4 text-xs font-black text-[#68707d] shadow-sm hover:bg-[#f7f8fb]"><MessageSquare size={13} /> See chat</Link>
+            </div>
+          </div>
         </div>
       </section>
     </main>
-  );
-}
-
-function BoardColumn({
-  title,
-  tone,
-  items,
-}: {
-  title: string;
-  tone: string;
-  items: string[];
-}) {
-  return (
-    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
-      <div className="flex items-center justify-between">
-        <p className="text-sm font-semibold text-slate-800">{title}</p>
-        <span className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${tone}`}>
-          {items.length} items
-        </span>
-      </div>
-      <div className="mt-3 space-y-2">
-        {items.map((item) => (
-          <div key={item} className="rounded-xl bg-white px-3 py-3 text-sm text-slate-700">
-            {item}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function FeatureTile({
-  icon,
-  title,
-  description,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-}) {
-  return (
-    <article className="rounded-[1.6rem] border border-slate-200 bg-white p-6 shadow-sm">
-      <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-100 text-slate-900">
-        {icon}
-      </div>
-      <h3 className="mt-4 text-lg font-semibold text-slate-950">{title}</h3>
-      <p className="mt-2 text-sm leading-7 text-slate-600">{description}</p>
-    </article>
-  );
-}
-
-function InfoCard({
-  title,
-  description,
-}: {
-  title: string;
-  description: string;
-}) {
-  return (
-    <article className="rounded-[1.6rem] border border-slate-200 bg-white p-6 shadow-sm">
-      <h3 className="text-lg font-semibold text-slate-950">{title}</h3>
-      <p className="mt-3 text-sm leading-7 text-slate-600">{description}</p>
-    </article>
   );
 }

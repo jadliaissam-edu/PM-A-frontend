@@ -1,147 +1,103 @@
 "use client";
 
-import React from "react";
 import { useParams } from "next/navigation";
+import { useState } from "react";
+import { Activity, CheckCircle2, Gauge, Users } from "lucide-react";
+import { Avatar, Chip, GhostButton, Panel, PrimaryButton, WorkspaceHeader, WorkspacePage } from "@/components/workspace-ui";
 
 export default function ProjectDashboardPage() {
   const params = useParams();
-  const projectId = params.id || "123";
+  const projectId = String(params.id || "commerce");
+  const [dialog, setDialog] = useState<"settings" | "sprint" | null>(null);
+  const [done, setDone] = useState<Set<string>>(new Set());
 
   return (
-    <main className="min-h-screen bg-zinc-100 p-8">
-      {/* Header */}
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Projet #{projectId}</span>
-            <span className="h-1.5 w-1.5 rounded-full bg-green-500"></span>
-            <span className="text-[10px] font-bold text-green-600 uppercase">Santé : Stable</span>
-          </div>
-          <h1 className="text-3xl font-bold text-zinc-900">Refonte E-commerce 2024</h1>
-          <p className="text-sm text-zinc-500 mt-1">Développement du frontend et intégration Stripe</p>
-        </div>
-        <div className="flex gap-3">
-          <button className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 transition">
-            Paramètres du projet
-          </button>
-          <button className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 transition">
-            Lancer un Sprint
-          </button>
-        </div>
-      </div>
+    <WorkspacePage>
+      <WorkspaceHeader
+        title="Refonte E-commerce 2024"
+        subtitle={`Product / Projects / ${projectId}`}
+        badge="Stable"
+        actions={<><GhostButton onClick={() => setDialog("settings")}>Project settings</GhostButton><PrimaryButton onClick={() => setDialog("sprint")}>Launch sprint</PrimaryButton></>}
+      />
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
-        {/* Main Stats Row */}
-        <div className="rounded-2xl bg-white p-6 shadow-sm border border-zinc-200">
-          <p className="text-xs font-bold text-zinc-400 uppercase">Avancement global</p>
-          <div className="mt-4 flex items-end justify-between">
-            <span className="text-4xl font-bold text-zinc-900">68%</span>
-            <span className="text-xs font-medium text-green-600 mb-1">+12% ce mois</span>
+      <section className="mb-4 grid gap-3 xl:grid-cols-4">
+        {[
+          { title: "Progress", value: "68%", meta: "+12% this month", tone: "purple" as const },
+          { title: "Open tasks", value: "24", meta: "86 total", tone: "blue" as const },
+          { title: "Time left", value: "12d", meta: "deadline May 2", tone: "yellow" as const },
+          { title: "Velocity", value: "42", meta: "pts / sprint", tone: "green" as const },
+        ].map((item) => (
+          <div key={item.title} className="rounded-[10px] border border-[#dfe3e8] bg-white p-3.5 shadow-sm">
+            <div className="mb-3 flex items-center justify-between"><p className="text-[11px] font-black uppercase text-[#8f96a3]">{item.title}</p><Chip tone={item.tone}>{item.meta}</Chip></div>
+            <p className="text-3xl font-black text-[#20242a]">{item.value}</p>
+            <div className="mt-3 h-1.5 rounded-full bg-[#e4e7ec]"><div className="h-full w-[68%] rounded-full bg-[#7b68ee]" /></div>
           </div>
-          <div className="mt-4 h-2 w-full bg-zinc-100 rounded-full overflow-hidden">
-            <div className="h-full bg-zinc-900 w-[68%]"></div>
-          </div>
-        </div>
+        ))}
+      </section>
 
-        <div className="rounded-2xl bg-white p-6 shadow-sm border border-zinc-200">
-          <p className="text-xs font-bold text-zinc-400 uppercase">Tickets Ouverts</p>
-          <div className="mt-4 flex items-end justify-between">
-            <span className="text-4xl font-bold text-zinc-900">24</span>
-            <span className="text-xs text-zinc-400 mb-1">sur 86 au total</span>
-          </div>
-          <div className="mt-4 flex gap-1">
-            <div className="h-1 flex-1 bg-red-400 rounded-full" title="Critique"></div>
-            <div className="h-1 flex-1 bg-orange-400 rounded-full" title="Haute"></div>
-            <div className="h-1 flex-2 bg-zinc-200 rounded-full" title="Basse"></div>
-          </div>
-        </div>
-
-        <div className="rounded-2xl bg-white p-6 shadow-sm border border-zinc-200">
-          <p className="text-xs font-bold text-zinc-400 uppercase">Temps restant</p>
-          <div className="mt-4 flex items-end justify-between">
-            <span className="text-4xl font-bold text-zinc-900">12j</span>
-            <span className="text-xs text-zinc-400 mb-1">Deadline : 02 Mai</span>
-          </div>
-          <p className="mt-4 text-xs font-medium text-orange-600">⚠ Attention : 4 tickets critiques</p>
-        </div>
-
-        <div className="rounded-2xl bg-white p-6 shadow-sm border border-zinc-200">
-          <p className="text-xs font-bold text-zinc-400 uppercase">Vitesse d&apos;équipe</p>
-          <div className="mt-4 flex items-end justify-between">
-            <span className="text-4xl font-bold text-zinc-900">42</span>
-            <span className="text-xs text-zinc-400 mb-1">pts / sprint</span>
-          </div>
-          <div className="mt-4 h-8 flex items-end gap-1">
-             <div className="bg-zinc-100 w-full h-1/2 rounded-t-sm"></div>
-             <div className="bg-zinc-200 w-full h-3/4 rounded-t-sm"></div>
-             <div className="bg-zinc-300 w-full h-2/3 rounded-t-sm"></div>
-             <div className="bg-zinc-900 w-full h-full rounded-t-sm"></div>
-          </div>
-        </div>
-      </div>
-
-      <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-3">
-        {/* Team Activity */}
-        <div className="lg:col-span-2 space-y-6">
-          <h2 className="text-lg font-bold text-zinc-900">Activité récente</h2>
-          <div className="space-y-4">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_330px]">
+        <Panel title="Recent activity" icon={<Activity size={16} />}>
+          <div className="space-y-2">
             {[
-              { user: "HT", name: "Hassine", action: "a poussé 3 commits sur", target: "feature/auth", time: "2h" },
-              { user: "AP", name: "Admin", action: "a commenté le ticket", target: "PM-12", time: "5h" },
-              { user: "SN", name: "Snofy", action: "a déplacé", target: "Ticket #88", text: "dans Terminé", time: "Hier" },
-            ].map((activity, idx) => (
-              <div key={idx} className="flex items-start gap-4 bg-white p-4 rounded-2xl shadow-sm border border-zinc-100 hover:border-zinc-200 transition">
-                <div className="h-10 w-10 rounded-full bg-zinc-900 text-xs font-bold text-white flex items-center justify-center flex-shrink-0">
-                  {activity.user}
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm">
-                    <span className="font-bold text-zinc-900">{activity.name}</span>
-                    <span className="text-zinc-600 ml-1">{activity.action}</span>
-                    <span className="font-semibold text-zinc-900 ml-1 underline decoration-zinc-200 underline-offset-4">{activity.target}</span>
-                    {activity.text && <span className="text-zinc-600 ml-1">{activity.text}</span>}
-                  </p>
-                  <p className="text-[10px] text-zinc-400 mt-1 uppercase font-bold">{activity.time}</p>
+              { user: "HT", text: "pushed 3 commits to feature/auth", time: "2h" },
+              { user: "AP", text: "commented on ticket PM-12", time: "5h" },
+              { user: "SN", text: "moved PM-88 into Done", time: "Yesterday" },
+            ].map((item) => (
+              <div key={item.text} className="flex items-center gap-3 rounded-[8px] border border-[#edf0f3] bg-[#f7f8fb] p-3">
+                <Avatar initials={item.user} />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-black text-[#20242a]">{item.text}</p>
+                  <p className="text-xs font-semibold text-[#8f96a3]">{item.time}</p>
                 </div>
               </div>
             ))}
           </div>
-        </div>
+        </Panel>
 
-        {/* Project Health & Risk */}
-        <div className="space-y-6">
-          <h2 className="text-lg font-bold text-zinc-900">Santé du projet</h2>
-          <div className="rounded-2xl bg-zinc-900 p-6 text-white overflow-hidden relative">
-            <div className="relative z-10">
-              <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Facteur de risque</p>
-              <p className="text-3xl font-bold mt-2">Faible</p>
-              <p className="text-xs text-zinc-400 mt-4 leading-relaxed">
-                Le projet est en avance sur le planning de 15%. Aucune dépendance critique n&apos;est actuellement bloquée.
-              </p>
-              <button className="mt-8 w-full bg-white text-zinc-900 py-3 rounded-xl text-sm font-bold hover:bg-zinc-100 transition">
-                Voir le rapport complet
-              </button>
+        <aside className="space-y-4">
+          <Panel title="Project health" icon={<Gauge size={16} />}>
+            <div className="rounded-[9px] bg-[#24113f] p-4 text-white">
+              <p className="text-[10px] font-black uppercase text-white/55">Risk factor</p>
+              <p className="mt-2 text-2xl font-black">Low</p>
+              <p className="mt-3 text-xs font-semibold leading-5 text-white/60">The project is ahead of plan. No critical dependency is currently blocked.</p>
             </div>
-            {/* Decorative element */}
-            <div className="absolute -bottom-12 -right-12 h-48 w-48 bg-white/5 rounded-full blur-3xl"></div>
-          </div>
-
-          <div className="rounded-2xl bg-white border border-zinc-200 p-6">
-             <h3 className="text-sm font-bold text-zinc-900 mb-4">Membres actifs</h3>
-             <div className="flex -space-x-3">
-                {['HT', 'AP', 'SN', 'JD'].map((m) => (
-                   <div key={m} className="h-10 w-10 rounded-full bg-zinc-100 border-2 border-white flex items-center justify-center text-xs font-bold text-zinc-600">
-                     {m}
-                   </div>
-                ))}
-                <div className="h-10 w-10 rounded-full bg-zinc-900 border-2 border-white flex items-center justify-center text-[10px] font-bold text-white">
-                  +12
-                </div>
-             </div>
-             <p className="mt-6 text-xs text-zinc-500 font-medium">Capacité actuelle : <span className="text-zinc-900">85%</span></p>
-          </div>
-        </div>
+          </Panel>
+          <Panel title="Active members" icon={<Users size={16} />}>
+            <div className="flex -space-x-2">
+              {["HT", "AP", "SN", "JD"].map((member) => <Avatar key={member} initials={member} />)}
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#20242a] text-[10px] font-black text-white ring-2 ring-white">+12</span>
+            </div>
+            <div className="mt-4 flex items-center justify-between text-xs font-black text-[#68707d]"><span>Capacity</span><span>85%</span></div>
+            <div className="mt-1 h-1.5 rounded-full bg-[#e4e7ec]"><div className="h-full w-[85%] rounded-full bg-[#7b68ee]" /></div>
+          </Panel>
+          <Panel title="Next actions" icon={<CheckCircle2 size={16} />}>
+            <div className="space-y-2">
+              {["Review Stripe integration", "Close QA checklist", "Prepare launch notes"].map((item) => (
+                <button key={item} onClick={() => setDone((current) => {
+                  const next = new Set(current);
+                  if (next.has(item)) next.delete(item);
+                  else next.add(item);
+                  return next;
+                })} className={`flex w-full items-center justify-between rounded-[8px] border border-[#edf0f3] bg-[#f7f8fb] px-3 py-2 text-left text-sm font-black text-[#20242a] hover:bg-white ${done.has(item) ? "text-[#8f96a3] line-through" : ""}`}>
+                  {item}
+                  {done.has(item) && <CheckCircle2 size={14} className="text-[#7b68ee]" />}
+                </button>
+              ))}
+            </div>
+          </Panel>
+        </aside>
       </div>
-    </main>
+      {dialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#20242a]/35 px-4 backdrop-blur-sm" onMouseDown={() => setDialog(null)}>
+          <section onMouseDown={(event) => event.stopPropagation()} className="w-full max-w-md rounded-[12px] border border-[#dfe3e8] bg-white p-4 shadow-2xl">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-base font-black text-[#20242a]">{dialog === "settings" ? "Project settings" : "Launch sprint"}</h2>
+              <button onClick={() => setDialog(null)} className="h-7 w-7 rounded-[7px] bg-[#f7f8fb] text-sm font-black text-[#68707d]">x</button>
+            </div>
+            <p className="text-sm font-semibold text-[#68707d]">{dialog === "settings" ? "Settings are local-only in this frontend pass." : "Sprint launch is staged locally until backend workflow support exists."}</p>
+          </section>
+        </div>
+      )}
+    </WorkspacePage>
   );
 }

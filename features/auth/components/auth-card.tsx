@@ -14,20 +14,21 @@ export function AuthCard({
   footer,
 }: AuthCardProps) {
   return (
-    <div className="rounded-[2rem] border border-white/80 bg-white/90 p-8 shadow-[0_20px_60px_rgba(15,23,42,0.12)] backdrop-blur">
-      <div className="mb-6">
-        <p className="text-sm font-medium uppercase tracking-[0.24em] text-teal-700">
-          AgileFlow
-        </p>
-        <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
-          {title}
-        </h1>
-        <p className="mt-2 text-sm leading-7 text-slate-600">{description}</p>
+    <section className="w-full rounded-[10px] border border-[#dfe3e8] bg-white p-5 shadow-[0_1px_2px_rgba(18,22,30,0.06)] sm:p-6">
+      <div className="mb-5">
+        <div className="mb-3 flex items-center justify-between">
+          <span className="inline-flex h-5 items-center rounded-[4px] border border-[#d7d1ff] bg-[#f3efff] px-2 text-[10px] font-black text-[#7b68ee]">Workspace access</span>
+          <span className="text-[10px] font-black uppercase text-[#8f96a3]">Secure</span>
+        </div>
+          <h1 className="text-[20px] font-black text-[#20242a]">
+            {title}
+          </h1>
+          <p className="mt-0.5 text-xs font-semibold leading-5 text-[#7c828d]">{description}</p>
       </div>
 
       {children}
 
-      {footer ? <div className="mt-6 space-y-3">{footer}</div> : null}
-    </div>
+      {footer ? <div className="mt-4 space-y-2 border-t border-[#edf0f3] pt-3.5">{footer}</div> : null}
+    </section>
   );
 }
