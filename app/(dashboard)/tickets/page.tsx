@@ -1,7 +1,10 @@
 "use client";
 
-import { useState, type ChangeEvent, type KeyboardEvent, type ReactNode } from "react";
+import { useState, useEffect, type ChangeEvent, type KeyboardEvent, type ReactNode } from "react";
+import { useSearchParams } from "next/navigation";
+import { ticketsService } from "@/services/tickets.service";
 import { ArrowDownUp, CheckCircle2, ChevronDown, CirclePlus, MoreHorizontal, Search, SlidersHorizontal, UserPlus } from "lucide-react";
+import { activityService } from "@/services/activity.service";
 
 type Ticket = {
   id: string;
@@ -20,18 +23,12 @@ type QuickFilter = "All" | "Open" | "Assigned to me" | "Due soon" | "Priority";
 type SortKey = "default" | "title" | "status" | "assignee" | "due" | "priority" | "updated";
 type ToolbarPanel = "filter" | "sort" | "customize" | null;
 
-const tickets: Ticket[] = [
-  { id: "PM-1", title: "Mise en place de l'auth JWT", priority: "High", status: "In Progress", assignee: "Hassine", updated: "2h", due: "Today", desc: "Besoin de configurer Passport.js ou simplejwt cote Django. Verifier les headers CORS.", subtasks: "3/5", comments: 4 },
-  { id: "PM-2", title: "Configuration CORS backend", priority: "Medium", status: "Done", assignee: "Admin", updated: "5h", due: "May 5", desc: "Autoriser l'origine localhost:3000 dans les settings Django.", subtasks: "2/2", comments: 1 },
-  { id: "PM-3", title: "Maquettes Dashboard", priority: "Low", status: "To Do", assignee: "Snofy", updated: "1j", due: "May 9", desc: "Utiliser Zinc pour le design system.", subtasks: "0/4", comments: 2 },
-  { id: "PM-4", title: "Integration Stripe", priority: "High", status: "Blocked", assignee: "Hassine", updated: "2j", due: "Overdue", desc: "En attente des cles API production.", subtasks: "1/6", comments: 7 },
-  { id: "PM-5", title: "Refonte de la sidebar", priority: "Medium", status: "In Progress", assignee: "Admin", updated: "1h", due: "Tomorrow", desc: "Ajouter les nouveaux liens vers les pages analytics.", subtasks: "4/8", comments: 3 },
-];
+
 
 const grid = "grid-cols-[42px_minmax(360px,1.25fr)_132px_154px_122px_108px_88px_72px]";
 
 export default function TicketsPage() {
-  const [items, setItems] = useState<Ticket[]>(tickets);
+  const [items, setItems] = useState<Ticket[]>([]);
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<Ticket | null>(null);
   const [comment, setComment] = useState("");
@@ -55,6 +52,8 @@ export default function TicketsPage() {
   const [compactRows, setCompactRows] = useState(false);
   const [showRowMeta, setShowRowMeta] = useState(true);
   const [localComments, setLocalComments] = useState<Record<string, Array<{ user: string; text: string; time: string }>>>({});
+  const [activityList, setActivityList] = useState<Array<{ user: string; text: string; time: string }>>([]);
+  const searchParams = useSearchParams();
   const assignees = Array.from(new Set(items.map((ticket) => ticket.assignee)));
   const statusCounts = items.reduce<Record<Ticket["status"], number>>((acc, ticket) => {
     acc[ticket.status] += 1;
@@ -90,23 +89,109 @@ export default function TicketsPage() {
   const openRow = (event: KeyboardEvent<HTMLDivElement>, ticket: Ticket) => {
     if (event.key === "Enter") setSelected(ticket);
   };
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      if (!selected) {
+        setActivityList([]);
+        return;
+      }
+      try {
+        // backend expects a UUID ticket id; avoid calling API with local display ids like "PM-1"
+        const ticketIdForApi = (selected as any).id;
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+        if (!uuidRegex.test(String(ticketIdForApi))) {
+          // fallback to local comments only
+          setActivityList(localComments[selected.id] || []);
+          return;
+        }
+        const data = await activityService.getTicketHistory(ticketIdForApi as any);
+        if (!mounted) return;
+        // Normalize incoming activity items to {user, text, time}
+        const normalized = (Array.isArray(data) ? data : []).map((it: any) => ({
+          user: it.author || it.user || it.actor || it.username || it.created_by || "Activity",
+          text: it.body || it.message || it.action || it.text || JSON.stringify(it),
+          time: it.created_at ? new Date(it.created_at).toLocaleString() : (it.time || "")
+        }));
+        // Merge with any local comments for this ticket
+        const locals = localComments[selected.id] || [];
+        setActivityList([...normalized, ...locals]);
+      } catch (e) {
+        console.error("Failed to load ticket activity", e);
+        setActivityList(localComments[selected?.id || ""] || []);
+      }
+    })();
+    return () => { mounted = false; };
+  }, [selected]);
   const addLocalTicket = () => {
     const title = newTitle.trim();
     if (!title) return;
-    const ticket: Ticket = {
-      id: `PM-${items.length + 1}`,
+    const ticketPayload: any = {
       title,
       priority: newPriority,
       status: newStatus,
       assignee: newAssignee,
-      updated: "now",
       due: newDue,
-      desc: "Local draft task created from the frontend workspace.",
-      subtasks: "0/3",
-      comments: 0,
+      description: "Created from UI",
     };
-    setItems((current) => [ticket, ...current]);
-    setSelected(ticket);
+    const projectId = searchParams ? (searchParams.get("projectId") ?? null) : null;
+
+    (async () => {
+      if (projectId) {
+        try {
+          const created = await ticketsService.createTicket(ticketPayload, projectId);
+          const ticket: Ticket = {
+            id: created.id,
+            title: created.title || title,
+            priority: created.priority || newPriority,
+            status: created.status || newStatus,
+            assignee: created.assigned_to || newAssignee,
+            updated: created.updated_at || "now",
+            due: created.due || newDue,
+            desc: created.description || "",
+            subtasks: created.subtasks || "0/0",
+            comments: created.comments_count || 0,
+          };
+          setItems((current) => [ticket, ...current]);
+          setSelected(ticket);
+        } catch (e) {
+          console.error("Failed to create ticket via project endpoint", e);
+          alert("Failed to create ticket on server. Creating local draft instead.");
+          const ticket: Ticket = {
+            id: `PM-${items.length + 1}`,
+            title,
+            priority: newPriority,
+            status: newStatus,
+            assignee: newAssignee,
+            updated: "now",
+            due: newDue,
+            desc: "Local draft task created from the frontend workspace.",
+            subtasks: "0/3",
+            comments: 0,
+          };
+          setItems((current) => [ticket, ...current]);
+          setSelected(ticket);
+        }
+      } else {
+        // no project context — keep local-only behavior but inform the user
+        alert("No project context found — ticket created locally. Open a project to create on the server.");
+        const ticket: Ticket = {
+          id: `PM-${items.length + 1}`,
+          title,
+          priority: newPriority,
+          status: newStatus,
+          assignee: newAssignee,
+          updated: "now",
+          due: newDue,
+          desc: "Local draft task created from the frontend workspace.",
+          subtasks: "0/3",
+          comments: 0,
+        };
+        setItems((current) => [ticket, ...current]);
+        setSelected(ticket);
+      }
+    })();
     setNewTitle("");
     setNewPriority("Medium");
     setNewStatus("To Do");
@@ -156,10 +241,7 @@ export default function TicketsPage() {
               <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search tasks..." className="min-w-0 flex-1 bg-transparent text-[12px] font-semibold outline-none placeholder:text-[#8f96a3]" />
               {query && <button onClick={() => setQuery("")} className="rounded-[5px] px-1 text-[10px] font-black text-[#8f96a3] hover:bg-white" aria-label="Clear search">x</button>}
             </div>
-            <button onClick={() => toggleToolbarPanel("filter")} className={`flex h-8 items-center gap-1.5 rounded-[7px] border px-3 text-xs font-black shadow-sm transition focus:outline-none focus:ring-2 focus:ring-[#d7d1ff] ${toolbarPanel === "filter" ? "border-[#d7d1ff] bg-[#f3efff] text-[#7b68ee]" : "border-[#dfe3e8] bg-white text-[#68707d] hover:bg-[#f7f8fb]"}`}>
-              <SlidersHorizontal size={14} />
-              Filter
-            </button>
+            
             <button onClick={() => toggleToolbarPanel("sort")} className={`flex h-8 items-center gap-1.5 rounded-[7px] border px-3 text-xs font-black shadow-sm transition focus:outline-none focus:ring-2 focus:ring-[#d7d1ff] ${toolbarPanel === "sort" ? "border-[#d7d1ff] bg-[#f3efff] text-[#7b68ee]" : "border-[#dfe3e8] bg-white text-[#68707d] hover:bg-[#f7f8fb]"}`}>
               <ArrowDownUp size={14} />
               Sort
@@ -431,13 +513,9 @@ export default function TicketsPage() {
               </div>
               <div className="border-t border-[#edf0f3] pt-5">
                 <h3 className="mb-4 text-sm font-black text-[#20242a]">Activity</h3>
-                {[
-                  { user: "Admin", text: "On devrait utiliser @Hassine pour cette partie.", time: "1h" },
-                  { user: "Snofy", text: "C'est deja en cours. J'ai ajoute le middleware.", time: "45 min" },
-                  ...(localComments[selected.id] || []),
-                ].map((activity, index) => (
+                {activityList.map((activity, index) => (
                   <div key={`${activity.user}-${activity.time}-${index}`} className="mb-4 flex gap-3">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#f3efff] text-[10px] font-black text-[#7b68ee]">{activity.user.charAt(0)}</div>
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#f3efff] text-[10px] font-black text-[#7b68ee]">{(activity.user || "A").charAt(0)}</div>
                     <div>
                       <div className="mb-1 flex items-baseline gap-2">
                         <span className="text-sm font-black text-[#20242a]">{activity.user}</span>
@@ -469,7 +547,14 @@ export default function TicketsPage() {
                     <button onClick={() => {
                       const text = comment.trim();
                       if (!text || !selected) return;
-                      setLocalComments((current) => ({ ...current, [selected.id]: [...(current[selected.id] || []), { user: "You", text, time: "now" }] }));
+                      // update local comments store
+                      setLocalComments((current) => {
+                        const next = { ...current };
+                        next[selected.id] = [...(next[selected.id] || []), { user: "You", text, time: "now" }];
+                        return next;
+                      });
+                      // also append to activityList so UI updates immediately
+                      setActivityList((current) => [...current, { user: "You", text, time: "now" }]);
                       setComment("");
                     }} className="rounded-[7px] bg-[#7b68ee] px-4 py-2 text-sm font-black text-white">Send</button>
                   </div>

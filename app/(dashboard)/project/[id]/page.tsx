@@ -2,6 +2,7 @@
 
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Activity, CheckCircle2, Gauge, Users } from "lucide-react";
 import { Avatar, Chip, GhostButton, Panel, PrimaryButton, WorkspaceHeader, WorkspacePage } from "@/components/workspace-ui";
 import { projectService, type ProjectSummary } from "@/services/project.service";
@@ -31,13 +32,19 @@ export default function ProjectDashboardPage() {
     return () => { mounted = false; };
   }, [projectId]);
 
+  const router = useRouter();
+
   return (
     <WorkspacePage>
       <WorkspaceHeader
         title={project?.name || "Project"}
         subtitle={`Product / Projects / ${projectId}`}
         badge={project?.status || "Stable"}
-        actions={<><GhostButton onClick={() => setDialog("settings")}>Project settings</GhostButton><PrimaryButton onClick={() => setDialog("sprint")}>Launch sprint</PrimaryButton></>}
+        actions={<>
+          <GhostButton onClick={() => router.push(`/Board/kanban?projectId=${projectId}`)}>View board</GhostButton>
+          <GhostButton onClick={() => setDialog("settings")}>Project settings</GhostButton>
+          <PrimaryButton onClick={() => setDialog("sprint")}>Launch sprint</PrimaryButton>
+        </>}
       />
 
       <section className="mb-4 grid gap-3 xl:grid-cols-4">

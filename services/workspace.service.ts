@@ -27,6 +27,8 @@ export const workspaceService = {
     api.get(`/activity/tickets/${ticketId}/history/`, { params }).then((r) => r.data),
 
   getMyActivity: (params?: any) => api.get(`/activity/users/me/activity/`, { params }).then((r) => r.data),
+  
+  listWorkspaceReleases: (workspaceId: string) => api.get(`/workspaces/${workspaceId}/releases/`).then((r) => r.data),
 }
 
 export default workspaceService

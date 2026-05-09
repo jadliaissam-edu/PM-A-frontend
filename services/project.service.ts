@@ -163,6 +163,11 @@ export const projectService = {
     return response.data;
   },
 
+  deleteRelease: async (projectId: string, releaseId: string) => {
+    const response = await api.delete(`/projects/${projectId}/releases/${releaseId}/`);
+    return response.data;
+  },
+
   getRelease: async (projectId: string, releaseId: string) => {
     const response = await api.get(`/projects/${projectId}/releases/${releaseId}/`);
     return response.data;

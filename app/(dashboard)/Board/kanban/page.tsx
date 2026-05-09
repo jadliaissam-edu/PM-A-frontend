@@ -1,8 +1,10 @@
 "use client";
 
 import { type DragEvent, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useAuthStore } from "../../../../store";
 import { dashboardService } from "@/services/dashboard.service";
+import { projectService } from "@/services/project.service";
 import { ticketsService } from "@/services/tickets.service";
 import { CheckCircle2, CirclePlus, MoreHorizontal, Search, SlidersHorizontal } from "lucide-react";
 
@@ -53,6 +55,8 @@ export default function KanbanBoardPage() {
   const [completed, setCompleted] = useState<Set<string>>(new Set());
   const [collapsedColumns, setCollapsedColumns] = useState<Set<string>>(new Set());
   const [notice, setNotice] = useState("");
+  const searchParams = useSearchParams();
+  const projectIdQuery = searchParams?.get("projectId") || null;
 
   const visibleColumns = columns.map((column) => ({
     ...column,
@@ -99,14 +103,36 @@ export default function KanbanBoardPage() {
       try {
         const statusMap = ["TO DO", "IN PROGRESS", "REVIEW", "DONE"];
         const newStatus = statusMap[targetColumnIndex] || statusMap[0];
+        // If the ticket id is a display id (e.g. PM-1) the server may not accept
+        // it on these endpoints; only attempt persistence for UUID-like ids.
+        const isUUID = (s: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(s);
+        if (!isUUID(taskId)) {
+          // Avoid calling server with display ids which cause 404s; refresh to
+          // reconcile server state instead of trying to patch.
+          setNotice("Skipped persisting move for display-id ticket; open the ticket to sync.");
+          void fetchData();
+          return;
+        }
+
         // find project id for ticket if available so we call the project-scoped endpoint
         const sourceTasks = columns[sourceColumnIndex]?.tasks || [];
-        const moved = sourceTasks.find((t) => t.id === taskId);
-        const projectId = (moved as any)?.project;
-        if (projectId) {
-          // Use the project-scoped status endpoint to avoid global /tickets/ POST issues
+        const moved = sourceTasks.find((t) => t.id === taskId) as any | undefined;
+        const projectId = moved?.project || projectIdQuery || null;
+
+        if (projectIdQuery) {
+          // If we're viewing a project board, use the project move endpoint which
+          // handles ordering and status server-side. Send source/target indices
+          // so backend can adjust ordering if supported.
+          await projectService.moveTicketOnBoard(projectIdQuery, taskId, {
+            from_column: sourceColumnIndex,
+            to_column: targetColumnIndex,
+            status: newStatus,
+          });
+        } else if (projectId) {
+          // Use the project-scoped status endpoint when we can infer a project id
           await ticketsService.updateStatus(taskId, projectId, { status: newStatus });
         } else {
+          // Fallback to updating the ticket resource directly
           await ticketsService.updateTicket(taskId, { status: newStatus });
         }
         setNotice(`Moved card to ${newStatus}.`);
@@ -227,14 +253,14 @@ export default function KanbanBoardPage() {
   useEffect(() => {
     // use the shared fetchData below for mount and manual refresh
     fetchData();
-    // no cleanup needed since fetchData uses local state handling
-  }, []);
+    // re-run when projectIdQuery changes
+  }, [projectIdQuery]);
 
   // fetchData: reusable loader so Refresh button can re-fetch board tasks
   async function fetchData() {
     setLoading(true);
     try {
-      const tasks = await dashboardService.getAssignedTasks();
+      const tasks = projectIdQuery ? await projectService.listProjectTickets(projectIdQuery) : await dashboardService.getAssignedTasks();
       // Map incoming tasks into columns by status
       const cols = initialColumns.map((c) => ({ ...c, tasks: [] }));
       tasks.forEach((t: any) => {
