@@ -6,8 +6,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { authService } from "../../services/auth.service";
 import { resetConfirmSchema, ResetConfirmFormData } from "../../lib/validations";
+import { Suspense } from "react";
 
-export default function ResetPasswordConfirmPage() {
+function ResetPasswordConfirmForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const emailFromQuery = searchParams.get("email") ?? "";
@@ -101,5 +102,13 @@ export default function ResetPasswordConfirmPage() {
         </form>
       </div>
     </main>
+  );
+}
+
+export default function ResetPasswordConfirmPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ResetPasswordConfirmForm />
+    </Suspense>
   );
 }

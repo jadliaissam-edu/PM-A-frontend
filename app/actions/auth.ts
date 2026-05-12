@@ -9,7 +9,7 @@ import { LoginFormData } from '@/lib/validations';
 export async function loginAction(data: LoginFormData) {
   try {
     const response = await authService.login({
-      email: data.email,
+      username: data.username,
       password: data.password,
     });
 

@@ -6,8 +6,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { authService } from "../../services/auth.service";
 import { verifyOtpSchema, VerifyOtpFormData } from "../../lib/validations";
+import { Suspense } from "react";
 
-export default function ResetPasswordVerifyPage() {
+function ResetPasswordVerifyForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const emailFromQuery = searchParams.get("email") ?? "";
@@ -88,5 +89,13 @@ export default function ResetPasswordVerifyPage() {
         </form>
       </div>
     </main>
+  );
+}
+
+export default function ResetPasswordVerifyPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ResetPasswordVerifyForm />
+    </Suspense>
   );
 }

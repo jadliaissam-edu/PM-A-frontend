@@ -2,7 +2,7 @@ import { api } from "../lib/api";
 import { AuthResponse } from "../types";
 
 export interface LoginPayload {
-  email: string;
+  username: string;
   password: string;
 }
 
@@ -54,7 +54,17 @@ export const authService = {
     return response.data;
   },
 
+  verifyResetOtp: async (data: { email: string; otp: string }) => {
+    const response = await api.post("/auth/verify-otp/", data);
+    return response.data;
+  },
+
   confirmReset: async (data: any) => {
+    const response = await api.post("/auth/confirm-reset/", data);
+    return response.data;
+  },
+
+  confirmPasswordReset: async (data: any) => {
     const response = await api.post("/auth/confirm-reset/", data);
     return response.data;
   },
