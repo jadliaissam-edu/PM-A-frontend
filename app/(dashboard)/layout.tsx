@@ -4,6 +4,8 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { authService, type UserProfile } from "@/services/auth.service";
+import { orgService, type Organization } from "@/services/org.service";
+import { useAuthStore } from "@/store";
 import { useSidebarStore } from "@/store/sidebar.store";
 import {
   BarChart3,
@@ -38,7 +40,12 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const collapsed = useSidebarStore((state) => state.isCollapsed);
   const toggleSidebar = useSidebarStore((state) => state.toggleCollapsed);
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [organization, setOrganization] = useState("AgileFlow Inc.");
+  const [organization, setOrganization] = useState<string | null>(null);
+  const [selectedOrgId, setSelectedOrgId] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+  const [orgs, setOrgs] = useState<Organization[]>([]);
+  const [workspaces, setWorkspaces] = useState<any[]>([]);
+  const [orgMembers, setOrgMembers] = useState<any[]>([]);
   const [menu, setMenu] = useState<"headerOrg" | "sidebarOrg" | "profile" | null>(null);
   const [globalSearch, setGlobalSearch] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
@@ -63,9 +70,138 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     authService.getProfile().then(setProfile).catch((error) => console.error("Failed to fetch dashboard profile", error));
   }, []);
 
+  // Mark mounted to avoid rendering client-only values during SSR
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const [data, wdata] = await Promise.all([orgService.getOrganizations(), orgService.getWorkspaces()]);
+        if (!mounted) return;
+        setOrgs(data || []);
+        setWorkspaces(wdata || []);
+        // if there's no persisted org id, pick the first returned
+        try {
+          const storedId = typeof window !== 'undefined' ? localStorage.getItem('af:org_id') : null;
+          if (storedId && data.some((o: any) => String(o.id) === String(storedId))) {
+            const orgFound = data.find((o: any) => String(o.id) === String(storedId));
+            if (orgFound) {
+              setSelectedOrgId(String(orgFound.id));
+              setOrganization(orgFound.name);
+            }
+          } else if (data && data.length > 0) {
+            const first = data[0];
+            setSelectedOrgId(String(first.id));
+            setOrganization(first.name);
+            try { if (typeof window !== 'undefined') { localStorage.setItem('af:org_id', String(first.id)); localStorage.setItem('af:org', first.name); } } catch {}
+          }
+        } catch (e) {
+          // ignore
+        }
+      } catch (e) {
+        console.error('Failed to fetch organizations', e);
+      }
+    })();
+    return () => { mounted = false };
+  }, []);
+
+  // Refresh workspaces when the selected organisation changes
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        if (!selectedOrgId) return;
+        const w = await orgService.getWorkspaces();
+        if (!mounted) return;
+        setWorkspaces(w || []);
+      } catch (e) {
+        // ignore
+      }
+    })();
+    return () => { mounted = false };
+  }, [selectedOrgId]);
+
+  // Fetch organisation members
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        if (!selectedOrgId) return;
+        const members = await orgService.getOrganizationMembers(selectedOrgId);
+        if (!mounted) return;
+        setOrgMembers(members || []);
+      } catch (e) {
+        console.error('Failed to fetch organisation members', e);
+      }
+    })();
+    return () => { mounted = false };
+  }, [selectedOrgId]);
+
+  // Apply user's preferred color (if provided in profile) as a CSS variable and theme-color meta
+  // Apply persisted appearance first (from localStorage) so user selections take effect immediately
+  useEffect(() => {
+    try {
+      if (typeof window === "undefined") return;
+      const storedAccent = localStorage.getItem("af:accent");
+      const storedDensity = localStorage.getItem("af:density");
+      if (storedAccent) {
+        document.documentElement.style.setProperty("--primary-color", storedAccent);
+        let meta = document.querySelector('meta[name="theme-color"]') as HTMLMetaElement | null;
+        if (!meta) {
+          meta = document.createElement("meta");
+          meta.name = "theme-color";
+          document.head.appendChild(meta);
+        }
+        meta.content = storedAccent;
+      }
+      if (storedDensity) {
+        document.documentElement.setAttribute("data-density", storedDensity.toLowerCase());
+      }
+    } catch (e) {
+      // ignore
+    }
+  }, []);
+
+  // Apply user's preferred color (if provided in profile) as a CSS variable and theme-color meta
+  useEffect(() => {
+    if (!profile) return;
+    // Try several common fields where a color might be stored
+    const pref = (profile as any).preferences_json || {};
+    // Prefer locally stored accent (user-set in UI) over profile values
+    const storedAccent = typeof window !== "undefined" ? localStorage.getItem("af:accent") : null;
+    const color = storedAccent || (profile as any).color || pref.primaryColor || pref.themeColor || pref.color || "[var(--primary-color)]";
+    try {
+      document.documentElement.style.setProperty("--primary-color", color);
+      document.documentElement.style.setProperty("--primary-color-hover", color);
+      let meta = document.querySelector('meta[name="theme-color"]') as HTMLMetaElement | null;
+      if (!meta) {
+        meta = document.createElement("meta");
+        meta.name = "theme-color";
+        document.head.appendChild(meta);
+      }
+      meta.content = color;
+    } catch (e) {
+      // ignore in non-browser environments
+    }
+    // also apply density preference from profile if local choice not present
+    try {
+      const storedDensity = typeof window !== "undefined" ? localStorage.getItem("af:density") : null;
+      const profileDensity = (pref && (pref.density || pref.workspaceDensity)) || null;
+      const densityToApply = storedDensity || profileDensity;
+      if (densityToApply) document.documentElement.setAttribute("data-density", densityToApply.toLowerCase());
+    } catch (e) {
+      // ignore
+    }
+  }, [profile]);
+
   const signOut = async () => {
     try {
       await authService.logout();
+      // clear local auth state and navigate to login
+      useAuthStore.getState().clearAuth();
       router.push("/login");
     } catch (error) {
       console.error("Logout failed", error);
@@ -84,7 +220,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   };
 
   const avatar = profile?.username?.charAt(0).toUpperCase() || "A";
-  const avatarStyle = profile?.avatar_url ? { backgroundImage: `url(${profile.avatar_url})` } : undefined;
+  const avatarStyle = profile?.avatar_url ? { backgroundImage: `url(${profile.avatar_url})` } : ((profile && ((profile as any).color || (profile as any).preferences_json?.color)) ? { backgroundColor: (profile as any).color || (profile as any).preferences_json?.color } : undefined);
   const searchResults = [
     { label: "Overview", href: "/dashboard/enterprise", meta: "Workspace home" },
     { label: "Tasks", href: "/tickets", meta: "List view" },
@@ -130,7 +266,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         {!collapsed && (
           <div className="flex min-h-0 w-[288px] flex-col bg-[#f4f6fa]">
             <div ref={sidebarDropdownRef} className="relative flex h-[58px] shrink-0 items-center gap-2.5 border-b border-[#dfe3e8] px-3.5">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[9px] bg-[#7b68ee] text-[12px] font-black text-white">{avatar}</span>
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[9px] bg-[var(--primary-color)] text-[12px] font-black text-white">{avatar}</span>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-[13px] font-black leading-4 text-[#24272d]">AgileFlow</p>
                 <p className="truncate text-[11px] font-semibold leading-4 text-[#7b828f]">Free Forever</p>
@@ -138,13 +274,13 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 <button onClick={() => setMenu(menu === "sidebarOrg" ? null : "sidebarOrg")} className="flex h-7 w-7 items-center justify-center rounded-[7px] text-[#8f96a3] hover:bg-white" aria-label="Switch organization">
                   <ChevronDown size={15} />
                 </button>
-              {menu === "sidebarOrg" && (
+                {menu === "sidebarOrg" && (
                 <div className="absolute left-3 right-3 top-[52px] z-50 rounded-[10px] border border-[#dfe3e8] bg-white p-2 shadow-xl">
                   <p className="mb-2 border-b border-[#edf0f3] px-2 pb-2 text-[11px] font-black uppercase text-[#8f96a3]">Organisations</p>
-                  {["AgileFlow Inc.", "Design Team"].map((org) => (
-                    <button key={org} onClick={() => { setOrganization(org); setMenu(null); }} className="flex w-full items-center justify-between rounded-[7px] px-2 py-2 text-left text-sm font-bold text-[#2f343c] hover:bg-[#f7f8fb]">
-                      {org}
-                      {organization === org && <CheckCircle2 size={16} className="text-[#7b68ee]" />}
+                  {orgs.map((org) => (
+                    <button key={org.id} onClick={() => { setOrganization(org.name); setSelectedOrgId(String(org.id)); try { if (typeof window !== 'undefined') { localStorage.setItem('af:org', org.name); localStorage.setItem('af:org_id', String(org.id)); } } catch {} setMenu(null); }} className="flex w-full items-center justify-between rounded-[7px] px-2 py-2 text-left text-sm font-bold text-[#2f343c] hover:bg-[#f7f8fb]">
+                      {org.name}
+                      {String(selectedOrgId) === String(org.id) && <CheckCircle2 size={16} className="text-[#7b68ee]" />}
                     </button>
                   ))}
                 </div>
@@ -178,25 +314,47 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               </div>
               <div className="mb-2 border-b border-[#e4e7ec] pb-2">
                 <p className="mb-1 flex h-5 items-center px-1.5 text-[10px] font-black uppercase text-[#8f96a3]">Spaces</p>
-                <div className="group mb-1 flex h-8 items-center gap-2 rounded-[7px] px-2 text-[12px] font-black text-[#2f343c] hover:bg-white">
+                <Link href="/workspaces" className="group mb-1 flex h-8 items-center gap-2 rounded-[7px] px-2 text-[12px] font-black text-[#2f343c] hover:bg-white">
                   <ChevronDown size={14} className="text-[#8f96a3]" />
                   <span className="h-2.5 w-2.5 rounded-[3px] bg-[#7b68ee]" />
-                  <span className="truncate">Product</span>
-                  <span className="ml-auto rounded-full bg-[#e7e9ef] px-1.5 py-px text-[9px] font-black text-[#7c828d]">14</span>
+                  <span className="truncate">Workspaces</span>
+                  <span className="ml-auto rounded-full bg-[#e7e9ef] px-1.5 py-px text-[9px] font-black text-[#7c828d]">All</span>
                   <CirclePlus size={13} className="hidden text-[#a2a9b5] group-hover:block" />
-                </div>
+                </Link>
                 <div className="ml-[13px] border-l border-[#d9dde5] pl-1.5">
-                  {[
-                    { href: "/project", label: "Projects", active: pathname === "/project" || pathname.startsWith("/project/"), icon: <FolderKanban size={15} />, left: 8 },
-                    { href: "/tickets", label: "Tasks", active: pathname === "/tickets", icon: <CheckCircle2 size={15} />, left: 24 },
-                    { href: "/release", label: "Releases", active: pathname === "/release", icon: <Workflow size={15} />, left: 24 },
-                    { href: "/reports", label: "Reports", active: pathname === "/reports", icon: <BarChart3 size={15} />, left: 24 },
-                  ].map((item) => (
-                    <Link key={item.href} href={item.href} className={`flex h-[31px] items-center gap-2 rounded-[7px] pr-2 text-[12px] ${item.active ? "bg-white font-black text-[#2f343c] shadow-sm ring-1 ring-[#dfe3e8]" : "font-bold text-[#68707d] hover:bg-white hover:text-[#2f343c]"}`} style={{ paddingLeft: item.left }}>
-                      <span className={item.active ? "text-[#7b68ee]" : "text-[#9aa1ad]"}>{item.icon}</span>
-                      <span className="truncate">{item.label}</span>
+                  {/* List workspaces for the selected organisation */}
+                  {workspaces.filter((ws) => String(ws.organization) === String(selectedOrgId)).map((ws) => (
+                    <Link key={ws.id} href={`/workspaces/${ws.id}`} className={`flex h-[31px] items-center gap-2 rounded-[7px] pr-2 text-[12px] ${pathname === `/workspaces/${ws.id}` ? "bg-white font-black text-[#2f343c] shadow-sm ring-1 ring-[#dfe3e8]" : "font-bold text-[#68707d] hover:bg-white hover:text-[#2f343c]"}`} style={{ paddingLeft: 8 }}>
+                      <span className="text-[#9aa1ad]"><FolderKanban size={15} /></span>
+                      <span className="truncate">{ws.name}</span>
                     </Link>
                   ))}
+                  <Link href="/release" className={`flex h-[31px] items-center gap-2 rounded-[7px] pr-2 text-[12px] ${pathname === "/release" ? "bg-white font-black text-[#2f343c] shadow-sm ring-1 ring-[#dfe3e8]" : "font-bold text-[#68707d] hover:bg-white hover:text-[#2f343c]"}`} style={{ paddingLeft: 8 }}>
+                    <span className="text-[#9aa1ad]"><Workflow size={15} /></span>
+                    <span className="truncate">Releases</span>
+                  </Link>
+                </div>
+              </div>
+              <div className="mb-2 border-b border-[#e4e7ec] pb-2 text-xs">
+                <p className="mb-1 flex h-5 items-center px-1.5 text-[10px] font-black uppercase text-[#8f96a3]">Teams</p>
+                <Link href="/chat" className={`mb-1 flex h-[31px] items-center gap-2 rounded-[7px] px-2 text-[12px] ${pathname === "/chat" ? "bg-white font-black text-[#2f343c] shadow-sm ring-1 ring-[#dfe3e8]" : "font-bold text-[#68707d] hover:bg-white hover:text-[#2f343c]"}`}>
+                  <span className={pathname === "/chat" ? "text-[#7b68ee]" : "text-[#9aa1ad]"}><Users size={15} /></span>
+                  <span className="truncate">Teams</span>
+                </Link>
+                {/* Dynamic member list from organization */}
+                <div className="mt-1 space-y-0.5 px-2">
+                   {orgMembers.map((member) => (
+                      <Link key={member.id} href="/chat" className="flex items-center gap-2 rounded-md py-1 text-[#68707d] hover:bg-white hover:text-[#2f343c]">
+                         <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#7b68ee] text-[8px] font-black text-white uppercase italic">
+                            {member.username.slice(0, 2)}
+                         </span>
+                         <span className="truncate font-semibold text-[11px]">{member.username}</span>
+                         <span className={`ml-auto h-1.5 w-1.5 rounded-full ${Math.random() > 0.3 ? 'bg-green-500' : 'bg-gray-300'}`} />
+                      </Link>
+                   ))}
+                   {orgMembers.length === 0 && (
+                      <p className="px-1 text-[10px] font-bold text-[#8f96a3] italic">No members found</p>
+                   )}
                 </div>
               </div>
               <div className="mb-2 border-b border-[#e4e7ec] pb-2">
@@ -252,18 +410,20 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               <div className="relative min-w-0">
                 <button onClick={() => setMenu(menu === "headerOrg" ? null : "headerOrg")} className="flex h-9 max-w-full items-center gap-2 rounded-[7px] px-2.5 text-[13px] font-black text-[#2f343c] transition hover:bg-[#f7f8fb] focus:outline-none focus:ring-2 focus:ring-[#d7d1ff] sm:max-w-[240px]">
                   <BriefcaseBusiness size={15} className="text-[#7b68ee]" />
-                  <span className="truncate">{organization}</span>
+                  <span className="truncate">{mounted && organization ? organization : ''}</span>
                   <ChevronDown size={14} className="text-[#8f96a3]" />
                 </button>
                 {menu === "headerOrg" && (
                   <div className="absolute left-0 top-full z-50 mt-2 w-64 rounded-[10px] border border-[#dfe3e8] bg-white p-2 shadow-xl">
                     <p className="mb-2 border-b border-[#edf0f3] px-2 pb-2 text-[11px] font-black uppercase text-[#8f96a3]">Organisations</p>
-                    {["AgileFlow Inc.", "Design Team"].map((org) => (
-                      <button key={org} onClick={() => { setOrganization(org); setMenu(null); }} className="flex w-full items-center justify-between rounded-[7px] px-2 py-2 text-left text-sm font-bold text-[#2f343c] hover:bg-[#f7f8fb]">
-                        {org}
-                        {organization === org && <CheckCircle2 size={16} className="text-[#7b68ee]" />}
+                    {orgs && orgs.length > 0 ? orgs.map((org) => (
+                      <button key={org.id} onClick={() => { setOrganization(org.name); setSelectedOrgId(String(org.id)); try { if (typeof window !== 'undefined') { localStorage.setItem('af:org', org.name); localStorage.setItem('af:org_id', String(org.id)); } } catch {} setMenu(null); }} className="flex w-full items-center justify-between rounded-[7px] px-2 py-2 text-left text-sm font-bold text-[#2f343c] hover:bg-[#f7f8fb]">
+                        {org.name}
+                        {String(selectedOrgId) === String(org.id) && <CheckCircle2 size={16} className="text-[#7b68ee]" />}
                       </button>
-                    ))}
+                    )) : (
+                      <div className="px-2 py-2 text-sm text-[#8f96a3]">No organisations</div>
+                    )}
                   </div>
                 )}
               </div>

@@ -5,17 +5,14 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { CheckCircle2, CirclePlus, FolderKanban, MoreHorizontal, Search } from "lucide-react";
 import { Avatar, Chip, GhostButton, Panel, PrimaryButton, WorkspaceHeader, WorkspacePage } from "@/components/workspace-ui";
+import { useEffect } from "react";
+import { projectService, type ProjectSummary } from "@/services/project.service";
 
-const projects = [
-  { id: "commerce", name: "Refonte E-commerce 2024", health: "Stable", progress: 68, owner: "HT", tasks: 86, due: "May 2", tone: "green" as const },
-  { id: "mobile", name: "Mobile App Launch", health: "At risk", progress: 42, owner: "AA", tasks: 44, due: "May 24", tone: "yellow" as const },
-  { id: "data", name: "Analytics Workspace", health: "Planning", progress: 18, owner: "SN", tasks: 31, due: "Jun 12", tone: "blue" as const },
-];
-type Project = (typeof projects)[number];
+type Project = ProjectSummary;
 
 export default function ProjectsPage() {
   const router = useRouter();
-  const [items, setItems] = useState<Project[]>(projects);
+  const [items, setItems] = useState<Project[]>([]);
   const [query, setQuery] = useState("");
   const [portfolio, setPortfolio] = useState(true);
   const [dialog, setDialog] = useState<"project" | "template" | "actions" | null>(null);
@@ -32,6 +29,33 @@ export default function ProjectsPage() {
     setNewProjectName("");
     setDialog(null);
   };
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const data = await projectService.getProjects();
+        if (!mounted) return;
+        // Map API shape into local Project type where necessary
+        const mapped = data.map((p) => ({
+          id: String(p.id),
+          name: p.name || p.code || "Untitled",
+          health: p.status || "Unknown",
+          progress: p.progress || 0,
+          owner: (p.lead && p.lead.slice(0, 2)) || (p.memberInitials && p.memberInitials[0]) || "--",
+          tasks: p.issueCount || 0,
+          due: p.dueLabel || p.dueLabel || "",
+          tone: p.accent ? "green" : "blue",
+          // keep other fields from API
+          ...p,
+        }));
+        setItems(mapped);
+      } catch (e) {
+        console.error("Failed to load projects", e);
+      }
+    })();
+    return () => { mounted = false; };
+  }, []);
 
   return (
     <WorkspacePage>

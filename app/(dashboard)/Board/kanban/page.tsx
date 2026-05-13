@@ -1,7 +1,11 @@
 "use client";
 
-import { type DragEvent, useState } from "react";
+import { type DragEvent, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useAuthStore } from "../../../../store";
+import { dashboardService } from "@/services/dashboard.service";
+import { projectService } from "@/services/project.service";
+import { ticketsService } from "@/services/tickets.service";
 import { CheckCircle2, CirclePlus, MoreHorizontal, Search, SlidersHorizontal } from "lucide-react";
 
 type BoardTask = {
@@ -12,6 +16,7 @@ type BoardTask = {
   points: number;
   subtasks: string;
   comments: number;
+  project?: string | null;
   label: string;
 };
 
@@ -24,52 +29,22 @@ type BoardColumn = {
 };
 
 const initialColumns: BoardColumn[] = [
-  {
-    title: "TO DO",
-    tone: "bg-[#87909e]",
-    soft: "bg-[#f0f2f5]",
-    wip: "8 / 12",
-    tasks: [
-      { id: "PM-101", content: "Definir architecture API", priority: "High", due: "May 8", points: 8, subtasks: "2/6", comments: 3, label: "Backend" },
-      { id: "PM-102", content: "Creer maquettes Figma", priority: "Normal", due: "May 9", points: 5, subtasks: "1/4", comments: 1, label: "Design" },
-      { id: "PM-103", content: "Installer Tailwind", priority: "Low", due: "Next week", points: 2, subtasks: "0/2", comments: 0, label: "Setup" },
-    ],
-  },
-  {
-    title: "IN PROGRESS",
-    tone: "bg-[#1090e0]",
-    soft: "bg-[#eaf5ff]",
-    wip: "5 / 6",
-    tasks: [
-      { id: "PM-142", content: "Developpement de la sidebar ClickUp", priority: "Urgent", due: "Today", points: 13, subtasks: "4/8", comments: 6, label: "Frontend" },
-      { id: "PM-118", content: "Integration d'Axios", priority: "High", due: "Tomorrow", points: 5, subtasks: "2/3", comments: 2, label: "API" },
-    ],
-  },
-  {
-    title: "REVIEW",
-    tone: "bg-[#f8ae00]",
-    soft: "bg-[#fff8e8]",
-    wip: "3 / 5",
-    tasks: [
-      { id: "PM-88", content: "Authentification JWT", priority: "High", due: "May 6", points: 8, subtasks: "5/5", comments: 5, label: "Security" },
-      { id: "PM-94", content: "Validation responsive desktop", priority: "Normal", due: "May 7", points: 3, subtasks: "3/4", comments: 2, label: "QA" },
-    ],
-  },
-  {
-    title: "DONE",
-    tone: "bg-[#00b884]",
-    soft: "bg-[#e8fff6]",
-    wip: "12 done",
-    tasks: [
-      { id: "PM-77", content: "Initier le projet Next.js", priority: "Low", due: "May 3", points: 2, subtasks: "2/2", comments: 1, label: "Setup" },
-      { id: "PM-81", content: "Configuration du backend Django", priority: "Normal", due: "May 4", points: 5, subtasks: "3/3", comments: 4, label: "Backend" },
-    ],
-  },
+  { title: "TO DO", tone: "bg-[#87909e]", soft: "bg-[#f0f2f5]", wip: "", tasks: [] },
+  { title: "IN PROGRESS", tone: "bg-[#1090e0]", soft: "bg-[#eaf5ff]", wip: "", tasks: [] },
+  { title: "REVIEW", tone: "bg-[#f8ae00]", soft: "bg-[#fff8e8]", wip: "", tasks: [] },
+  { title: "DONE", tone: "bg-[#00b884]", soft: "bg-[#e8fff6]", wip: "", tasks: [] },
 ];
+
+const backendToFrontendPriority = (p: string): BoardTask["priority"] => {
+  const map: Record<string, BoardTask["priority"]> = { critical: "Urgent", high: "High", medium: "Normal", low: "Low" };
+  return map[(p || "medium").toLowerCase()] || "Normal";
+};
 
 export default function KanbanBoardPage() {
   const user = useAuthStore((state) => state.user);
-  const [columns, setColumns] = useState<BoardColumn[]>(initialColumns);
+  const [boardColumns, setBoardColumns] = useState<BoardColumn[]>(initialColumns);
+  // Start as false so server-rendered HTML matches client initial render
+  const [loading, setLoading] = useState(false);
   const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [compact, setCompact] = useState(false);
@@ -78,7 +53,7 @@ export default function KanbanBoardPage() {
   const [targetColumn, setTargetColumn] = useState(0);
   const [newCardTitle, setNewCardTitle] = useState("");
   const [newPriority, setNewPriority] = useState<BoardTask["priority"]>("Normal");
-  const [newDue, setNewDue] = useState("Tomorrow");
+  const [newDue, setNewDue] = useState(new Date().toISOString().split('T')[0]);
   const [newLabel, setNewLabel] = useState("Local");
   const [priorityFilter, setPriorityFilter] = useState<"All" | BoardTask["priority"]>("All");
   const [hideDone, setHideDone] = useState(false);
@@ -86,8 +61,10 @@ export default function KanbanBoardPage() {
   const [completed, setCompleted] = useState<Set<string>>(new Set());
   const [collapsedColumns, setCollapsedColumns] = useState<Set<string>>(new Set());
   const [notice, setNotice] = useState("");
+  const searchParams = useSearchParams();
+  const projectIdQuery = searchParams?.get("projectId") || null;
 
-  const visibleColumns = columns.map((column) => ({
+  const visibleColumns = boardColumns.map((column) => ({
     ...column,
     tasks: column.tasks
       .filter((task) => `${task.id} ${task.content} ${task.label} ${task.priority} ${task.due}`.toLowerCase().includes(query.toLowerCase()))
@@ -118,7 +95,7 @@ export default function KanbanBoardPage() {
       return;
     }
 
-    setColumns((currentColumns) => {
+    setBoardColumns((currentColumns) => {
       const nextColumns = currentColumns.map((column) => ({ ...column, tasks: [...column.tasks] }));
       const taskIndex = nextColumns[sourceColumnIndex]?.tasks.findIndex((task) => task.id === taskId) ?? -1;
       if (taskIndex === -1) return currentColumns;
@@ -127,40 +104,139 @@ export default function KanbanBoardPage() {
       return nextColumns;
     });
     setDraggedTaskId(null);
+    // Persist status change to backend
+    (async () => {
+      try {
+        const statusMap = ["todo", "in_progress", "in_review", "done"];
+        const newStatus = statusMap[targetColumnIndex] || statusMap[0];
+
+        // find project id for ticket if available so we call the project-scoped endpoint
+        const sourceTasks = boardColumns[sourceColumnIndex]?.tasks || [];
+        const moved = sourceTasks.find((t) => t.id === taskId) as any | undefined;
+        const projectId = moved?.project || projectIdQuery || null;
+
+        if (projectIdQuery) {
+          // If we're viewing a project board, use the project move endpoint which
+          // handles ordering and status server-side. Send source/target indices
+          // so backend can adjust ordering if supported.
+          await projectService.moveTicketOnBoard(projectIdQuery, taskId, {
+            from_column: sourceColumnIndex,
+            to_column: targetColumnIndex,
+            status: newStatus,
+          });
+        } else if (projectId) {
+          // Use the project-scoped status endpoint when we can infer a project id
+          await ticketsService.updateStatus(taskId, projectId, { status: newStatus });
+        } else {
+          // Fallback to updating the ticket resource directly
+          await ticketsService.updateTicket(taskId, { status: newStatus });
+        }
+        setNotice(`Moved card to ${newStatus}.`);
+      } catch (e) {
+        console.error("Failed to persist moved card", e);
+        setNotice("Failed to persist card move.");
+        // Optionally refresh board to revert optimistic change
+        void fetchData();
+      }
+    })();
   };
   const addCard = () => {
-    const title = newCardTitle.trim();
-    if (!title) return;
-    const task: BoardTask = {
-      id: `PM-${Math.floor(Date.now() / 1000)}`,
-      content: title,
-      priority: "Normal",
-      due: "Tomorrow",
-      points: 3,
-      subtasks: "0/3",
-      comments: 0,
-      label: newLabel.trim() || "Local",
-    };
-    task.priority = newPriority;
-    task.due = newDue;
-    setColumns((current) => current.map((column, index) => index === targetColumn ? { ...column, tasks: [task, ...column.tasks] } : column));
-    setNewCardTitle("");
-    setNewPriority("Normal");
-    setNewDue("Tomorrow");
-    setNewLabel("Local");
-    setDialog(null);
-    setSelectedTask(task);
-    setNotice(`Added ${task.id} to ${columns[targetColumn]?.title || "board"}.`);
+    (async () => {
+      const title = newCardTitle.trim();
+      if (!title) return;
+      setDialog(null);
+      try {
+        const statusMap = ["todo", "in_progress", "in_review", "done"];
+        // Build payload matching backend TicketSerializer fields
+        const priorityMap: Record<string, string> = {
+          Urgent: "critical",
+          High: "high",
+          Normal: "medium",
+          Low: "low",
+        };
+        const payload: any = {
+          title,
+          // backend field is `priority` with choices [critical, high, medium, low]
+          priority: priorityMap[newPriority] || "medium",
+          
+          status: statusMap[targetColumn] || statusMap[0],
+          // serializer expects `labels` as an array
+          labels: newLabel ? [newLabel.trim()] : [],
+        };
+        // Try to infer a project context for ticket creation. The backend expects
+        // creation to be under a project: POST /projects/{project_id}/tickets/
+        const inferredProject = projectIdQuery ||
+          (boardColumns[targetColumn]?.tasks && boardColumns[targetColumn].tasks[0]?.project) ||
+          boardColumns.flatMap((c) => c.tasks).find((t) => (t as any).project)?.project ||
+          null;
+
+        if (!inferredProject) {
+          setNotice("Cannot create ticket: no project context. Create a ticket from a project page.");
+          return;
+        }
+
+        const created: any = await ticketsService.createTicket(payload, inferredProject);
+
+        const task: BoardTask = {
+          id: created.id,
+          content: created.title || title,
+          priority: backendToFrontendPriority(created.priority),
+          due: created.due_date || newDue,
+          points: created.estimate_story_points || 0,
+          subtasks: "0/0",
+          comments: created.comments_count || 0,
+          label: created.label || payload.label,
+          project: created.project || null,
+        };
+        setBoardColumns((current) => current.map((column, index) => index === targetColumn ? { ...column, tasks: [task, ...column.tasks] } : column));
+        setNewCardTitle("");
+        setNewPriority("Normal");
+        setNewDue(new Date().toISOString().split('T')[0]);
+        setNewLabel("Local");
+        setSelectedTask(task);
+        setNotice(`Created ${task.id} in ${boardColumns[targetColumn]?.title || "board"}.`);
+      } catch (e) {
+        console.error("Failed to create ticket", e);
+        setNotice("Failed to create ticket.");
+      }
+    })();
+  };
+
+  async function fetchTicketDetail(ticketId: string, projectId?: string) {
+    try {
+      // accept optional project id to call project-scoped detail endpoint
+      const detail = await ticketsService.getTicket(ticketId, projectId);
+      
+      const task: BoardTask = {
+        id: detail.id,
+        content: detail.title || detail.description || "Untitled",
+        priority: backendToFrontendPriority(detail.priority as string),
+        due: detail.updated_at || "",
+        points: 0,
+        subtasks: "0/0",
+        comments: detail.comments_count || 0,
+        label: detail.project || "",
+        project: (detail.project as any) || null,
+      };
+      setSelectedTask(task);
+    } catch (e) {
+      console.error("Failed to load ticket details", e);
+      setNotice("Failed to load ticket details.");
+    }
+  }
+
+  const handleOpenTask = (task: BoardTask) => {
+    fetchTicketDetail(task.id, task.project || projectIdQuery || undefined);
   };
   const updateTask = (taskId: string, patch: Partial<BoardTask>) => {
-    setColumns((current) => current.map((column) => ({
+    setBoardColumns((current) => current.map((column) => ({
       ...column,
       tasks: column.tasks.map((task) => task.id === taskId ? { ...task, ...patch } : task),
     })));
     setSelectedTask((current) => current?.id === taskId ? { ...current, ...patch } : current);
   };
   const moveTask = (taskId: string, targetColumnIndex: number) => {
-    setColumns((current) => {
+    setBoardColumns((current) => {
       const next = current.map((column) => ({ ...column, tasks: [...column.tasks] }));
       const sourceColumnIndex = next.findIndex((column) => column.tasks.some((task) => task.id === taskId));
       if (sourceColumnIndex === -1 || sourceColumnIndex === targetColumnIndex) return current;
@@ -169,7 +245,20 @@ export default function KanbanBoardPage() {
       next[targetColumnIndex].tasks.push(task);
       return next;
     });
-    setNotice(`Moved card to ${columns[targetColumnIndex]?.title || "selected column"}.`);
+    setNotice(`Moved card to ${boardColumns[targetColumnIndex]?.title || "selected column"}.`);
+  };
+  const handleDeleteTicket = async (ticketId: string, projectId?: string) => {
+    try {
+      setLoading(true);
+      await ticketsService.deleteTicket(ticketId, projectId);
+      setBoardColumns((current) => current.map((col) => ({ ...col, tasks: col.tasks.filter((t) => t.id !== ticketId) })));
+      setNotice("Ticket deleted.");
+    } catch (e) {
+      console.error("Failed to delete ticket", e);
+      setNotice("Failed to delete ticket.");
+    } finally {
+      setLoading(false);
+    }
   };
   const toggleColumn = (columnTitle: string) => {
     setCollapsedColumns((current) => {
@@ -184,6 +273,47 @@ export default function KanbanBoardPage() {
     setPriorityFilter("All");
     setHideDone(false);
   };
+
+  useEffect(() => {
+    // use the shared fetchData below for mount and manual refresh
+    fetchData();
+    // re-run when projectIdQuery changes
+  }, [projectIdQuery]);
+
+  // fetchData: reusable loader so Refresh button can re-fetch board tasks
+  async function fetchData() {
+    setLoading(true);
+    try {
+      const tasks = projectIdQuery ? await projectService.listProjectTickets(projectIdQuery) : await dashboardService.getAssignedTasks();
+      
+      // Map incoming tasks into columns by status
+      const cols: BoardColumn[] = initialColumns.map((c) => ({ ...c, tasks: [] }));
+        tasks.forEach((t: any) => {
+          const task: BoardTask = {
+            id: t.id,
+            content: t.title || t.content || "Untitled",
+            priority: backendToFrontendPriority(t.priority),
+            due: t.due_date || t.due || "",
+            points: t.estimate_story_points || t.points || 0,
+            subtasks: t.subtasks || "0/0",
+            comments: t.comments_count || t.comments || 0,
+            label: t.label || t.project || "",
+            project: t.project || null,
+          };
+        const status = (t.status || "TO DO").toUpperCase();
+        if (status.includes("DONE") || status === "DONE") cols[3].tasks.push(task);
+        else if (status.includes("REVIEW")) cols[2].tasks.push(task);
+        else if (status.includes("IN PROGRESS") || status.includes("PROGRESS")) cols[1].tasks.push(task);
+        else cols[0].tasks.push(task);
+      });
+      setBoardColumns(cols);
+    } catch (e) {
+      setBoardColumns(initialColumns);
+      setNotice("Failed to load board data.");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <main className="flex min-h-full flex-col bg-[#f7f8fb]">
@@ -207,6 +337,9 @@ export default function KanbanBoardPage() {
         clearFilters={clearBoardFilters}
         openSettings={() => setDialog("settings")}
         openAddTask={() => { setTargetColumn(0); setDialog("add"); }}
+        fetchData={fetchData}
+        loading={loading}
+        columns={boardColumns}
       />
       <div className="min-h-0 flex-1 overflow-x-auto p-4">
         <div className="flex min-h-full min-w-max gap-3">
@@ -233,7 +366,8 @@ export default function KanbanBoardPage() {
                 return next;
               })}
               openAddTask={() => { setTargetColumn(columnIndex); setDialog("add"); }}
-              openTask={setSelectedTask}
+              openTask={handleOpenTask}
+              removeTicket={(taskId: string) => handleDeleteTicket(taskId, projectIdQuery || undefined)}
             />
           ))}
         </div>
@@ -257,7 +391,7 @@ export default function KanbanBoardPage() {
                 <div>
                   <p className="mb-1.5 text-[10px] font-black uppercase text-[#8f96a3]">Move to</p>
                   <div className="flex flex-wrap gap-1">
-                    {columns.map((column, index) => (
+                    {boardColumns.map((column, index) => (
                       <button key={column.title} onClick={() => moveTask(selectedTask.id, index)} className="h-8 rounded-[7px] border border-[#dfe3e8] bg-[#f7f8fb] px-2.5 text-[11px] font-black text-[#68707d] hover:bg-white">{column.title}</button>
                     ))}
                   </div>
@@ -274,12 +408,15 @@ export default function KanbanBoardPage() {
                 <input value={newCardTitle} onChange={(event) => setNewCardTitle(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") addCard(); }} autoFocus placeholder="Card title" className="h-10 w-full rounded-[8px] border border-[#dfe3e8] bg-[#f7f8fb] px-3 text-sm font-semibold outline-none focus:border-[#7b68ee]" />
                 <div className="mt-3 grid grid-cols-2 gap-2">
                   <FieldSelect label="Priority" value={newPriority} onChange={(value) => setNewPriority(value as BoardTask["priority"])} options={["Urgent", "High", "Normal", "Low"]} />
-                  <FieldSelect label="Due" value={newDue} onChange={setNewDue} options={["Today", "Tomorrow", "May 6", "May 7", "May 8", "Next week"]} />
+                  <label className="block text-[10px] font-black uppercase text-[#8f96a3]">
+                    Due Date
+                    <input type="date" value={newDue} onChange={(e) => setNewDue(e.target.value)} className="mt-1 h-9 w-full rounded-[7px] border border-[#dfe3e8] bg-[#f7f8fb] px-2 text-xs font-black text-[#20242a] outline-none focus:border-[#7b68ee]" />
+                  </label>
                   <FieldSelect label="Label" value={newLabel} onChange={setNewLabel} options={["Frontend", "Backend", "Design", "API", "QA", "Security", "Setup", "Local"]} />
                   <label className="text-[10px] font-black uppercase text-[#8f96a3]">
                     Column
                     <select value={targetColumn} onChange={(event) => setTargetColumn(Number(event.target.value))} className="mt-1 h-9 w-full rounded-[7px] border border-[#dfe3e8] bg-[#f7f8fb] px-2 text-xs font-black text-[#20242a] outline-none focus:border-[#7b68ee]">
-                      {columns.map((column, index) => <option key={column.title} value={index}>{column.title}</option>)}
+                      {boardColumns.map((column, index) => <option key={column.title} value={index}>{column.title}</option>)}
                     </select>
                   </label>
                 </div>
@@ -311,6 +448,9 @@ function BoardToolbar({
   clearFilters,
   openSettings,
   openAddTask,
+  fetchData,
+  loading,
+  columns,
 }: {
   query: string;
   setQuery: (value: string) => void;
@@ -326,6 +466,9 @@ function BoardToolbar({
   clearFilters: () => void;
   openSettings: () => void;
   openAddTask: () => void;
+  fetchData: () => Promise<void>;
+  loading: boolean;
+  columns: BoardColumn[];
 }) {
   return (
       <div className="border-b border-[#dfe3e8] bg-white px-5 py-3">
@@ -333,8 +476,8 @@ function BoardToolbar({
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-[19px] font-black text-[#20242a]">Active Board</h1>
-            <span className="rounded-full bg-[#edf0f5] px-2 py-0.5 text-[10px] font-black text-[#68707d]">4 statuses</span>
-            <span className="rounded-full bg-[#f3efff] px-2 py-0.5 text-[10px] font-black text-[#7b68ee]">{visibleTaskCount} cards</span>
+            <span className="rounded-full bg-[#edf0f5] px-2 py-0.5 text-[10px] font-black text-[#68707d]">{columns.length} statuses</span>
+            <span className="rounded-full bg-[#f3efff] px-2 py-0.5 text-[10px] font-black text-[var(--primary-color)]">{visibleTaskCount} cards</span>
           </div>
           <p className="mt-0.5 text-xs font-semibold text-[#7c828d]">Sprint Backlog / Board view / grouped by status</p>
         </div>
@@ -343,11 +486,14 @@ function BoardToolbar({
             <Search size={14} className="text-[#8f96a3]" />
             <input value={query} onChange={(event) => setQuery(event.target.value)} className="min-w-0 flex-1 bg-transparent text-[12px] font-semibold outline-none placeholder:text-[#9aa1ad]" placeholder="Search cards..." />
           </div>
+          <button onClick={() => fetchData()} disabled={loading} className="flex h-8 items-center gap-1.5 rounded-[7px] border border-[#dfe3e8] bg-white px-3 text-xs font-black text-[#68707d] shadow-sm transition hover:bg-[#f7f8fb] focus:outline-none focus:ring-2 focus:ring-[#d7d1ff]">
+            {loading ? "Refreshing..." : "Refresh"}
+          </button>
           <button onClick={openSettings} className="flex h-8 items-center gap-1.5 rounded-[7px] border border-[#dfe3e8] bg-white px-3 text-xs font-black text-[#68707d] shadow-sm transition hover:bg-[#f7f8fb] focus:outline-none focus:ring-2 focus:ring-[#d7d1ff]">
             <SlidersHorizontal size={14} />
             Board settings
           </button>
-          <button onClick={openAddTask} className="rounded-[7px] bg-[#7b68ee] px-3.5 py-1.5 text-xs font-black text-white shadow-sm transition hover:bg-[#6d56ea] focus:outline-none focus:ring-2 focus:ring-[#d7d1ff]">Add task</button>
+          <button onClick={openAddTask} className="rounded-[7px] bg-[var(--primary-color)] px-3.5 py-1.5 text-xs font-black text-white shadow-sm transition hover:bg-[var(--primary-color)] focus:outline-none focus:ring-2 focus:ring-[#d7d1ff]">Add task</button>
         </div>
       </div>
       <div className="mt-3 flex flex-wrap gap-1">
@@ -358,7 +504,7 @@ function BoardToolbar({
         {(["All", "Urgent", "High", "Normal", "Low"] as Array<"All" | BoardTask["priority"]>).map((priority) => (
           <button key={priority} onClick={() => setPriorityFilter(priority)} className={`h-7 rounded-[7px] px-2.5 text-[11px] font-black ${priorityFilter === priority ? "border border-[#dfe3e8] bg-[#f7f8fb] text-[#20242a]" : "text-[#68707d] hover:bg-[#f7f8fb]"}`}>{priority}</button>
         ))}
-        {(query || priorityFilter !== "All" || hideDone) && <button onClick={clearFilters} className="h-7 rounded-[7px] px-2.5 text-[11px] font-black text-[#7b68ee] hover:bg-[#f3efff]">Clear</button>}
+        {(query || priorityFilter !== "All" || hideDone) && <button onClick={clearFilters} className="h-7 rounded-[7px] px-2.5 text-[11px] font-black text-[var(--primary-color)] hover:bg-[var(--primary-color)]">Clear</button>}
       </div>
     </div>
   );
@@ -381,6 +527,7 @@ function BoardLane({
   toggleComplete,
   openAddTask,
   openTask,
+  removeTicket,
 }: {
   column: BoardColumn;
   columnIndex: number;
@@ -398,6 +545,7 @@ function BoardLane({
   toggleComplete: (taskId: string) => void;
   openAddTask: () => void;
   openTask: (task: BoardTask) => void;
+  removeTicket: (taskId: string) => void;
 }) {
   return (
     <section className={`${isCollapsed ? "w-[74px]" : "w-[352px]"} flex shrink-0 flex-col transition-[width]`}>
@@ -420,6 +568,7 @@ function BoardLane({
               isComplete={completed.has(task.id)}
               toggleComplete={() => toggleComplete(task.id)}
               openTask={() => openTask(task)}
+              removeTicket={() => removeTicket(task.id)}
               onDragStart={(event) => onDragStart(event, task.id, columnIndex)}
               onDragEnd={onDragEnd}
             />
@@ -485,6 +634,7 @@ function TaskCard({
   isComplete,
   toggleComplete,
   openTask,
+  removeTicket,
   onDragStart,
   onDragEnd,
 }: {
@@ -497,6 +647,7 @@ function TaskCard({
   isComplete: boolean;
   toggleComplete: () => void;
   openTask: () => void;
+  removeTicket: () => void;
   onDragStart: (event: DragEvent<HTMLElement>) => void;
   onDragEnd: () => void;
 }) {
@@ -508,14 +659,17 @@ function TaskCard({
       onDragEnd={onDragEnd}
       className={`group cursor-pointer rounded-[9px] border border-[#dfe3e8] bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-[#c8cdd4] hover:shadow-md active:scale-[0.98] ${isDragging ? "scale-[0.98] opacity-50" : "opacity-100"}`}
     >
-      <div className="flex items-center justify-between border-b border-[#edf0f3] px-3 py-2">
+        <div className="flex items-center justify-between border-b border-[#edf0f3] px-3 py-2">
         <div className="flex items-center gap-2">
           <button onClick={(event) => { event.stopPropagation(); toggleComplete(); }} className={`flex h-4 w-4 items-center justify-center rounded-[3px] border ${isComplete ? "border-[#7b68ee] bg-[#7b68ee] text-white" : "border-[#c8cdd4] bg-white text-transparent group-hover:border-[#7b68ee] group-hover:text-[#7b68ee]"}`}>
             <CheckCircle2 size={12} />
           </button>
           <span className="rounded-[3px] bg-[#f3f4f6] px-1.5 py-0.5 text-[9px] font-black text-[#8f96a3]">{task.id}</span>
         </div>
-        <PriorityPill priority={task.priority} />
+          <div className="flex items-center gap-2">
+            <PriorityPill priority={task.priority} />
+            <button onClick={(event) => { event.stopPropagation(); if (confirm('Delete this ticket?')) removeTicket(); }} className="h-6 w-6 rounded-[5px] text-[#e5484d] hover:bg-[#fff1f1]" title="Delete ticket">✕</button>
+          </div>
       </div>
 
       <div className={compact ? "p-2.5" : "p-3"}>
