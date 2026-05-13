@@ -45,6 +45,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const [mounted, setMounted] = useState(false);
   const [orgs, setOrgs] = useState<Organization[]>([]);
   const [workspaces, setWorkspaces] = useState<any[]>([]);
+  const [orgMembers, setOrgMembers] = useState<any[]>([]);
   const [menu, setMenu] = useState<"headerOrg" | "sidebarOrg" | "profile" | null>(null);
   const [globalSearch, setGlobalSearch] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
@@ -87,13 +88,15 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           const storedId = typeof window !== 'undefined' ? localStorage.getItem('af:org_id') : null;
           if (storedId && data.some((o: any) => String(o.id) === String(storedId))) {
             const orgFound = data.find((o: any) => String(o.id) === String(storedId));
-            setSelectedOrgId(String(orgFound.id));
-            setOrganization(orgFound.name);
+            if (orgFound) {
+              setSelectedOrgId(String(orgFound.id));
+              setOrganization(orgFound.name);
+            }
           } else if (data && data.length > 0) {
             const first = data[0];
             setSelectedOrgId(String(first.id));
             setOrganization(first.name);
-            try { if (typeof window !== 'undefined') localStorage.setItem('af:org_id', String(first.id)); localStorage.setItem('af:org', first.name); } catch {}
+            try { if (typeof window !== 'undefined') { localStorage.setItem('af:org_id', String(first.id)); localStorage.setItem('af:org', first.name); } } catch {}
           }
         } catch (e) {
           // ignore
@@ -116,6 +119,22 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         setWorkspaces(w || []);
       } catch (e) {
         // ignore
+      }
+    })();
+    return () => { mounted = false };
+  }, [selectedOrgId]);
+
+  // Fetch organisation members
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        if (!selectedOrgId) return;
+        const members = await orgService.getOrganizationMembers(selectedOrgId);
+        if (!mounted) return;
+        setOrgMembers(members || []);
+      } catch (e) {
+        console.error('Failed to fetch organisation members', e);
       }
     })();
     return () => { mounted = false };
@@ -316,12 +335,27 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                   </Link>
                 </div>
               </div>
-              <div className="mb-2 border-b border-[#e4e7ec] pb-2">
+              <div className="mb-2 border-b border-[#e4e7ec] pb-2 text-xs">
                 <p className="mb-1 flex h-5 items-center px-1.5 text-[10px] font-black uppercase text-[#8f96a3]">Teams</p>
-                <Link href="/chat" className={`flex h-[31px] items-center gap-2 rounded-[7px] px-2 text-[12px] ${pathname === "/chat" ? "bg-white font-black text-[#2f343c] shadow-sm ring-1 ring-[#dfe3e8]" : "font-bold text-[#68707d] hover:bg-white hover:text-[#2f343c]"}`}>
+                <Link href="/chat" className={`mb-1 flex h-[31px] items-center gap-2 rounded-[7px] px-2 text-[12px] ${pathname === "/chat" ? "bg-white font-black text-[#2f343c] shadow-sm ring-1 ring-[#dfe3e8]" : "font-bold text-[#68707d] hover:bg-white hover:text-[#2f343c]"}`}>
                   <span className={pathname === "/chat" ? "text-[#7b68ee]" : "text-[#9aa1ad]"}><Users size={15} /></span>
                   <span className="truncate">Teams</span>
                 </Link>
+                {/* Dynamic member list from organization */}
+                <div className="mt-1 space-y-0.5 px-2">
+                   {orgMembers.map((member) => (
+                      <Link key={member.id} href="/chat" className="flex items-center gap-2 rounded-md py-1 text-[#68707d] hover:bg-white hover:text-[#2f343c]">
+                         <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#7b68ee] text-[8px] font-black text-white uppercase italic">
+                            {member.username.slice(0, 2)}
+                         </span>
+                         <span className="truncate font-semibold text-[11px]">{member.username}</span>
+                         <span className={`ml-auto h-1.5 w-1.5 rounded-full ${Math.random() > 0.3 ? 'bg-green-500' : 'bg-gray-300'}`} />
+                      </Link>
+                   ))}
+                   {orgMembers.length === 0 && (
+                      <p className="px-1 text-[10px] font-bold text-[#8f96a3] italic">No members found</p>
+                   )}
+                </div>
               </div>
               <div className="mb-2 border-b border-[#e4e7ec] pb-2">
                 <p className="mb-1 flex h-5 items-center px-1.5 text-[10px] font-black uppercase text-[#8f96a3]">Everything</p>

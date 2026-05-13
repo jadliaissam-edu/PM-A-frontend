@@ -1,4 +1,7 @@
+"use client";
+import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ArrowRight, BarChart3, CalendarDays, CheckCircle2, Layers3, MessageSquare, PanelsTopLeft, Search, ShieldCheck } from "lucide-react";
 
 const columns = [
@@ -22,6 +25,44 @@ const productRoutes = [
 ];
 
 export default function LandingPage() {
+  const [showModal, setShowModal] = useState(false);
+  const [email, setEmail] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+
+  const router = useRouter();
+
+  function isAuthenticated() {
+    try {
+      if (typeof window === "undefined") return false;
+      // Basic client-side presence check (adjust to your auth method)
+      if (localStorage.getItem("authToken")) return true;
+      if (document.cookie && document.cookie.includes("session")) return true;
+    } catch (e) {
+      return false;
+    }
+    return false;
+  }
+
+  function handleProtectedNav(e: React.MouseEvent, href: string) {
+    e.preventDefault();
+    if (isAuthenticated()) {
+      router.push(href);
+    } else {
+      router.push(`/login?next=${encodeURIComponent(href)}`);
+    }
+  }
+
+  function submitCreate(e: React.FormEvent) {
+    e.preventDefault();
+    setSubmitted(true);
+    // placeholder for real flow: send email to backend
+    setTimeout(() => {
+      setShowModal(false);
+      setEmail("");
+      setSubmitted(false);
+    }, 900);
+  }
+
   return (
     <main className="min-h-screen bg-[#f7f8fb] text-[#20242a]">
       <header className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
@@ -54,15 +95,24 @@ export default function LandingPage() {
           <h1 className="mt-5 max-w-3xl text-4xl font-black tracking-tight text-[#20242a] md:text-6xl">Plan, track, and ship work in one compact product surface.</h1>
           <p className="mt-5 max-w-2xl text-base font-semibold leading-8 text-[#68707d]">AgileFlow brings project dashboards, task lists, boards, timelines, reports, imports, audit logs, chat, and settings into one coherent PM workspace.</p>
           <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-            <Link href="/register" className="inline-flex h-10 items-center justify-center gap-2 rounded-[8px] bg-[#7b68ee] px-5 text-sm font-black text-white shadow-sm transition hover:bg-[#6d56ea] focus:outline-none focus:ring-2 focus:ring-[#d7d1ff]">
+            <button
+              onClick={() => setShowModal(true)}
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-[8px] bg-gradient-to-r from-[#7b68ee] to-[#6d56ea] px-5 text-sm font-black text-white shadow-lg transition-transform hover:-translate-y-0.5 focus:outline-none focus:ring-4 focus:ring-[#d7d1ff]/40"
+              aria-haspopup="dialog"
+            >
               Create workspace
               <ArrowRight size={16} />
-            </Link>
+            </button>
             <Link href="/dashboard/enterprise" className="inline-flex h-10 items-center justify-center rounded-[8px] border border-[#dfe3e8] bg-white px-5 text-sm font-black text-[#68707d] shadow-sm transition hover:bg-[#f7f8fb] focus:outline-none focus:ring-2 focus:ring-[#d7d1ff]">View dashboard</Link>
           </div>
           <div className="mt-5 grid max-w-xl grid-cols-2 gap-2 sm:grid-cols-4">
             {productRoutes.map((route) => (
-              <Link key={route.href} href={route.href} className="rounded-[8px] border border-[#dfe3e8] bg-white px-3 py-2 shadow-sm transition hover:-translate-y-0.5 hover:border-[#d7d1ff] hover:bg-[#f3efff]">
+              <Link
+                key={route.href}
+                href={route.href}
+                onClick={(e) => handleProtectedNav(e as any, route.href)}
+                className="rounded-[8px] border border-[#dfe3e8] bg-white px-3 py-2 shadow-sm transition hover:-translate-y-0.5 hover:border-[#d7d1ff] hover:bg-[#f3efff]"
+              >
                 <p className="truncate text-[11px] font-black text-[#20242a]">{route.label}</p>
                 <p className="text-[10px] font-bold text-[#8f96a3]">{route.meta}</p>
               </Link>
@@ -77,7 +127,7 @@ export default function LandingPage() {
               <span className="text-sm font-black">Sprint Backlog</span>
               <span className="rounded-[5px] border border-[#e1e4e8] bg-[#f7f8fb] px-2 py-0.5 text-[10px] font-bold text-[#8f96a3]">Private</span>
             </div>
-            <Link href="/tickets" className="hidden h-8 w-72 items-center gap-2 rounded-[7px] border border-[#dfe3e8] bg-[#f7f8fb] px-2.5 transition hover:bg-white md:flex">
+            <Link href="/tickets" onClick={(e) => handleProtectedNav(e as any, "/tickets")} className="hidden h-8 w-72 items-center gap-2 rounded-[7px] border border-[#dfe3e8] bg-[#f7f8fb] px-2.5 transition hover:bg-white md:flex">
               <Search size={14} className="text-[#8f96a3]" />
               <span className="text-xs font-semibold text-[#9aa1ad]">Search or jump to...</span>
             </Link>
@@ -109,11 +159,16 @@ export default function LandingPage() {
             <h2 className="text-2xl font-black text-[#20242a]">Workspace views that match the app</h2>
             <p className="mt-1 text-sm font-semibold text-[#68707d]">Every card below opens the matching dashboard route.</p>
           </div>
-          <Link href="/tickets" className="inline-flex h-9 items-center justify-center rounded-[8px] border border-[#dfe3e8] bg-white px-4 text-xs font-black text-[#68707d] shadow-sm hover:bg-[#f7f8fb]">Open task list</Link>
+          <Link href="/tickets" onClick={(e) => handleProtectedNav(e as any, "/tickets")} className="inline-flex h-9 items-center justify-center rounded-[8px] border border-[#dfe3e8] bg-white px-4 text-xs font-black text-[#68707d] shadow-sm hover:bg-[#f7f8fb]">Open task list</Link>
         </div>
         <div className="grid gap-4 md:grid-cols-4">
         {views.map((item) => (
-          <Link href={item.href} key={item.title} className="rounded-[10px] border border-[#dfe3e8] bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-[#d7d1ff] hover:shadow-md">
+          <Link
+            href={item.href}
+            key={item.title}
+            onClick={(e) => handleProtectedNav(e as any, item.href)}
+            className="rounded-[10px] border border-[#dfe3e8] bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-[#d7d1ff] hover:shadow-md"
+          >
             <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-[8px] bg-[#f3efff] text-[#7b68ee]">{item.icon}</div>
             <h2 className="text-sm font-black">{item.title}</h2>
             <p className="mt-2 text-xs font-semibold leading-5 text-[#68707d]">{item.text}</p>
@@ -121,6 +176,34 @@ export default function LandingPage() {
         ))}
         </div>
       </section>
+
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setShowModal(false)} aria-hidden="true" />
+          <div role="dialog" aria-modal="true" className="relative z-10 w-[95%] max-w-md rounded-xl bg-white p-6 shadow-2xl">
+            <h3 className="text-lg font-black">Create workspace</h3>
+            <p className="mt-1 text-sm text-[#68707d]">Start a new workspace — we'll send a confirmation link to your email.</p>
+            <form onSubmit={submitCreate} className="mt-4 flex flex-col gap-3">
+              <label className="text-xs font-bold">Email</label>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full rounded-md border border-[#e6e9ee] px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#d7d1ff]/60"
+                placeholder="you@company.com"
+                aria-label="email"
+              />
+              <div className="flex items-center justify-between">
+                <button type="submit" disabled={submitted} className="inline-flex items-center gap-2 rounded-md bg-[#7b68ee] px-4 py-2 text-sm font-black text-white shadow-sm disabled:opacity-60">
+                  {submitted ? "Creating..." : "Create workspace"}
+                </button>
+                <button type="button" onClick={() => setShowModal(false)} className="text-sm font-bold text-[#68707d]">Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       <section id="security" className="mx-auto max-w-7xl px-6 pb-16">
         <div className="rounded-[12px] border border-[#dfe3e8] bg-white p-5 shadow-sm">

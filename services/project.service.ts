@@ -182,6 +182,11 @@ export const projectService = {
     return response.data;
   },
 
+  listWorkspaceReleases: async (workspaceId: string) => {
+    const response = await api.get(`/workspaces/${workspaceId}/releases/`);
+    return response.data;
+  },
+
   createRelease: async (projectId: string, payload: any) => {
     const response = await api.post(`/projects/${projectId}/releases/`, payload);
     return response.data;
@@ -363,6 +368,16 @@ export const projectService = {
   /* Ticket import */
   importTickets: async (projectId: string, payload: any) => {
     const response = await api.post(`/projects/${projectId}/tickets/import/`, payload);
+    return response.data;
+  },
+  /* Activity */
+  getProjectActivity: async (projectId: string) => {
+    const response = await api.get(`/projects/${projectId}/activity/`);
+    return response.data;
+  },
+
+  getAuditLogs: async () => {
+    const response = await api.get(`/activity/audit/`);
     return response.data;
   },
 };

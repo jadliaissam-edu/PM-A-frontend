@@ -118,4 +118,9 @@ export const orgService = {
     const response = await api.delete(`/orgs/workspaces/${id}/`);
     return response.data;
   },
+
+  getOrganizationMembers: async (orgId: string) => {
+    const response = await api.get(`/orgs/organizations/${orgId}/members/`);
+    return response.data;
+  },
 };

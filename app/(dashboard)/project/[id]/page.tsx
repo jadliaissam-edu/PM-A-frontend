@@ -13,6 +13,7 @@ export default function ProjectDashboardPage() {
   const [dialog, setDialog] = useState<"settings" | "sprint" | null>(null);
   const [done, setDone] = useState<Set<string>>(new Set());
   const [project, setProject] = useState<ProjectSummary | null>(null);
+  const [activity, setActivity] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -20,17 +21,33 @@ export default function ProjectDashboardPage() {
     (async () => {
       setLoading(true);
       try {
-        const data = await projectService.getProjectById(projectId);
+        const [projectData, activityData] = await Promise.all([
+          projectService.getProjectById(projectId),
+          projectService.getProjectActivity(projectId)
+        ]);
         if (!mounted) return;
-        setProject(data);
+        setProject(projectData);
+        setActivity(activityData);
       } catch (e) {
-        console.error("Failed to load project", e);
+        console.error("Failed to load project dashboard", e);
       } finally {
         if (mounted) setLoading(false);
       }
     })();
     return () => { mounted = false; };
   }, [projectId]);
+
+  const formatTime = (dateStr: string) => {
+    if (!dateStr) return "";
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
+    if (diffHrs < 1) return "Just now";
+    if (diffHrs < 24) return `${diffHrs}h`;
+    if (diffHrs < 48) return "Yesterday";
+    return date.toLocaleDateString();
+  };
 
   const router = useRouter();
 
@@ -65,27 +82,19 @@ export default function ProjectDashboardPage() {
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_330px]">
         <Panel title="Recent activity" icon={<Activity size={16} />}>
           <div className="space-y-2">
-            {project && (project as any).recent_activity ? (project as any).recent_activity.map((item: any) => (
-              <div key={item.text} className="flex items-center gap-3 rounded-[8px] border border-[#edf0f3] bg-[#f7f8fb] p-3">
-                <Avatar initials={item.user || (item.user_initials || "") } />
+            {activity && activity.length > 0 ? activity.slice(0, 10).map((item: any) => (
+              <div key={item.id} className="flex items-center gap-3 rounded-[8px] border border-[#edf0f3] bg-[#f7f8fb] p-3">
+                <Avatar initials={item.actor_username ? item.actor_username.slice(0, 2).toUpperCase() : "???"} />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-black text-[#20242a]">{item.text}</p>
-                  <p className="text-xs font-semibold text-[#8f96a3]">{item.time}</p>
+                  <p className="truncate text-sm font-black text-[#20242a]">{item.description}</p>
+                  <p className="text-xs font-semibold text-[#8f96a3]">{formatTime(item.created_at)}</p>
                 </div>
               </div>
-            )) : [
-              { user: "HT", text: "pushed 3 commits to feature/auth", time: "2h" },
-              { user: "AP", text: "commented on ticket PM-12", time: "5h" },
-              { user: "SN", text: "moved PM-88 into Done", time: "Yesterday" },
-            ].map((item) => (
-              <div key={item.text} className="flex items-center gap-3 rounded-[8px] border border-[#edf0f3] bg-[#f7f8fb] p-3">
-                <Avatar initials={item.user} />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-black text-[#20242a]">{item.text}</p>
-                  <p className="text-xs font-semibold text-[#8f96a3]">{item.time}</p>
-                </div>
+            )) : (
+              <div className="p-4 text-center text-xs font-semibold text-[#8f96a3]">
+                No recent activity found for this project.
               </div>
-            ))}
+            )}
           </div>
         </Panel>
 
