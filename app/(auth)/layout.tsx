@@ -72,82 +72,94 @@ export default function AuthLayout({
         </nav>
       </aside>
 
-      <section className="flex min-h-screen min-w-0 flex-1 flex-col">
-        <header className="flex min-h-[58px] shrink-0 flex-wrap items-center justify-between gap-2 border-b border-[#dfe3e8] bg-white px-4 py-2 shadow-[0_1px_0_rgba(18,22,30,0.02)]">
-          <div className="min-w-0">
-            <div className="flex min-w-0 items-center gap-2 text-[12px] font-bold text-[#7c828d]">
-              <span>Everything</span>
-              <span className="text-[#c3c8d0]">/</span>
-              <span>Security</span>
-              <span className="text-[#c3c8d0]">/</span>
-              <span className="truncate font-black text-[#20242a]">Authentication</span>
-            </div>
-            <p className="mt-0.5 truncate text-[11px] font-semibold text-[#8f96a3]">Use your AgileFlow credentials to access delivery work.</p>
-          </div>
-          <div className="flex items-center gap-1">
-            <span className="hidden h-8 items-center rounded-[7px] border border-[#dfe3e8] bg-white px-3 text-xs font-black text-[#68707d] shadow-sm sm:inline-flex">Private workspace</span>
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#7b68ee] text-[10px] font-black text-white ring-2 ring-white">AF</span>
-          </div>
-        </header>
-
-        <div className="flex h-10 shrink-0 items-end gap-1 overflow-x-auto border-b border-[#dfe3e8] bg-white px-4">
-          {authNav.map((item) => {
-            const active = pathname === item.href;
-            return (
-              <Link key={item.href} href={item.href} className={`flex h-9 shrink-0 items-center px-2.5 text-[13px] font-black ${active ? "border-b-2 border-[#7b68ee] text-[#20242a]" : "text-[#68707d] hover:text-[#20242a]"}`}>
-                {item.label}
-              </Link>
-            );
-          })}
+    <section className="flex min-h-screen w-full items-center justify-center bg-[#f7f8fb] px-4 py-6 sm:px-6">
+  <div className="grid w-full max-w-6xl overflow-hidden rounded-[10px] border border-[#dfe3e8] bg-white shadow-sm xl:grid-cols-[minmax(0,0.9fr)_430px]">
+    
+    {/* Left Preview Panel */}
+    <div className="hidden border-r border-[#edf0f3] bg-white p-5 xl:block">
+      <div className="mb-4 flex items-center justify-between">
+        <div>
+          <p className="text-[10px] font-black uppercase text-[#8f96a3]">
+            Workspace preview
+          </p>
+          <h2 className="mt-1 text-sm font-black text-[#20242a]">
+            Sprint Backlog
+          </h2>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto bg-[#f7f8fb] p-4 sm:p-6">
-          <div className="mx-auto grid max-w-4xl overflow-hidden rounded-[10px] border border-[#dfe3e8] bg-white shadow-sm xl:grid-cols-[minmax(0,0.9fr)_430px]">
-            <div className="hidden border-r border-[#edf0f3] bg-white p-5 xl:block">
-              <div className="mb-4 flex items-center justify-between">
-                <div>
-                  <p className="text-[10px] font-black uppercase text-[#8f96a3]">Workspace preview</p>
-                  <h2 className="mt-1 text-sm font-black text-[#20242a]">Sprint Backlog</h2>
-                </div>
-                <span className="inline-flex h-5 items-center rounded-[4px] border border-[#d7d1ff] bg-[#f3efff] px-2 text-[10px] font-black text-[#7b68ee]">Auth required</span>
-              </div>
-              <div className="space-y-2.5">
-                {previewRows.map((row) => (
-                  <div key={row.title} className="grid grid-cols-[minmax(0,1fr)_104px_76px] items-center rounded-[7px] border border-[#edf0f3] bg-white text-[12px] shadow-sm">
-                    <div className="flex min-w-0 items-center gap-2 px-3 py-2">
-                      <span className="h-3.5 w-3.5 rounded-[3px] border border-[#c8cdd4] bg-white" />
-                      <span className="truncate font-black text-[#20242a]">{row.title}</span>
-                    </div>
-                    <span className="border-l border-[#edf0f3] px-3 py-2 text-[9px] font-black text-white" style={{ backgroundColor: row.color }}>{row.status}</span>
-                    <span className="border-l border-[#edf0f3] px-3 py-2 text-[10px] font-black text-[#8f96a3]">Today</span>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-5 rounded-[9px] border border-[#edf0f3] bg-[#f7f8fb] p-3">
-                <p className="text-[10px] font-black uppercase text-[#8f96a3]">Session status</p>
-                <p className="mt-1 text-sm font-semibold leading-6 text-[#68707d]">
-                  Sign in to unlock your workspace data and continue where your team left off.
-                </p>
-              </div>
-              <div className="mt-3 grid grid-cols-3 gap-2">
-                {[
-                  ["Tasks", "14"],
-                  ["Boards", "5"],
-                  ["Reports", "8"],
-                ].map(([label, value]) => (
-                  <div key={label} className="rounded-[7px] border border-[#edf0f3] bg-[#f7f8fb] p-3">
-                    <p className="text-[10px] font-black uppercase text-[#8f96a3]">{label}</p>
-                    <p className="mt-1 text-xl font-black text-[#20242a]">{value}</p>
-                  </div>
-                ))}
-              </div>
+        <span className="inline-flex h-5 items-center rounded-[4px] border border-[#d7d1ff] bg-[#f3efff] px-2 text-[10px] font-black text-[#7b68ee]">
+          Auth required
+        </span>
+      </div>
+
+      <div className="space-y-2.5">
+        {previewRows.map((row) => (
+          <div
+            key={row.title}
+            className="grid grid-cols-[minmax(0,1fr)_104px_76px] items-center rounded-[7px] border border-[#edf0f3] bg-white text-[12px] shadow-sm"
+          >
+            <div className="flex min-w-0 items-center gap-2 px-3 py-2">
+              <span className="h-3.5 w-3.5 rounded-[3px] border border-[#c8cdd4] bg-white" />
+              <span className="truncate font-black text-[#20242a]">
+                {row.title}
+              </span>
             </div>
-            <div className="flex min-h-[calc(100vh-140px)] items-center justify-center bg-white p-5 sm:min-h-[560px] sm:p-7">
-              <div className="w-full max-w-[410px]">{children}</div>
-            </div>
+
+            <span
+              className="border-l border-[#edf0f3] px-3 py-2 text-[9px] font-black text-white"
+              style={{ backgroundColor: row.color }}
+            >
+              {row.status}
+            </span>
+
+            <span className="border-l border-[#edf0f3] px-3 py-2 text-[10px] font-black text-[#8f96a3]">
+              Today
+            </span>
           </div>
-        </div>
-      </section>
+        ))}
+      </div>
+
+      <div className="mt-5 rounded-[9px] border border-[#edf0f3] bg-[#f7f8fb] p-3">
+        <p className="text-[10px] font-black uppercase text-[#8f96a3]">
+          Session status
+        </p>
+
+        <p className="mt-1 text-sm font-semibold leading-6 text-[#68707d]">
+          Sign in to unlock your workspace data and continue where your team left off.
+        </p>
+      </div>
+
+      <div className="mt-3 grid grid-cols-3 gap-2">
+        {[
+          ["Tasks", "14"],
+          ["Boards", "5"],
+          ["Reports", "8"],
+        ].map(([label, value]) => (
+          <div
+            key={label}
+            className="rounded-[7px] border border-[#edf0f3] bg-[#f7f8fb] p-3"
+          >
+            <p className="text-[10px] font-black uppercase text-[#8f96a3]">
+              {label}
+            </p>
+
+            <p className="mt-1 text-xl font-black text-[#20242a]">
+              {value}
+            </p>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    {/* Auth Section */}
+    <div className="flex min-h-[560px] items-center justify-center bg-white p-5 sm:p-7">
+      <div className="w-full max-w-[410px]">
+        {children}
+      </div>
+    </div>
+
+  </div>
+</section>
     </main>
   );
 }

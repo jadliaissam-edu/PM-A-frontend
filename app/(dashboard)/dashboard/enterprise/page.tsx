@@ -18,19 +18,7 @@ type FocusItem = {
 
 type DashboardPanel = "customize" | "task" | "invite" | "view";
 
-const focusItems: FocusItem[] = [
-  { id: "PM-142", title: "Refine ClickUp-style workspace shell", status: "IN PROGRESS", owner: "AA", due: "Today", priority: "Urgent" },
-  { id: "PM-136", title: "Review sprint backlog priorities", status: "REVIEW", owner: "MK", due: "May 8", priority: "High" },
-  { id: "PM-128", title: "Prepare release checklist", status: "TO DO", owner: "YS", due: "Next week", priority: "Low" },
-  { id: "PM-119", title: "QA task drawer interactions", status: "IN PROGRESS", owner: "HA", due: "Tomorrow", priority: "Medium" },
-];
-
-const overviewColumns = [
-  { title: "To Do", filter: "TO DO" as const, count: 8, color: "bg-[#87909e]", width: "w-[54%]" },
-  { title: "Doing", filter: "IN PROGRESS" as const, count: 5, color: "bg-[#1090e0]", width: "w-[42%]" },
-  { title: "Review", filter: "REVIEW" as const, count: 3, color: "bg-[#f8ae00]", width: "w-[28%]" },
-  { title: "Done", filter: "All" as const, count: 12, color: "bg-[#00b884]", width: "w-[76%]" },
-];
+const focusItems: FocusItem[] = [];
 
 const quickActions = ["Create task", "Open board", "Invite teammate", "Add view"];
 
@@ -77,6 +65,25 @@ export default function EnterpriseDashboardPage() {
       setStats(statsData);
       setActivities(activityData);
       setTasks(taskData);
+      // Map backend tickets/tasks into local FocusItem shape
+      try {
+        const mapped: FocusItem[] = (taskData || []).map((t: any) => {
+          const rawStatus = (t.status || "").toString().toLowerCase();
+          const status: FocusItem["status"] = rawStatus.includes("progress") || rawStatus.includes("in_progress") || rawStatus.includes("in-progress") ? "IN PROGRESS" : rawStatus.includes("review") ? "REVIEW" : "TO DO";
+          const owner = (t.assigned_to || t.owner || (t.assignee && (t.assignee.username || t.assignee.name)) || profileData?.username) || "AA";
+          return {
+            id: String(t.id),
+            title: t.title || t.summary || t.content || "Untitled",
+            status,
+            owner: String(owner).slice(0, 2).toUpperCase(),
+            due: t.due_date || t.due || (t.due_at ? new Date(t.due_at).toLocaleDateString() : "TBD"),
+            priority: t.priority || t.priority_level || "Medium",
+          } as FocusItem;
+        });
+        if (mapped.length > 0) setLocalFocusItems(mapped);
+      } catch (e) {
+        console.warn("Failed to map tasks to focus items", e);
+      }
       setOrganizations(orgsData || []);
       setWorkspaces(workspacesData || []);
     } catch (error) {
@@ -95,6 +102,12 @@ export default function EnterpriseDashboardPage() {
   const visibleActivities = activities.filter((item) => `${item.title} ${item.meta}`.toLowerCase().includes(search.toLowerCase()));
   const visibleAssignedTasks = (tasks.length > 0 ? tasks.slice(0, 4) : localFocusItems).filter((task) => task.title.toLowerCase().includes(search.toLowerCase()));
   const isWidgetVisible = (widget: string) => !hiddenWidgets.has(widget);
+  const overviewColumns = [
+    { title: "To Do", filter: "TO DO" as const, count: stats?.total_projects ?? 0, color: "bg-[#87909e]", width: "w-[54%]" },
+    { title: "Doing", filter: "IN PROGRESS" as const, count: stats?.owned_projects ?? 0, color: "bg-[#1090e0]", width: "w-[42%]" },
+    { title: "Review", filter: "REVIEW" as const, count: stats?.member_projects ?? 0, color: "bg-[#f8ae00]", width: "w-[28%]" },
+    { title: "Done", filter: "All" as const, count: stats?.archived_projects ?? 0, color: "bg-[#00b884]", width: "w-[76%]" },
+  ];
   const addLocalTask = () => {
     const title = newTaskTitle.trim();
     if (!title) return;
@@ -185,7 +198,7 @@ export default function EnterpriseDashboardPage() {
             </div>
           </Panel>
 
-          <Panel title="Focus list" icon={<CheckCircle2 size={16} />} action={<button onClick={() => setPanel("task")} className="flex h-7 items-center gap-1 rounded-[6px] bg-[#7b68ee] px-2.5 text-[11px] font-black text-white"><CirclePlus size={13} />Task</button>}>
+          <Panel title="Focus list" icon={<CheckCircle2 size={16} />}>
             <FocusTable
               items={filteredFocusItems}
               completed={completedFocus}
@@ -224,22 +237,6 @@ export default function EnterpriseDashboardPage() {
         </section>
 
         <aside className="space-y-4">
-          <Panel title="Quick actions" icon={<CirclePlus size={16} />} action={<MoreHorizontal size={15} className="text-[#a2a9b5]" />}>
-            <div className="grid gap-2">
-              {quickActions.map((action) => (
-                <button key={action} onClick={() => {
-                  if (action === "Open board") router.push("/Board/kanban");
-                  else if (action === "Create task") setPanel("task");
-                  else if (action === "Invite teammate") setPanel("invite");
-                  else setPanel("view");
-                }} className="flex h-10 items-center justify-between rounded-[8px] border border-[#dfe3e8] bg-[#f7f8fb] px-3 text-left text-sm font-black text-[#20242a] transition hover:border-[#c8cdd4] hover:bg-white">
-                  {action}
-                  <CirclePlus size={14} className="text-[var(--primary-color)]" />
-                </button>
-              ))}
-            </div>
-          </Panel>
-
           {isWidgetVisible("activity") && <Panel title="Recent activity" icon={<Activity size={16} />}>
             <ActivityList activities={visibleActivities} loading={loading} onOpen={setSelectedActivity} />
           </Panel>}

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -77,6 +78,22 @@ export default function LoginPage() {
             aria-invalid={Boolean(errors.email)}
             className="h-9 w-full rounded-[7px] border border-[#dfe3e8] bg-[#f7f8fb] px-3 text-xs font-black text-[#20242a] outline-none transition placeholder:text-[#9aa1ad] hover:bg-white focus:border-[#7b68ee] focus:bg-white focus:ring-2 focus:ring-[#d7d1ff] aria-[invalid=true]:border-[#ffd6d6] aria-[invalid=true]:bg-[#fffafa]"
             placeholder="you@company.com"
+                footer={
+                  <>
+                    <div className="space-y-2">
+                      <button type="button" onClick={() => signIn('google')} className="flex h-9 w-full items-center justify-center gap-2 rounded-[7px] border border-[#dfe3e8] bg-white px-3 text-xs font-black text-[#20242a] shadow-sm hover:bg-[#f7f8fb]">Continue with Google</button>
+                      <button type="button" onClick={() => signIn('github')} className="flex h-9 w-full items-center justify-center gap-2 rounded-[7px] border border-[#dfe3e8] bg-white px-3 text-xs font-black text-[#20242a] shadow-sm hover:bg-[#f7f8fb]">Continue with GitHub</button>
+                      <button type="button" onClick={() => signIn('microsoft')} className="flex h-9 w-full items-center justify-center gap-2 rounded-[7px] border border-[#dfe3e8] bg-white px-3 text-xs font-black text-[#20242a] shadow-sm hover:bg-[#f7f8fb]">Continue with Microsoft</button>
+                      <button type="button" onClick={() => signIn('linkedin')} className="flex h-9 w-full items-center justify-center gap-2 rounded-[7px] border border-[#dfe3e8] bg-white px-3 text-xs font-black text-[#20242a] shadow-sm hover:bg-[#f7f8fb]">Continue with LinkedIn</button>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <span className="flex-1 border-t border-[#edf0f3]" />
+                      <span className="text-[11px] font-black text-[#8f96a3]">or continue with email</span>
+                      <span className="flex-1 border-t border-[#edf0f3]" />
+                    </div>
+                  </>
+                }
           />
           {!errors.email && <p className="mt-1 text-[10px] font-bold text-[#8f96a3]">Use your work email to sign in.</p>}
           {errors.email && (

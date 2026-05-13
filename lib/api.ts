@@ -1,4 +1,5 @@
 import axios from "axios";
+import { useAuthStore } from "@/store";
 
 export const api = axios.create({
   baseURL:
@@ -6,6 +7,8 @@ export const api = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
+  // allow cookies from the backend (refresh/access cookie setting)
+  withCredentials: true,
 });
 
 // Attach Authorization header from localStorage for client requests
@@ -30,6 +33,10 @@ if (typeof window !== "undefined") {
         try {
           localStorage.removeItem("accessToken");
           localStorage.removeItem("refreshToken");
+        } catch (e) {}
+        try {
+          // clear persisted auth store
+          if (useAuthStore && typeof useAuthStore.getState === "function") useAuthStore.getState().clearAuth();
         } catch (e) {}
         // Force navigation to login page
         if (typeof window !== "undefined") window.location.href = "/login";

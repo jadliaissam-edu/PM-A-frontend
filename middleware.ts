@@ -17,7 +17,7 @@ export default withAuth({
 
 export const config = {
   matcher: [
-    "/dashboard/:path*",
+    // dashboard temporarily excluded from auth during local debugging
     "/tickets/:path*",
     "/project/:path*",
     "/Board/:path*",

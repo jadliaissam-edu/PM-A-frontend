@@ -10,6 +10,8 @@ export interface RegisterPayload {
   username: string;
   email: string;
   password: string;
+  first_name?: string;
+  last_name?: string;
 }
 
 export interface UserProfile {
@@ -25,7 +27,10 @@ export interface UserProfile {
 
 export const authService = {
   register: async (data: RegisterPayload) => {
+    const url = `${api.defaults.baseURL?.replace(/\/$/, '')}/auth/register/`;
+    console.debug("authService.register ->", url, data);
     const response = await api.post("/auth/register/", data);
+    console.debug("authService.register response ->", response.status, response.data);
     return response.data;
   },
 
@@ -46,6 +51,11 @@ export const authService = {
 
   requestPasswordReset: async (email: string) => {
     const response = await api.post("/auth/reset-password/", { email });
+    return response.data;
+  },
+
+  mfaSetup: async (email: string) => {
+    const response = await api.post("/auth/mfa/setup/", { email });
     return response.data;
   },
 
@@ -70,7 +80,19 @@ export const authService = {
     } catch (e) {
       // ignore network errors during logout
     }
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
+    try {
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
+    } catch (e) {}
+    try {
+      // clear client auth store as well
+      // lazy-import to avoid circular deps in some bundlers
+      const { useAuthStore } = require("@/store");
+      if (useAuthStore && typeof useAuthStore.getState === "function") {
+        useAuthStore.getState().clearAuth();
+      }
+    } catch (e) {
+      // ignore
+    }
   },
 };

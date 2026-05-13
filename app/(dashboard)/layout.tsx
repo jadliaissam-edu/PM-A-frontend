@@ -291,7 +291,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 <p className="mb-1 flex h-5 items-center px-1.5 text-[10px] font-black uppercase text-[#8f96a3]">Home</p>
                 {[
                   { href: "/dashboard/enterprise", label: "Home", active: pathname.startsWith("/dashboard"), icon: <Home size={15} /> },
-                  { href: "/dashboard/enterprise", label: "Dashboard", active: false, icon: <LayoutGrid size={15} /> },
                 ].map((item) => (
                   <Link key={item.href + item.label} href={item.href} className={`flex h-[31px] items-center gap-2 rounded-[7px] px-2 text-[12px] ${item.active ? "bg-white font-black text-[#2f343c] shadow-sm ring-1 ring-[#dfe3e8]" : "font-bold text-[#68707d] hover:bg-white hover:text-[#2f343c]"}`}>
                     <span className={item.active ? "text-[#7b68ee]" : "text-[#9aa1ad]"}>{item.icon}</span>
@@ -299,19 +298,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                   </Link>
                 ))}
               </div>
-              <div className="mb-2 border-b border-[#e4e7ec] pb-2">
-                <p className="mb-1 flex h-5 items-center px-1.5 text-[10px] font-black uppercase text-[#8f96a3]">Favorites</p>
-                {[
-                  { href: "/sprint", label: "Sprint Backlog", active: pathname === "/sprint", icon: <Layers3 size={15} /> },
-                  { href: "/Board/kanban", label: "Active Board", active: pathname.startsWith("/Board/kanban"), icon: <PanelsTopLeft size={15} /> },
-                  { href: "/Board/Timeline", label: "Timeline", active: pathname.startsWith("/Board/Timeline"), icon: <CalendarDays size={15} /> },
-                ].map((item) => (
-                  <Link key={item.href} href={item.href} className={`flex h-[31px] items-center gap-2 rounded-[7px] px-2 text-[12px] ${item.active ? "bg-white font-black text-[#2f343c] shadow-sm ring-1 ring-[#dfe3e8]" : "font-bold text-[#68707d] hover:bg-white hover:text-[#2f343c]"}`}>
-                    <span className={item.active ? "text-[#7b68ee]" : "text-[#9aa1ad]"}>{item.icon}</span>
-                    <span className="truncate">{item.label}</span>
-                  </Link>
-                ))}
-              </div>
+             
               <div className="mb-2 border-b border-[#e4e7ec] pb-2">
                 <p className="mb-1 flex h-5 items-center px-1.5 text-[10px] font-black uppercase text-[#8f96a3]">Spaces</p>
                 <Link href="/workspaces" className="group mb-1 flex h-8 items-center gap-2 rounded-[7px] px-2 text-[12px] font-black text-[#2f343c] hover:bg-white">
@@ -320,6 +307,11 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                   <span className="truncate">Workspaces</span>
                   <span className="ml-auto rounded-full bg-[#e7e9ef] px-1.5 py-px text-[9px] font-black text-[#7c828d]">All</span>
                   <CirclePlus size={13} className="hidden text-[#a2a9b5] group-hover:block" />
+                </Link>
+                <Link href="/projects" className="group mb-1 flex h-8 items-center gap-2 rounded-[7px] px-2 text-[12px] font-black text-[#2f343c] hover:bg-white">
+                  <Layers3 size={14} className="text-[#8f96a3]" />
+                  <span className="truncate">Projects</span>
+                  <span className="ml-auto rounded-full bg-[#e7e9ef] px-1.5 py-px text-[9px] font-black text-[#7c828d]">All</span>
                 </Link>
                 <div className="ml-[13px] border-l border-[#d9dde5] pl-1.5">
                   {/* List workspaces for the selected organisation */}
@@ -360,9 +352,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               <div className="mb-2 border-b border-[#e4e7ec] pb-2">
                 <p className="mb-1 flex h-5 items-center px-1.5 text-[10px] font-black uppercase text-[#8f96a3]">Everything</p>
                 {[
-                  { href: "/import", label: "Import", active: pathname === "/import", icon: <Download size={15} /> },
-                  { href: "/audit", label: "Audit Logs", active: pathname === "/audit", icon: <History size={15} /> },
-                  { href: "/chat", label: "Teams", active: pathname === "/chat", icon: <Users size={15} /> },
                   { href: "/user_profile", label: "Settings", active: pathname === "/user_profile", icon: <Settings size={15} /> },
                 ].map((item) => (
                   <Link key={item.href} href={item.href} className={`flex h-[31px] items-center gap-2 rounded-[7px] px-2 text-[12px] ${item.active ? "bg-white font-black text-[#2f343c] shadow-sm ring-1 ring-[#dfe3e8]" : "font-bold text-[#68707d] hover:bg-white hover:text-[#2f343c]"}`}>
@@ -372,30 +361,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 ))}
               </div>
             </nav>
-            <div className="m-2.5 rounded-[10px] border border-[#dfe3e8] bg-white p-2.5 shadow-sm">
-              <div className="flex items-center justify-between">
-                <p className="text-[10px] font-black uppercase text-[#8f96a3]">Pinned views</p>
-                <MoreHorizontal size={14} className="text-[#a2a9b5]" />
-              </div>
-              <div className="mt-2 grid grid-cols-3 gap-1.5">
-                {[
-                  { label: "List", href: "/tickets" },
-                  { label: "Board", href: "/Board/kanban" },
-                  { label: "Cal", href: "/Board/Timeline" },
-                ].map((view) => {
-                  const isActive = view.href === "/tickets" ? pathname === "/tickets" || pathname === "/sprint" : pathname.startsWith(view.href);
-                  return (
-                  <Link key={view.label} href={view.href} className={`h-[46px] rounded-[7px] border p-1.5 text-[10px] font-black ${isActive ? "border-[#d7d1ff] bg-[#f3efff] text-[#7b68ee]" : "border-[#e2e5ea] bg-white text-[#68707d]"}`}>
-                    <span>{view.label}</span>
-                    <div className="mt-2 flex gap-0.5">
-                      <span className="h-1 w-4 rounded-full bg-current opacity-40" />
-                      <span className="h-1 w-2 rounded-full bg-current opacity-20" />
-                    </div>
-                  </Link>
-                  );
-                })}
-              </div>
-            </div>
           </div>
         )}
       </aside>
@@ -407,6 +372,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               <button onClick={toggleSidebar} className="hidden h-8 w-8 items-center justify-center rounded-[7px] border border-[#dfe3e8] bg-white text-[#68707d] transition hover:bg-[#f7f8fb] focus:outline-none focus:ring-2 focus:ring-[#d7d1ff] xl:flex">
                 {collapsed ? <ChevronsRight size={15} /> : <ChevronsLeft size={15} />}
               </button>
+              <button onClick={() => router.push('/organization')} title="Create organization" className="ml-2 flex h-7 w-7 items-center justify-center rounded-[7px] border border-[#e8eaf0] bg-white text-[#7b68ee] hover:bg-[#f7f8fb] focus:outline-none focus:ring-2 focus:ring-[#d7d1ff]" aria-label="Create organization">
+​                  <CirclePlus size={14} />
+​              </button>
               <div className="relative min-w-0">
                 <button onClick={() => setMenu(menu === "headerOrg" ? null : "headerOrg")} className="flex h-9 max-w-full items-center gap-2 rounded-[7px] px-2.5 text-[13px] font-black text-[#2f343c] transition hover:bg-[#f7f8fb] focus:outline-none focus:ring-2 focus:ring-[#d7d1ff] sm:max-w-[240px]">
                   <BriefcaseBusiness size={15} className="text-[#7b68ee]" />
@@ -456,10 +424,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                   <CirclePlus size={14} />
                   New
                 </button>
-                <button onClick={() => openQuickPanel("automate")} className="hidden h-8 items-center gap-1 rounded-[7px] border border-[#dfe3e8] bg-white px-2.5 text-[12px] font-black text-[#68707d] transition hover:bg-[#f7f8fb] focus:outline-none focus:ring-2 focus:ring-[#d7d1ff] lg:flex">
-                  <Workflow size={14} />
-                  Automate
-                </button>
                 <button onClick={() => openQuickPanel("notifications")} className="flex h-8 w-8 items-center justify-center rounded-[7px] text-[#68707d] hover:bg-[#f7f8fb]" aria-label="Open notifications">
                   <Bell size={15} />
                 </button>
@@ -493,57 +457,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         </header>
 
         <main className="flex min-h-0 flex-1 flex-col overflow-hidden bg-white">
-          <div className="flex min-h-[58px] shrink-0 flex-wrap items-center justify-between gap-2 overflow-hidden border-b border-[#dfe3e8] bg-white px-5 py-2">
-            <div className="flex min-w-0 items-center gap-2">
-              <span className="flex h-8 w-8 items-center justify-center rounded-[8px] bg-[#7b68ee] text-white shadow-sm">
-                <FolderKanban size={15} />
-              </span>
-              <span className="text-[13px] font-bold text-[#7c828d]">Product</span>
-              <span className="text-[#c3c8d0]">/</span>
-              <span className="truncate text-[18px] font-black text-[#20242a]">Sprint Backlog</span>
-              <span className="rounded-[5px] border border-[#e1e4e8] bg-[#f7f8fb] px-2 py-0.5 text-[11px] font-bold text-[#8f96a3]">Private</span>
-              <span className="hidden rounded-full bg-[#edf0f5] px-2 py-0.5 text-[10px] font-black text-[#7c828d] md:inline">14 tasks</span>
-            </div>
-            <div className="hidden items-center gap-1 sm:flex">
-              <span className="flex -space-x-1">
-                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#7b68ee] text-[10px] font-black text-white ring-2 ring-white">AA</span>
-                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#00b884] text-[10px] font-black text-white ring-2 ring-white">MK</span>
-              </span>
-              <button onClick={() => openQuickPanel("share")} className="h-8 rounded-[7px] border border-[#dfe3e8] bg-white px-3 text-[12px] font-black text-[#68707d]">Share</button>
-              <button onClick={() => openQuickPanel("new")} className="h-8 rounded-[7px] bg-[#7b68ee] px-3.5 text-[12px] font-black text-white">Add task</button>
-            </div>
-          </div>
-          <div className="flex h-10 shrink-0 items-end justify-between gap-3 overflow-x-auto border-b border-[#dfe3e8] bg-white px-5">
-            <div className="flex h-full shrink-0 items-end gap-1">
-              {[
-                { href: "/dashboard/enterprise", label: "Overview", active: pathname.startsWith("/dashboard") },
-                { href: "/tickets", label: "List", active: pathname === "/tickets" || pathname === "/sprint" },
-                { href: "/Board/kanban", label: "Board", active: pathname.startsWith("/Board/kanban") },
-                { href: "/Board/Timeline", label: "Calendar", active: pathname.startsWith("/Board/Timeline") },
-              ].map((tab) => (
-                <Link key={tab.href} href={tab.href} className={`flex h-9 items-center gap-1.5 px-2.5 text-[13px] font-black ${tab.active ? "border-b-2 border-[#7b68ee] text-[#20242a]" : "text-[#68707d] hover:text-[#20242a]"}`}>
-                  {tab.label}
-                  {tab.active && <span className="h-1.5 w-1.5 rounded-full bg-[#7b68ee]" />}
-                </Link>
-              ))}
-              <button onClick={() => openQuickPanel("view")} className="h-9 px-2.5 text-[13px] font-black text-[#68707d]">+ View</button>
-            </div>
-            <div className="hidden h-full shrink-0 items-center gap-1 text-[11px] font-black text-[#8f96a3] lg:flex">
-              <MessageSquare size={14} />
-              3 comments
-            </div>
-          </div>
-          <div className="flex h-11 shrink-0 items-center justify-between gap-3 overflow-x-auto border-b border-[#dfe3e8] bg-[#fbfbfc] px-5">
-            <div className="flex shrink-0 gap-1">
-              <button onClick={() => setToolbarMode((current) => ({ ...current, grouped: !current.grouped }))} className={`h-8 rounded-[7px] px-2.5 text-[12px] font-black shadow-sm ${toolbarMode.grouped ? "border border-[#dfe3e8] bg-white text-[#20242a]" : "text-[#68707d] hover:bg-white"}`}>Group: Status</button>
-              <button onClick={() => setToolbarMode((current) => ({ ...current, subtasks: !current.subtasks }))} className={`h-8 rounded-[7px] px-2.5 text-[12px] font-black ${toolbarMode.subtasks ? "border border-[#dfe3e8] bg-white text-[#20242a]" : "text-[#68707d] hover:bg-white"}`}>Subtasks</button>
-              <button onClick={() => setToolbarMode((current) => ({ ...current, me: !current.me }))} className={`h-8 rounded-[7px] px-2.5 text-[12px] font-black ${toolbarMode.me ? "border border-[#dfe3e8] bg-white text-[#20242a]" : "text-[#68707d] hover:bg-white"}`}>Me mode</button>
-            </div>
-            <div className="hidden shrink-0 items-center gap-1 md:flex">
-              <button onClick={() => openQuickPanel("filter")} className="h-8 rounded-[7px] border border-[#dfe3e8] bg-white px-2.5 text-[12px] font-black text-[#68707d]">Filter</button>
-              <button onClick={() => openQuickPanel("sort")} className="h-8 rounded-[7px] border border-[#dfe3e8] bg-white px-2.5 text-[12px] font-black text-[#68707d]">Sort</button>
-            </div>
-          </div>
           <div className="min-h-0 flex-1 overflow-y-auto bg-[#f7f8fb]">{children}</div>
         </main>
       </div>
