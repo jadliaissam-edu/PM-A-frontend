@@ -9,11 +9,13 @@ export function WorkspaceHeader({
   subtitle,
   badge,
   actions,
+  avatarUrl,
 }: {
   title: string;
   subtitle: string;
   badge?: string;
   actions?: ReactNode;
+  avatarUrl?: string;
 }) {
   return (
     <section className="mb-4 rounded-[10px] border border-[#dfe3e8] bg-white shadow-sm">
@@ -25,7 +27,10 @@ export function WorkspaceHeader({
           </div>
           <p className="mt-0.5 text-xs font-semibold text-[#7c828d]">{subtitle}</p>
         </div>
-        {actions && <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>}
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
+          {avatarUrl ? <img src={avatarUrl} alt="profile" className="h-8 w-8 rounded-full object-cover" /> : null}
+          {actions}
+        </div>
       </div>
     </section>
   );

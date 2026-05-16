@@ -34,6 +34,16 @@ export const projectService = {
     return response.data;
   },
 
+  archiveProject: async (id: string): Promise<ProjectSummary> => {
+    const response = await api.post(`/projects/${id}/archive/`);
+    return response.data;
+  },
+
+  closeProject: async (id: string): Promise<ProjectSummary> => {
+    const response = await api.post(`/projects/${id}/close/`);
+    return response.data;
+  },
+
   /* Backlog */
   listBacklog: async (projectId: string, params?: any) => {
     const response = await api.get(`/projects/${projectId}/backlog/`, { params });
@@ -292,6 +302,11 @@ export const projectService = {
 
   getProjectTicket: async (projectId: string, ticketId: string) => {
     const response = await api.get(`/projects/${projectId}/tickets/${ticketId}/`);
+    return response.data;
+  },
+
+  getTicketAuditLogs: async (projectId: string, ticketId: string) => {
+    const response = await api.get(`/projects/${projectId}/tickets/${ticketId}/audit/`);
     return response.data;
   },
 

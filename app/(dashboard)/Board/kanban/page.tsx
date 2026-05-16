@@ -58,6 +58,8 @@ export default function KanbanBoardPage() {
   const [priorityFilter, setPriorityFilter] = useState<"All" | BoardTask["priority"]>("All");
   const [hideDone, setHideDone] = useState(false);
   const [selectedTask, setSelectedTask] = useState<BoardTask | null>(null);
+  const [projectReleases, setProjectReleases] = useState<any[]>([]);
+  const [selectedReleaseId, setSelectedReleaseId] = useState<string | null>(null);
   const [completed, setCompleted] = useState<Set<string>>(new Set());
   const [collapsedColumns, setCollapsedColumns] = useState<Set<string>>(new Set());
   const [notice, setNotice] = useState("");
@@ -219,6 +221,21 @@ export default function KanbanBoardPage() {
         project: (detail.project as any) || null,
       };
       setSelectedTask(task);
+      // load releases for the ticket's project so user can associate ticket -> release
+      try {
+        if (detail.project) {
+          const rels = await projectService.listReleases(detail.project);
+          setProjectReleases(rels || []);
+          setSelectedReleaseId(detail.release || null);
+        } else {
+          setProjectReleases([]);
+          setSelectedReleaseId(null);
+        }
+      } catch (e) {
+        console.warn('Failed to load project releases', e);
+        setProjectReleases([]);
+        setSelectedReleaseId(detail.release || null);
+      }
     } catch (e) {
       console.error("Failed to load ticket details", e);
       setNotice("Failed to load ticket details.");
@@ -388,6 +405,32 @@ export default function KanbanBoardPage() {
                 <FieldSelect label="Priority" value={selectedTask.priority} onChange={(value) => updateTask(selectedTask.id, { priority: value as BoardTask["priority"] })} options={["Urgent", "High", "Normal", "Low"]} />
                 <FieldSelect label="Due" value={selectedTask.due} onChange={(value) => updateTask(selectedTask.id, { due: value })} options={["Today", "Tomorrow", "May 6", "May 7", "May 8", "Next week"]} />
                 <FieldSelect label="Label" value={selectedTask.label} onChange={(value) => updateTask(selectedTask.id, { label: value })} options={["Frontend", "Backend", "Design", "API", "QA", "Security", "Setup", "Local"]} />
+                <div>
+                  <p className="mb-1.5 text-[10px] font-black uppercase text-[#8f96a3]">Release</p>
+                  <select
+                    value={selectedReleaseId || ''}
+                    onChange={async (e) => {
+                      const val = e.target.value || null;
+                      setSelectedReleaseId(val);
+                      try {
+                        const projectId = selectedTask?.project || projectIdQuery || undefined;
+                        if (!projectId) {
+                          setNotice('Cannot assign release: missing project context');
+                          return;
+                        }
+                        await ticketsService.updateTicket(selectedTask.id, { release: val }, projectId as string);
+                        setNotice('Release association updated.');
+                      } catch (err) {
+                        console.error('Failed to update ticket release', err);
+                        setNotice('Failed to update release.');
+                      }
+                    }}
+                    className="mt-2 h-9 w-full rounded-[7px] border border-[#dfe3e8] bg-[#f7f8fb] px-2 text-sm font-black text-[#20242a]"
+                  >
+                    <option value="">None</option>
+                    {projectReleases.map((r) => <option key={r.id} value={r.id}>{r.tag}</option>)}
+                  </select>
+                </div>
                 <div>
                   <p className="mb-1.5 text-[10px] font-black uppercase text-[#8f96a3]">Move to</p>
                   <div className="flex flex-wrap gap-1">

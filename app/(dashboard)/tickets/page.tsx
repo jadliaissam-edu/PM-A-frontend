@@ -3,6 +3,8 @@
 import { useState, useEffect, type ChangeEvent, type KeyboardEvent, type ReactNode } from "react";
 import { useSearchParams } from "next/navigation";
 import { ticketsService } from "@/services/tickets.service";
+import reactionsService from "@/services/reactions.service";
+import { projectService } from "@/services/project.service";
 import { ArrowDownUp, CheckCircle2, ChevronDown, CirclePlus, MoreHorizontal, Search, SlidersHorizontal, UserPlus } from "lucide-react";
 import { activityService } from "@/services/activity.service";
 
@@ -32,6 +34,8 @@ export default function TicketsPage() {
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<Ticket | null>(null);
   const [comment, setComment] = useState("");
+  const [releases, setReleases] = useState<any[]>([]);
+  const [selectedReleaseId, setSelectedReleaseId] = useState<string | null>(null);
   const [showMentions, setShowMentions] = useState(false);
   const [activeFilter, setActiveFilter] = useState<QuickFilter>("Open");
   const [statusFilter, setStatusFilter] = useState<"All" | Ticket["status"]>("All");
@@ -53,6 +57,16 @@ export default function TicketsPage() {
   const [showRowMeta, setShowRowMeta] = useState(true);
   const [localComments, setLocalComments] = useState<Record<string, Array<{ user: string; text: string; time: string }>>>({});
   const [activityList, setActivityList] = useState<Array<{ user: string; text: string; time: string }>>([]);
+  const [ticketComments, setTicketComments] = useState<Array<any>>([]);
+  const [loadingComments, setLoadingComments] = useState(false);
+  const [newCommentText, setNewCommentText] = useState("");
+  const [ticketLinks, setTicketLinks] = useState<Array<any>>([]);
+  const [newLinkTarget, setNewLinkTarget] = useState("");
+  const [newLinkType, setNewLinkType] = useState("blocks");
+  const [showBulkAssign, setShowBulkAssign] = useState(false);
+  const [bulkReleaseId, setBulkReleaseId] = useState<string | null>(null);
+  const [bulkAssignLoading, setBulkAssignLoading] = useState(false);
+  const [viewMode, setViewMode] = useState<"list" | "board" | "timeline">("list");
   const searchParams = useSearchParams();
   const assignees = Array.from(new Set(items.map((ticket) => ticket.assignee)));
   const statusCounts = items.reduce<Record<Ticket["status"], number>>((acc, ticket) => {
@@ -117,6 +131,31 @@ export default function TicketsPage() {
         // Merge with any local comments for this ticket
         const locals = localComments[selected.id] || [];
         setActivityList([...normalized, ...locals]);
+        // also load ticket comments and links when we have a valid ticket id and project context
+        try {
+          const ticketIdForApi = (selected as any).id;
+          const projectId = searchParams ? (searchParams.get("projectId") ?? null) : null;
+          const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+          if (uuidRegex.test(String(ticketIdForApi)) && projectId) {
+            setLoadingComments(true);
+            try {
+              const comments = await ticketsService.listComments(ticketIdForApi, projectId);
+              if (mounted) setTicketComments(Array.isArray(comments) ? comments : []);
+            } catch (err) {
+              console.warn('Failed to load comments', err);
+              if (mounted) setTicketComments([]);
+            }
+            try {
+              const links = await projectService.listTicketLinks(projectId as any, ticketIdForApi as any);
+              if (mounted) setTicketLinks(Array.isArray(links) ? links : []);
+            } catch (err) {
+              if (mounted) setTicketLinks([]);
+            }
+            setLoadingComments(false);
+          }
+        } catch (err) {
+          // ignore
+        }
       } catch (e) {
         console.error("Failed to load ticket activity", e);
         setActivityList(localComments[selected?.id || ""] || []);
@@ -124,6 +163,54 @@ export default function TicketsPage() {
     })();
     return () => { mounted = false; };
   }, [selected]);
+
+  // When a ticket is selected, try to load project releases for assignment
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      if (!selected) return;
+      const projectId = searchParams ? (searchParams.get("projectId") ?? null) : null;
+      // try to extract project from selected if present
+      const projFromSelected = (selected as any).project ?? null;
+      const effectiveProjectId = projectId || projFromSelected || null;
+      if (!effectiveProjectId) return;
+      try {
+        const rels = await projectService.listReleases(effectiveProjectId as any);
+        if (!mounted) return;
+        setReleases(rels || []);
+        // populate selected release id if ticket has release info
+        const releaseTag = (selected as any).release || (selected as any).release_tag || null;
+        if (releaseTag && rels && rels.length) {
+          // try to find release by id or tag
+          const found = rels.find((r: any) => String(r.id) === String(releaseTag) || String(r.tag) === String(releaseTag));
+          setSelectedReleaseId(found ? String(found.id) : String(releaseTag));
+        } else if ((selected as any).release) {
+          setSelectedReleaseId(String((selected as any).release));
+        } else {
+          setSelectedReleaseId(null);
+        }
+      } catch (e) {
+        // ignore
+      }
+    })();
+    return () => { mounted = false };
+  }, [selected, searchParams]);
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      if (!showBulkAssign) return;
+      const projectId = searchParams ? (searchParams.get("projectId") ?? null) : null;
+      if (!projectId) return;
+      try {
+        const rels = await projectService.listReleases(projectId as any);
+        if (!mounted) return;
+        setReleases(rels || []);
+      } catch (e) {
+        // ignore
+      }
+    })();
+    return () => { mounted = false; };
+  }, [showBulkAssign, searchParams]);
   const addLocalTicket = () => {
     const title = newTitle.trim();
     if (!title) return;
@@ -242,6 +329,13 @@ export default function TicketsPage() {
               {query && <button onClick={() => setQuery("")} className="rounded-[5px] px-1 text-[10px] font-black text-[#8f96a3] hover:bg-white" aria-label="Clear search">x</button>}
             </div>
             
+            <div className="flex items-center gap-2">
+              <div className="rounded-[7px] border bg-white px-1 py-0.5 text-xs font-black">
+                <button onClick={() => setViewMode("list")} className={`px-2 ${viewMode === "list" ? "bg-[#7b68ee] text-white rounded-[6px]" : "text-[#68707d]"}`}>List</button>
+                <button onClick={() => setViewMode("board")} className={`px-2 ${viewMode === "board" ? "bg-[#7b68ee] text-white rounded-[6px]" : "text-[#68707d]"}`}>Board</button>
+                <button onClick={() => setViewMode("timeline")} className={`px-2 ${viewMode === "timeline" ? "bg-[#7b68ee] text-white rounded-[6px]" : "text-[#68707d]"}`}>Timeline</button>
+              </div>
+            </div>
             <button onClick={() => toggleToolbarPanel("sort")} className={`flex h-8 items-center gap-1.5 rounded-[7px] border px-3 text-xs font-black shadow-sm transition focus:outline-none focus:ring-2 focus:ring-[#d7d1ff] ${toolbarPanel === "sort" ? "border-[#d7d1ff] bg-[#f3efff] text-[#7b68ee]" : "border-[#dfe3e8] bg-white text-[#68707d] hover:bg-[#f7f8fb]"}`}>
               <ArrowDownUp size={14} />
               Sort
@@ -251,6 +345,10 @@ export default function TicketsPage() {
               Customize
             </button>
             <button onClick={() => setNewTicketOpen(true)} className="h-8 rounded-[7px] bg-[#7b68ee] px-3.5 text-xs font-black text-white shadow-sm transition hover:bg-[#6d56ea] focus:outline-none focus:ring-2 focus:ring-[#d7d1ff]">New ticket</button>
+            <button onClick={() => {
+                if (completed.size === 0) { alert('Select tasks to assign first'); return; }
+                setShowBulkAssign(true);
+              }} className="h-8 rounded-[7px] border border-[#dfe3e8] bg-white px-3 text-xs font-black text-[#68707d] hover:bg-[#f7f8fb]">Assign release</button>
           </div>
         </div>
         <div className="mt-3 flex items-center justify-between">
@@ -377,7 +475,7 @@ export default function TicketsPage() {
             <div className="h-full border-l border-[#e5e7eb]" />
           </div>
 
-          {!collapsed && visibleTickets.map((ticket) => {
+          {viewMode === "list" && !collapsed && visibleTickets.map((ticket) => {
             const isSelected = selected?.id === ticket.id;
             const isComplete = completed.has(ticket.id);
             const isExpanded = expandedRows.has(ticket.id);
@@ -446,7 +544,7 @@ export default function TicketsPage() {
               </div>
             );
           })}
-          {!collapsed && visibleTickets.length === 0 && (
+          {viewMode === "list" && !collapsed && visibleTickets.length === 0 && (
             <div className="flex h-28 items-center justify-center border-b border-[#edf0f3] bg-white text-sm font-bold text-[#8f96a3]">
               No tasks match the current filters.
             </div>
@@ -465,6 +563,45 @@ export default function TicketsPage() {
             <div className="h-full border-l border-[#e5e7eb]" />
             <div className="h-full border-l border-[#e5e7eb]" />
           </button>
+          {viewMode === "board" && (
+            <div className="grid grid-cols-4 gap-3 p-4">
+              {(["To Do", "In Progress", "Blocked", "Done"] as Ticket["status"][]).map((col) => (
+                <div key={col} className="rounded-[8px] border border-[#e9edf2] bg-white p-3">
+                  <div className="mb-3 flex items-center justify-between">
+                    <div className="text-sm font-black">{col}</div>
+                    <div className="text-xs text-[#8f96a3]">{visibleTickets.filter(t => t.status === col).length}</div>
+                  </div>
+                  <div className="space-y-2">
+                    {visibleTickets.filter(t => t.status === col).map((ticket) => (
+                      <div key={ticket.id} onClick={() => setSelected(ticket)} className="cursor-pointer rounded-[6px] border p-2 hover:bg-[#f7f8fb]">
+                        <div className="font-black text-sm">{ticket.title}</div>
+                        <div className="text-[11px] text-[#68707d]">{ticket.assignee} • {ticket.priority}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {viewMode === "timeline" && (
+            <div className="p-4">
+              <h3 className="mb-3 text-sm font-black">Timeline (simplified)</h3>
+              <div className="space-y-3">
+                {visibleTickets.sort((a,b)=> String(a.due).localeCompare(String(b.due))).map((t) => (
+                  <div key={t.id} className="flex items-center gap-3">
+                    <div className="w-40 text-sm font-black">{t.title}</div>
+                    <div className="flex-1">
+                      <div className="relative h-3 rounded bg-[#f0f2f5]">
+                        <div className={`absolute left-0 top-0 h-3 rounded ${t.priority === 'High' ? 'bg-[#ffb3b3]' : t.priority === 'Medium' ? 'bg-[#ffdca3]' : 'bg-[#d7f0e6]'}`} style={{width: `${Math.min(100, Math.max(10, (new Date(t.due).getTime() - Date.now())/86400/1000 + 30))}%`}} />
+                      </div>
+                      <div className="text-[11px] text-[#8f96a3] mt-1">Due: {t.due}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -501,6 +638,28 @@ export default function TicketsPage() {
                   </div>
                 </div>
                 <div className="rounded-[8px] border border-[#edf0f3] bg-[#f7f8fb] p-3">
+                  <p className="mb-1 text-[10px] font-black uppercase text-[#8f96a3]">Release</p>
+                  <div>
+                    <select value={selectedReleaseId ?? ""} onChange={async (e) => {
+                      const val = e.target.value || null;
+                      setSelectedReleaseId(val);
+                      // attempt to patch ticket on the server (use project context if available)
+                      const projectId = searchParams ? (searchParams.get("projectId") ?? null) : null;
+                      try {
+                        if ((selected as any).id && projectId) {
+                          await ticketsService.updateTicket((selected as any).id as any, { release: val }, projectId as any);
+                          updateTicket((selected as any).id, { /* no-op local update, UI will refresh via API */ });
+                        }
+                      } catch (err) {
+                        console.error('Failed to update ticket release', err);
+                      }
+                    }} className="mt-1 h-9 w-full rounded-[7px] border border-[#dfe3e8] bg-[#f7f8fb] px-2 text-sm font-black text-[#20242a] outline-none focus:border-[#7b68ee]">
+                      <option value="">Unassigned</option>
+                      {releases.map((r) => (<option key={r.id} value={r.id}>{r.tag || r.version || r.name || r.id}</option>))}
+                    </select>
+                  </div>
+                </div>
+                <div className="rounded-[8px] border border-[#edf0f3] bg-[#f7f8fb] p-3">
                   <p className="mb-1 text-[10px] font-black uppercase text-[#8f96a3]">Due</p>
                   <p className="text-sm font-black text-[#20242a]">{selected.due}</p>
                 </div>
@@ -526,11 +685,48 @@ export default function TicketsPage() {
                   </div>
                 ))}
                 <div className="relative mt-5">
+                  <div className="mb-3">
+                    <h4 className="mb-2 text-sm font-black">Comments</h4>
+                    {loadingComments ? (
+                      <div className="text-sm text-[#68707d]">Loading comments...</div>
+                    ) : (
+                      <div className="space-y-3">
+                        {ticketComments.map((c) => (
+                          <div key={c.id} className="rounded-[10px] border border-[#edf0f3] bg-[#f7f8fb] p-3">
+                            <div className="flex items-center justify-between mb-1">
+                              <div className="text-sm font-black text-[#20242a]">{c.author_username || c.author || 'User'}</div>
+                              <div className="text-[10px] text-[#8f96a3]">{new Date(c.created_at).toLocaleString()}</div>
+                            </div>
+                            <div className="text-sm text-[#59606b] mb-2">{c.body}</div>
+                            <div className="flex gap-2">
+                              {/* Simple reaction buttons */}
+                              <button onClick={async () => {
+                                try {
+                                  const projectId = searchParams ? (searchParams.get('projectId') ?? null) : null;
+                                  if (!projectId) return;
+                                  await reactionsService.addReaction(projectId as any, (selected as any).id, c.id, { type: 'like' });
+                                  // refresh reactions (not implemented fully) — optimistic UI: show a small note
+                                } catch (err) { console.error('Failed to add reaction', err); }
+                              }} className="text-xs font-bold text-[#68707d]">👍</button>
+                              <button onClick={async () => {
+                                try {
+                                  const projectId = searchParams ? (searchParams.get('projectId') ?? null) : null;
+                                  if (!projectId) return;
+                                  await reactionsService.addReaction(projectId as any, (selected as any).id, c.id, { type: 'love' });
+                                } catch (err) { console.error('Failed to add reaction', err); }
+                              }} className="text-xs font-bold text-[#68707d]">❤️</button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
                   <textarea
-                    value={comment}
+                    value={newCommentText}
                     onChange={(event: ChangeEvent<HTMLTextAreaElement>) => {
                       const value = event.target.value;
-                      setComment(value);
+                      setNewCommentText(value);
                       setShowMentions(value.endsWith("@"));
                     }}
                     placeholder="Leave a comment... use @ to mention"
@@ -539,24 +735,75 @@ export default function TicketsPage() {
                   {showMentions && (
                     <div className="absolute bottom-full left-0 mb-2 w-48 overflow-hidden rounded-[9px] border border-[#dfe3e8] bg-white shadow-xl">
                       {["Hassine", "Snofy", "Admin"].map((name) => (
-                    <button key={name} onClick={() => { setComment(`${comment}${name} `); setShowMentions(false); }} className="block w-full px-3 py-2 text-left text-sm font-bold hover:bg-[#f7f8fb]">{name}</button>
+                    <button key={name} onClick={() => { setNewCommentText(`${newCommentText}${name} `); setShowMentions(false); }} className="block w-full px-3 py-2 text-left text-sm font-bold hover:bg-[#f7f8fb]">{name}</button>
                       ))}
                     </div>
                   )}
                   <div className="mt-2 flex justify-end">
-                    <button onClick={() => {
-                      const text = comment.trim();
+                    <button onClick={async () => {
+                      const text = newCommentText.trim();
                       if (!text || !selected) return;
-                      // update local comments store
-                      setLocalComments((current) => {
-                        const next = { ...current };
-                        next[selected.id] = [...(next[selected.id] || []), { user: "You", text, time: "now" }];
-                        return next;
-                      });
-                      // also append to activityList so UI updates immediately
-                      setActivityList((current) => [...current, { user: "You", text, time: "now" }]);
-                      setComment("");
+                      const projectId = searchParams ? (searchParams.get('projectId') ?? null) : null;
+                      try {
+                        if (projectId) {
+                          await ticketsService.addComment((selected as any).id, { body: text }, projectId as any);
+                          // refresh comments
+                          const comments = await ticketsService.listComments((selected as any).id, projectId as any);
+                          setTicketComments(Array.isArray(comments) ? comments : []);
+                        } else {
+                          // local fallback
+                          setLocalComments((current) => {
+                            const next = { ...current };
+                            next[selected.id] = [...(next[selected.id] || []), { user: "You", text, time: "now" }];
+                            return next;
+                          });
+                          setActivityList((current) => [...current, { user: "You", text, time: "now" }]);
+                        }
+                        setNewCommentText("");
+                      } catch (err) {
+                        console.error('Failed to post comment', err);
+                        alert('Failed to post comment');
+                      }
                     }} className="rounded-[7px] bg-[#7b68ee] px-4 py-2 text-sm font-black text-white">Send</button>
+                  </div>
+                </div>
+
+                <div className="mt-6">
+                  <h4 className="mb-2 text-sm font-black">Links</h4>
+                  <div className="space-y-2">
+                    {ticketLinks.map((l) => (
+                      <div key={l.id} className="rounded-[8px] border border-[#edf0f3] bg-[#fff] p-2 text-sm">
+                        <div className="flex items-center justify-between">
+                          <div className="font-black">{l.target_ticket_title || l.target_ticket}</div>
+                          <div className="text-[10px] text-[#8f96a3]">{l.link_type}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-3 grid grid-cols-3 gap-2">
+                    <input value={newLinkTarget} onChange={(e) => setNewLinkTarget(e.target.value)} placeholder="Target ticket id" className="col-span-2 rounded-[8px] border border-[#dfe3e8] p-2" />
+                    <select value={newLinkType} onChange={(e) => setNewLinkType(e.target.value)} className="rounded-[8px] border border-[#dfe3e8] p-2">
+                      <option value="blocks">Blocks</option>
+                      <option value="blocked_by">Blocked By</option>
+                      <option value="duplicates">Duplicates</option>
+                      <option value="related_to">Related To</option>
+                    </select>
+                  </div>
+                  <div className="mt-2 flex justify-end">
+                    <button onClick={async () => {
+                      const target = newLinkTarget.trim();
+                      if (!target || !selected) return;
+                      const projectId = searchParams ? (searchParams.get('projectId') ?? null) : null;
+                      try {
+                        if (!projectId) { alert('No project context for creating link'); return; }
+                        const created = await projectService.createTicketLink(projectId as any, (selected as any).id, { target_ticket: target, link_type: newLinkType });
+                        setTicketLinks((current) => [created, ...current]);
+                        setNewLinkTarget("");
+                      } catch (err) {
+                        console.error('Failed to create link', err);
+                        alert('Failed to create link');
+                      }
+                    }} className="rounded-[7px] bg-[#7b68ee] px-4 py-2 text-sm font-black text-white">Create link</button>
                   </div>
                 </div>
               </div>
@@ -581,6 +828,48 @@ export default function TicketsPage() {
             <div className="mt-3 flex justify-end gap-2">
               <button onClick={() => setNewTicketOpen(false)} className="h-8 rounded-[7px] border border-[#dfe3e8] px-3 text-xs font-black text-[#68707d]">Cancel</button>
               <button onClick={addLocalTicket} className="h-8 rounded-[7px] bg-[#7b68ee] px-3.5 text-xs font-black text-white">Create</button>
+            </div>
+          </section>
+        </div>
+      )}
+
+      {showBulkAssign && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#20242a]/35 px-4 backdrop-blur-sm" onMouseDown={() => setShowBulkAssign(false)}>
+          <section onMouseDown={(event) => event.stopPropagation()} className="w-full max-w-md rounded-[12px] border border-[#dfe3e8] bg-white p-4 shadow-2xl">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-base font-black text-[#20242a]">Assign selected tasks to release</h2>
+              <button onClick={() => setShowBulkAssign(false)} className="h-7 w-7 rounded-[7px] bg-[#f7f8fb] text-sm font-black text-[#68707d]">x</button>
+            </div>
+            <div>
+              <p className="mb-2 text-sm font-black text-[#8f96a3]">Choose a release to assign the selected tasks to (or leave Unassigned to remove)</p>
+              <select value={bulkReleaseId ?? ""} onChange={(e) => setBulkReleaseId(e.target.value || null)} className="mb-3 mt-1 h-9 w-full rounded-[7px] border border-[#dfe3e8] bg-[#f7f8fb] px-2 text-sm font-black text-[#20242a] outline-none">
+                <option value="">Unassigned</option>
+                {releases.map((r) => (<option key={r.id} value={r.id}>{r.tag || r.version || r.name || r.id}</option>))}
+              </select>
+              <div className="flex justify-end gap-2">
+                <button onClick={() => setShowBulkAssign(false)} className="h-8 rounded-[7px] border border-[#dfe3e8] px-3 text-xs font-black text-[#68707d]">Cancel</button>
+                <button onClick={async () => {
+                  const projectId = searchParams ? (searchParams.get("projectId") ?? null) : null;
+                  if (!projectId) { alert('No project context'); return; }
+                  try {
+                    setBulkAssignLoading(true);
+                    const ticketIds = Array.from(completed);
+                    const updated = await ticketsService.bulkAssignRelease(projectId as any, ticketIds, bulkReleaseId);
+                    // Merge updated info into local list
+                    setItems((current) => current.map((it) => {
+                      const matched = (updated || []).find((u: any) => String(u.id) === String(it.id));
+                      return matched ? { ...it, ...matched } : it;
+                    }));
+                    // Close modal and clear selection
+                    setShowBulkAssign(false);
+                    setBulkReleaseId(null);
+                    setCompleted(new Set());
+                  } catch (err) {
+                    console.error('Bulk assign failed', err);
+                    alert('Bulk assign failed');
+                  } finally { setBulkAssignLoading(false); }
+                }} className="h-8 rounded-[7px] bg-[#7b68ee] px-3.5 text-xs font-black text-white">{bulkAssignLoading ? 'Working...' : 'Assign'}</button>
+              </div>
             </div>
           </section>
         </div>

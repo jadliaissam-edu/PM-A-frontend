@@ -10,6 +10,8 @@ export interface RegisterPayload {
   username: string;
   email: string;
   password: string;
+  first_name?: string;
+  last_name?: string;
 }
 
 export interface UserProfile {
@@ -25,12 +27,33 @@ export interface UserProfile {
 
 export const authService = {
   register: async (data: RegisterPayload) => {
+    const url = `${api.defaults.baseURL?.replace(/\/$/, '')}/auth/register/`;
+    console.debug("authService.register ->", url, data);
     const response = await api.post("/auth/register/", data);
+    console.debug("authService.register response ->", response.status, response.data);
     return response.data;
   },
 
   login: async (data: LoginPayload): Promise<AuthResponse> => {
     const response = await api.post("/auth/login/", data);
+    // If MFA is required, backend returns { mfa_required: true, email }
+    if (response.data?.mfa_required) {
+      return response.data;
+    }
+
+    const access = response.data?.access;
+    const refresh = response.data?.refresh;
+    const user = response.data?.user || null;
+    try {
+      if (access) localStorage.setItem("accessToken", access);
+      if (refresh) localStorage.setItem("refreshToken", refresh);
+    } catch (e) {}
+    try {
+      const { useAuthStore } = require("@/store");
+      if (useAuthStore && typeof useAuthStore.getState === "function") {
+        useAuthStore.getState().setAuth({ user, accessToken: access, refreshToken: refresh });
+      }
+    } catch (e) {}
     return response.data;
   },
 
@@ -49,8 +72,29 @@ export const authService = {
     return response.data;
   },
 
-  verifyOtp: async (data: { email: string; otp: string }) => {
+  mfaSetup: async (email: string) => {
+    const response = await api.post("/auth/mfa/setup/", { email });
+    return response.data;
+  },
+
+  verifyOtp: async (data: { email: string; otp: string; issue_tokens?: boolean }) => {
     const response = await api.post("/auth/verify-otp/", data);
+    // If tokens were issued as part of MFA verification, persist them
+    const access = response.data?.access;
+    const refresh = response.data?.refresh;
+    const user = response.data?.user || null;
+    if (access || refresh) {
+      try {
+        if (access) localStorage.setItem("accessToken", access);
+        if (refresh) localStorage.setItem("refreshToken", refresh);
+      } catch (e) {}
+      try {
+        const { useAuthStore } = require("@/store");
+        if (useAuthStore && typeof useAuthStore.getState === "function") {
+          useAuthStore.getState().setAuth({ user, accessToken: access, refreshToken: refresh });
+        }
+      } catch (e) {}
+    }
     return response.data;
   },
 
@@ -80,7 +124,19 @@ export const authService = {
     } catch (e) {
       // ignore network errors during logout
     }
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
+    try {
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
+    } catch (e) {}
+    try {
+      // clear client auth store as well
+      // lazy-import to avoid circular deps in some bundlers
+      const { useAuthStore } = require("@/store");
+      if (useAuthStore && typeof useAuthStore.getState === "function") {
+        useAuthStore.getState().clearAuth();
+      }
+    } catch (e) {
+      // ignore
+    }
   },
 };

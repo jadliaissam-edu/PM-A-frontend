@@ -12,6 +12,11 @@ export async function loginAction(data: LoginFormData) {
       username: data.username,
       password: data.password,
     });
+    // If backend indicates MFA is required, return that to the caller so
+    // the frontend can redirect the user to the MFA verification flow.
+    if (response?.mfa_required) {
+      return { success: true, mfa_required: true, email: response.email || data.email };
+    }
 
     const cookieStore = await cookies();
 

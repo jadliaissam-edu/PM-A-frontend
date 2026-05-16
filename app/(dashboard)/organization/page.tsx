@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { WorkspacePage, WorkspaceHeader, Panel, GhostButton, PrimaryButton, Avatar, Chip } from "@/components/workspace-ui";
 import { orgService, type Organization, type Workspace } from "@/services/org.service";
 import { useRouter } from "next/navigation";
+import SlideOver from "@/components/ui/SlideOver";
 
 export default function OrganizationsPage() {
   const [orgs, setOrgs] = useState<Organization[]>([]);
@@ -142,33 +143,31 @@ export default function OrganizationsPage() {
         </div>
       )}
 
-      {workspaceCreatingOrgId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#20242a]/35 px-4 backdrop-blur-sm" onMouseDown={() => setWorkspaceCreatingOrgId(null)}>
-          <section onMouseDown={(e) => e.stopPropagation()} className="w-full max-w-md rounded-[12px] border border-[#dfe3e8] bg-white p-4 shadow-2xl">
-            <h3 className="mb-3 text-base font-black">Create Workspace</h3>
-            <input value={newWsName} onChange={(e) => setNewWsName(e.target.value)} placeholder="Workspace name" className="mb-2 h-10 w-full rounded-[8px] border border-[#dfe3e8] px-3" />
-            <select value={newWsVisibility} onChange={(e) => setNewWsVisibility(e.target.value)} className="mb-3 h-10 w-full rounded-[8px] border border-[#dfe3e8] px-3">
-              <option value="private">Private</option>
-              <option value="public">Public</option>
-            </select>
-            <div className="flex justify-end gap-2">
-              <button onClick={() => setWorkspaceCreatingOrgId(null)} className="h-8 rounded-[7px] border border-[#dfe3e8] px-3 text-xs">Cancel</button>
-              <button onClick={async () => {
-                const name = newWsName.trim();
-                if (!name || !workspaceCreatingOrgId) return;
-                try {
-                  const payload = { name, visibility: newWsVisibility, organization: workspaceCreatingOrgId } as any;
-                  const created = await orgService.createWorkspace(payload);
-                  setWorkspaces((cur) => [created, ...cur]);
-                  setNewWsName(""); setNewWsVisibility("private"); setWorkspaceCreatingOrgId(null);
-                } catch (e) {
-                  console.error('Failed to create workspace', e);
-                }
-              }} className="h-8 rounded-[7px] bg-[var(--primary-color)] px-3.5 text-xs font-black text-white">Create</button>
-            </div>
-          </section>
+      <SlideOver open={Boolean(workspaceCreatingOrgId)} onClose={() => setWorkspaceCreatingOrgId(null)} title="Create Workspace" width={420} backdrop={false}>
+        <div className="space-y-3">
+          <h3 className="mb-1 text-base font-black">Create Workspace</h3>
+          <input value={newWsName} onChange={(e) => setNewWsName(e.target.value)} placeholder="Workspace name" className="mb-2 h-10 w-full rounded-[8px] border border-[#dfe3e8] px-3" />
+          <select value={newWsVisibility} onChange={(e) => setNewWsVisibility(e.target.value)} className="mb-3 h-10 w-full rounded-[8px] border border-[#dfe3e8] px-3">
+            <option value="private">Private</option>
+            <option value="public">Public</option>
+          </select>
+          <div className="flex justify-end gap-2">
+            <button onClick={() => setWorkspaceCreatingOrgId(null)} className="h-8 rounded-[7px] border border-[#dfe3e8] px-3 text-xs">Cancel</button>
+            <button onClick={async () => {
+              const name = newWsName.trim();
+              if (!name || !workspaceCreatingOrgId) return;
+              try {
+                const payload = { name, visibility: newWsVisibility, organization: workspaceCreatingOrgId } as any;
+                const created = await orgService.createWorkspace(payload);
+                setWorkspaces((cur) => [created, ...cur]);
+                setNewWsName(""); setNewWsVisibility("private"); setWorkspaceCreatingOrgId(null);
+              } catch (e) {
+                console.error('Failed to create workspace', e);
+              }
+            }} className="h-8 rounded-[7px] bg-[var(--primary-color)] px-3.5 text-xs font-black text-white">Create</button>
+          </div>
         </div>
-      )}
+      </SlideOver>
       {inviteOrgId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#20242a]/35 px-4 backdrop-blur-sm" onMouseDown={() => setInviteOrgId(null)}>
           <section onMouseDown={(e) => e.stopPropagation()} className="w-full max-w-md rounded-[12px] border border-[#dfe3e8] bg-white p-4 shadow-2xl">
@@ -214,31 +213,28 @@ export default function OrganizationsPage() {
           </section>
         </div>
       )}
-      {creating && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#20242a]/35 px-4 backdrop-blur-sm" onMouseDown={() => setCreating(false)}>
-          <section onMouseDown={(e) => e.stopPropagation()} className="w-full max-w-md rounded-[12px] border border-[#dfe3e8] bg-white p-4 shadow-2xl">
-            <h3 className="mb-3 text-base font-black">Create Organization</h3>
-            <input value={newOrgName} onChange={(e) => setNewOrgName(e.target.value)} placeholder="Organization name" className="mb-2 h-10 w-full rounded-[8px] border border-[#dfe3e8] px-3" />
-            <input value={newOrgDesc} onChange={(e) => setNewOrgDesc(e.target.value)} placeholder="Description (optional)" className="mb-3 h-10 w-full rounded-[8px] border border-[#dfe3e8] px-3" />
-            <div className="flex justify-end gap-2">
-              <button onClick={() => setCreating(false)} className="h-8 rounded-[7px] border border-[#dfe3e8] px-3 text-xs">Cancel</button>
-              <button onClick={async () => {
-                const name = newOrgName.trim();
-                if (!name) { return; }
-                try {
-                  setCreating(false);
-                  const payload = { name, description: newOrgDesc };
-                  const created = await orgService.createOrganization(payload);
-                  setOrgs((current) => [created, ...current]);
-                  setNewOrgName(''); setNewOrgDesc('');
-                } catch (e) {
-                  console.error('Failed to create org', e);
-                }
-              }} className="h-8 rounded-[7px] bg-[var(--primary-color)] px-3.5 text-xs font-black text-white">Create</button>
-            </div>
-          </section>
+      <SlideOver open={creating} onClose={() => setCreating(false)} title="Create Organization" width={420} backdrop={false}>
+        <div className="space-y-3">
+          <input value={newOrgName} onChange={(e) => setNewOrgName(e.target.value)} placeholder="Organization name" className="mb-2 h-10 w-full rounded-[8px] border border-[#dfe3e8] px-3" />
+          <input value={newOrgDesc} onChange={(e) => setNewOrgDesc(e.target.value)} placeholder="Description (optional)" className="mb-3 h-10 w-full rounded-[8px] border border-[#dfe3e8] px-3" />
+          <div className="flex justify-end gap-2">
+            <button onClick={() => setCreating(false)} className="h-8 rounded-[7px] border border-[#dfe3e8] px-3 text-xs">Cancel</button>
+            <button onClick={async () => {
+              const name = newOrgName.trim();
+              if (!name) { return; }
+              try {
+                setCreating(false);
+                const payload = { name, description: newOrgDesc };
+                const created = await orgService.createOrganization(payload);
+                setOrgs((current) => [created, ...current]);
+                setNewOrgName(''); setNewOrgDesc('');
+              } catch (e) {
+                console.error('Failed to create org', e);
+              }
+            }} className="h-8 rounded-[7px] bg-[var(--primary-color)] px-3.5 text-xs font-black text-white">Create</button>
+          </div>
         </div>
-      )}
+      </SlideOver>
       
     </WorkspacePage>
   );
