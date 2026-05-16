@@ -34,8 +34,10 @@ if (typeof window !== "undefined") {
   let refreshPromise: Promise<string | null> | null = null;
   const subscribers: Array<(token: string | null) => void> = [];
 
+  
   const subscribeTokenRefresh = (cb: (token: string | null) => void) => {
     subscribers.push(cb);
+
   };
 
   const onRefreshed = (token: string | null) => {
