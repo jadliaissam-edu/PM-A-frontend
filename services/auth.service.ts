@@ -36,6 +36,24 @@ export const authService = {
 
   login: async (data: LoginPayload): Promise<AuthResponse> => {
     const response = await api.post("/auth/login/", data);
+    // If MFA is required, backend returns { mfa_required: true, email }
+    if (response.data?.mfa_required) {
+      return response.data;
+    }
+
+    const access = response.data?.access;
+    const refresh = response.data?.refresh;
+    const user = response.data?.user || null;
+    try {
+      if (access) localStorage.setItem("accessToken", access);
+      if (refresh) localStorage.setItem("refreshToken", refresh);
+    } catch (e) {}
+    try {
+      const { useAuthStore } = require("@/store");
+      if (useAuthStore && typeof useAuthStore.getState === "function") {
+        useAuthStore.getState().setAuth({ user, accessToken: access, refreshToken: refresh });
+      }
+    } catch (e) {}
     return response.data;
   },
 
@@ -59,8 +77,24 @@ export const authService = {
     return response.data;
   },
 
-  verifyOtp: async (data: { email: string; otp: string }) => {
+  verifyOtp: async (data: { email: string; otp: string; issue_tokens?: boolean }) => {
     const response = await api.post("/auth/verify-otp/", data);
+    // If tokens were issued as part of MFA verification, persist them
+    const access = response.data?.access;
+    const refresh = response.data?.refresh;
+    const user = response.data?.user || null;
+    if (access || refresh) {
+      try {
+        if (access) localStorage.setItem("accessToken", access);
+        if (refresh) localStorage.setItem("refreshToken", refresh);
+      } catch (e) {}
+      try {
+        const { useAuthStore } = require("@/store");
+        if (useAuthStore && typeof useAuthStore.getState === "function") {
+          useAuthStore.getState().setAuth({ user, accessToken: access, refreshToken: refresh });
+        }
+      } catch (e) {}
+    }
     return response.data;
   },
 

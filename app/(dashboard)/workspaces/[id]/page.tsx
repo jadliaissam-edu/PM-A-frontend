@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { orgService } from "@/services/org.service";
 import { WorkspacePage, WorkspaceHeader, Panel, GhostButton, PrimaryButton, Avatar, Chip } from "@/components/workspace-ui";
+import SlideOver from "@/components/ui/SlideOver";
 import { projectService, type ProjectSummary } from "@/services/project.service";
 import { workspaceService } from "@/services/workspace.service";
 import { Settings, Plus, Rocket, Trash2, Layout, Kanban, RefreshCw, BarChart3, Users, Clock, Globe, Lock } from "lucide-react";
@@ -34,6 +35,7 @@ export default function WorkspaceDetailView() {
   const id = params?.id as string | undefined;
   
   const [workspace, setWorkspace] = useState<WorkspaceWithCounts | null>(null);
+  const [orgName, setOrgName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [projects, setProjects] = useState<ProjectSummary[]>([]);
@@ -42,6 +44,14 @@ export default function WorkspaceDetailView() {
   const [loadingReleases, setLoadingReleases] = useState(false);
 
   const [isCreatingProject, setIsCreatingProject] = useState(false);
+  const [creatingProject, setCreatingProject] = useState(false);
+  const [newProjectName, setNewProjectName] = useState("");
+  const [newProjectType, setNewProjectType] = useState("software");
+  const [creatingRelease, setCreatingRelease] = useState(false);
+  const [newReleaseTag, setNewReleaseTag] = useState("");
+  const [newReleaseTargetDate, setNewReleaseTargetDate] = useState<string>(new Date().toISOString().split("T")[0]);
+  const [newReleaseDescription, setNewReleaseDescription] = useState("");
+  const [newReleaseProjectId, setNewReleaseProjectId] = useState<string | null>(null);
 
   const fetchData = async () => {
     if (!id) return;
@@ -50,6 +60,18 @@ export default function WorkspaceDetailView() {
     try {
       const w = await orgService.getWorkspaceById(id);
       setWorkspace(w);
+      // load organisation name if available
+      try {
+        if (w?.organization) {
+          const org = await orgService.getOrganization(String(w.organization));
+          setOrgName(org?.name || null);
+        } else {
+          setOrgName(null);
+        }
+      } catch (err) {
+        console.warn('Failed to load organisation for workspace', err);
+        setOrgName(null);
+      }
       
       setLoadingProjects(true);
       const ps = await projectService.getProjects({ workspace_id: id });
@@ -75,22 +97,27 @@ export default function WorkspaceDetailView() {
   }, [id]);
 
   const handleCreateProject = async () => {
-    const name = prompt("Project Name:");
-    if (!name) return;
-    const type = prompt("Project Type (software/business/support):", "software");
-    if (!type) return;
+    setNewProjectName("");
+    setNewProjectType("software");
+    setCreatingProject(true);
+  };
 
+  const submitCreateProject = async () => {
+    if (!newProjectName || !id) {
+      alert("Please provide a project name.");
+      return;
+    }
     try {
       setIsCreatingProject(true);
       await projectService.createProject({
-        name,
-        type: type.toLowerCase(),
+        name: newProjectName,
+        type: newProjectType.toLowerCase(),
         workspace_id: id,
-        status: "active"
+        status: "active",
       });
-      // Refresh projects
       const ps = await projectService.getProjects({ workspace_id: id });
       setProjects(ps || []);
+      setCreatingProject(false);
       alert("Project created successfully!");
     } catch (err: any) {
       console.error("Failed to create project", err);
@@ -118,23 +145,38 @@ export default function WorkspaceDetailView() {
       alert("Please create a project first.");
       return;
     }
-    const tag = prompt("Release tag (e.g. v1.0.0):");
-    if (!tag) return;
-    const date = prompt("Target date (YYYY-MM-DD):", new Date().toISOString().split('T')[0]);
-    if (!date) return;
-    
+    setNewReleaseProjectId(projects[0].id);
+    setNewReleaseTag("");
+    setNewReleaseDescription("");
+    setNewReleaseTargetDate(new Date().toISOString().split("T")[0]);
+    setCreatingRelease(true);
+  };
+
+  const submitCreateRelease = async () => {
+    if (!newReleaseProjectId) {
+      alert("Select a project for the release");
+      return;
+    }
+    if (!newReleaseTag) {
+      alert("Please provide a release tag (e.g. v1.0.0)");
+      return;
+    }
     try {
-      await projectService.createRelease(projects[0].id, {
-        tag,
-        target_date: date,
-        description: "Workspace release",
-        status: "planned"
+      setLoadingReleases(true);
+      await projectService.createRelease(newReleaseProjectId, {
+        tag: newReleaseTag,
+        target_date: newReleaseTargetDate,
+        description: newReleaseDescription,
+        status: "planned",
       });
       const rs = await workspaceService.listWorkspaceReleases(id!);
       setReleases(rs || []);
+      setCreatingRelease(false);
     } catch (err) {
       console.error("Failed to create release", err);
-      alert("Failed to create release");
+      alert("Failed to create release: " + (err?.message || String(err)));
+    } finally {
+      setLoadingReleases(false);
     }
   };
 
@@ -151,7 +193,7 @@ export default function WorkspaceDetailView() {
   return (
     <WorkspacePage>
       <WorkspaceHeader
-        title={workspace?.name || "Workspace"}
+        title={`${orgName ? `${orgName} / ` : ""}${workspace?.name || "Workspace"}`}
         subtitle="Collaboration & Delivery Hub"
         actions={(
           <div className="flex items-center gap-2">
@@ -364,6 +406,73 @@ export default function WorkspaceDetailView() {
           </Panel>
         </aside>
       </div>
-    </WorkspacePage>
+        <SlideOver open={creatingProject} onClose={() => setCreatingProject(false)} title="Create Project" width={480} backdrop={false}>
+          <div className="space-y-4">
+            <div>
+              <label className="text-[12px] font-black text-[#68707d]">Project name</label>
+              <input
+                value={newProjectName}
+                onChange={(e) => setNewProjectName(e.target.value)}
+                placeholder="My new project"
+                className="mt-2 h-10 w-full rounded-[8px] border border-[#dfe3e8] px-3"
+              />
+            </div>
+
+            <div>
+              <label className="text-[12px] font-black text-[#68707d]">Project type</label>
+              <select
+                value={newProjectType}
+                onChange={(e) => setNewProjectType(e.target.value)}
+                className="mt-2 h-10 w-full rounded-[8px] border border-[#dfe3e8] px-3"
+              >
+                <option value="software">Software</option>
+                <option value="business">Business</option>
+                <option value="support">Support</option>
+              </select>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button onClick={() => setCreatingProject(false)} className="h-8 rounded-[7px] bg-white px-4 text-sm font-black text-[#68707d] border border-[#dfe3e8]">Cancel</button>
+              <button onClick={submitCreateProject} disabled={isCreatingProject} className="h-8 rounded-[7px] bg-[var(--primary-color)] px-4 text-sm font-black text-white">{isCreatingProject ? 'Creating...' : 'Create'}</button>
+            </div>
+          </div>
+        </SlideOver>
+        <SlideOver open={creatingRelease} onClose={() => setCreatingRelease(false)} title="Plan Release" width={520} backdrop={false}>
+          <div className="space-y-4">
+            <div>
+              <label className="text-[12px] font-black text-[#68707d]">Project</label>
+              <select
+                value={newReleaseProjectId || ''}
+                onChange={(e) => setNewReleaseProjectId(e.target.value || null)}
+                className="mt-2 h-10 w-full rounded-[8px] border border-[#dfe3e8] px-3"
+              >
+                {projects.map(p => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="text-[12px] font-black text-[#68707d]">Tag</label>
+              <input value={newReleaseTag} onChange={(e) => setNewReleaseTag(e.target.value)} placeholder="v1.0.0" className="mt-2 h-10 w-full rounded-[8px] border border-[#dfe3e8] px-3" />
+            </div>
+
+            <div>
+              <label className="text-[12px] font-black text-[#68707d]">Target date</label>
+              <input type="date" value={newReleaseTargetDate} onChange={(e) => setNewReleaseTargetDate(e.target.value)} className="mt-2 h-10 w-full rounded-[8px] border border-[#dfe3e8] px-3" />
+            </div>
+
+            <div>
+              <label className="text-[12px] font-black text-[#68707d]">Description</label>
+              <textarea value={newReleaseDescription} onChange={(e) => setNewReleaseDescription(e.target.value)} placeholder="Optional release notes" className="mt-2 w-full rounded-[8px] border border-[#dfe3e8] px-3 py-2" />
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button onClick={() => setCreatingRelease(false)} className="h-8 rounded-[7px] bg-white px-4 text-sm font-black text-[#68707d] border border-[#dfe3e8]">Cancel</button>
+              <button onClick={submitCreateRelease} disabled={loadingReleases} className="h-8 rounded-[7px] bg-[var(--primary-color)] px-4 text-sm font-black text-white">{loadingReleases ? 'Planning...' : 'Plan Release'}</button>
+            </div>
+          </div>
+        </SlideOver>
+      </WorkspacePage>
   );
 }

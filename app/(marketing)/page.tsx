@@ -4,10 +4,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowRight, BarChart3, CalendarDays, CheckCircle2, Layers3, MessageSquare, PanelsTopLeft, Search, ShieldCheck } from "lucide-react";
 
-const columns = [
-  { title: "TO DO", color: "bg-[#87909e]", tasks: ["Plan import mapping", "Review auth states"] },
-  { title: "IN PROGRESS", color: "bg-[#1090e0]", tasks: ["Polish list density", "Update workspace shell"] },
-  { title: "REVIEW", color: "bg-[#f8ae00]", tasks: ["Board fidelity pass"] },
+const initialColumns = [
+  { title: "TO DO", color: "bg-[#87909e]", tasks: [{ id: "t1", title: "Plan import mapping" }, { id: "t2", title: "Review auth states" }] },
+  { title: "IN PROGRESS", color: "bg-[#1090e0]", tasks: [{ id: "t3", title: "Polish list density" }, { id: "t4", title: "Update workspace shell" }] },
+  { title: "REVIEW", color: "bg-[#f8ae00]", tasks: [{ id: "t5", title: "Board fidelity pass" }] },
 ];
 
 const views = [
@@ -28,6 +28,8 @@ export default function LandingPage() {
   const [showModal, setShowModal] = useState(false);
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [columnsState, setColumnsState] = useState(initialColumns);
+  const [justDropped, setJustDropped] = useState<Record<string, boolean>>({});
 
   const router = useRouter();
 
@@ -63,6 +65,43 @@ export default function LandingPage() {
     }, 900);
   }
 
+  const handleDragStart = (e: React.DragEvent, fromCol: number, taskId: string) => {
+    e.dataTransfer.setData("application/json", JSON.stringify({ fromCol, taskId }));
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+  };
+
+  const handleDrop = (e: React.DragEvent, toCol: number) => {
+    e.preventDefault();
+    try {
+      const payload = JSON.parse(e.dataTransfer.getData("application/json"));
+      const { fromCol, taskId } = payload as { fromCol: number; taskId: string };
+      if (fromCol === toCol) return;
+
+      // clone
+      const cols = columnsState.map((c) => ({ ...c, tasks: [...c.tasks] }));
+
+      // find and remove task from source
+      const srcIndex = cols[fromCol].tasks.findIndex((t: any) => t.id === taskId);
+      if (srcIndex === -1) return;
+      const [task] = cols[fromCol].tasks.splice(srcIndex, 1);
+
+      // add to target end
+      cols[toCol].tasks.push(task);
+      setColumnsState(cols);
+
+      // flash highlight on dropped task
+      setJustDropped((s) => ({ ...s, [taskId]: true }));
+      setTimeout(() => setJustDropped((s) => ({ ...s, [taskId]: false })), 600);
+    } catch (err) {
+      // ignore
+    }
+  };
+
   return (
     <main className="min-h-screen bg-[#f7f8fb] text-[#20242a]">
       <header className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
@@ -85,7 +124,7 @@ export default function LandingPage() {
         </nav>
         <div className="flex items-center gap-2">
           <Link href="/login" className="h-8 rounded-[7px] border border-[#dfe3e8] bg-white px-3 py-2 text-xs font-black text-[#68707d] shadow-sm transition hover:bg-[#f7f8fb] focus:outline-none focus:ring-2 focus:ring-[#d7d1ff]">Sign in</Link>
-          <Link href="/register" className="h-8 rounded-[7px] bg-[#7b68ee] px-3.5 py-2 text-xs font-black text-white shadow-sm transition hover:bg-[#6d56ea] focus:outline-none focus:ring-2 focus:ring-[#d7d1ff]">Start free</Link>
+          <Link href="/register" className="h-8 rounded-[7px] bg-[#7b68ee] px-3.5 py-2 text-xs font-black text-white shadow-sm transition hover:bg-[#6d56ea] focus:outline-none focus:ring-2 focus:ring-[#d7d1ff] ">Sign up</Link>
         </div>
       </header>
 
@@ -94,16 +133,11 @@ export default function LandingPage() {
           <span className="inline-flex h-7 items-center rounded-full border border-[#d7d1ff] bg-[#f3efff] px-3 text-xs font-black text-[#7b68ee]">ClickUp-inspired delivery workspace</span>
           <h1 className="mt-5 max-w-3xl text-4xl font-black tracking-tight text-[#20242a] md:text-6xl">Plan, track, and ship work in one compact product surface.</h1>
           <p className="mt-5 max-w-2xl text-base font-semibold leading-8 text-[#68707d]">AgileFlow brings project dashboards, task lists, boards, timelines, reports, imports, audit logs, chat, and settings into one coherent PM workspace.</p>
-          <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-            <button
-              onClick={() => setShowModal(true)}
-              className="inline-flex h-10 items-center justify-center gap-2 rounded-[8px] bg-gradient-to-r from-[#7b68ee] to-[#6d56ea] px-5 text-sm font-black text-white shadow-lg transition-transform hover:-translate-y-0.5 focus:outline-none focus:ring-4 focus:ring-[#d7d1ff]/40"
-              aria-haspopup="dialog"
-            >
-              Create workspace
+          <div className="mt-7 flex">
+            <Link href="/register" className="inline-flex h-10 items-center justify-center gap-2 rounded-[8px] bg-[#7b68ee] px-5 text-sm font-black text-white shadow-sm transition hover:bg-[#6d56ea] focus:outline-none focus:ring-4 focus:ring-[#d7d1ff]/40">
+              Get started
               <ArrowRight size={16} />
-            </button>
-            <Link href="/dashboard/enterprise" className="inline-flex h-10 items-center justify-center rounded-[8px] border border-[#dfe3e8] bg-white px-5 text-sm font-black text-[#68707d] shadow-sm transition hover:bg-[#f7f8fb] focus:outline-none focus:ring-2 focus:ring-[#d7d1ff]">View dashboard</Link>
+            </Link>
           </div>
           <div className="mt-5 grid max-w-xl grid-cols-2 gap-2 sm:grid-cols-4">
             {productRoutes.map((route) => (
@@ -133,16 +167,21 @@ export default function LandingPage() {
             </Link>
           </div>
           <div className="grid gap-3 bg-[#f7f8fb] p-4 md:grid-cols-3">
-            {columns.map((column) => (
-              <div key={column.title} className="rounded-[10px] border border-[#dfe3e8] bg-[#eef0f4] p-2">
+            {columnsState.map((column, colIndex) => (
+              <div key={column.title} className="rounded-[10px] border border-[#dfe3e8] bg-[#eef0f4] p-2" onDragOver={handleDragOver} onDrop={(e) => handleDrop(e, colIndex)}>
                 <div className="mb-2 flex h-8 items-center justify-between rounded-[8px] border border-[#dfe3e8] bg-white px-2">
                   <div className="flex items-center gap-2"><span className={`h-2.5 w-2.5 rounded-[3px] ${column.color}`} /><span className="text-[11px] font-black">{column.title}</span></div>
                   <span className="rounded-full bg-[#eef0f4] px-2 text-[10px] font-black text-[#68707d]">{column.tasks.length}</span>
                 </div>
                 <div className="space-y-2">
                   {column.tasks.map((task) => (
-                    <div key={task} className="rounded-[8px] border border-[#dfe3e8] bg-white p-3 shadow-sm">
-                      <p className="text-xs font-black">{task}</p>
+                    <div
+                      key={task.id}
+                      draggable
+                      onDragStart={(e) => handleDragStart(e, colIndex, task.id)}
+                      className={`rounded-[8px] border border-[#dfe3e8] bg-white p-3 shadow-sm transition-shadow duration-200 ${justDropped[task.id] ? 'ring-2 ring-[#7b68ee] shadow-lg' : ''}`}
+                    >
+                      <p className="text-xs font-black">{task.title}</p>
                       <div className="mt-3 flex items-center justify-between"><span className="rounded-[4px] bg-[#f7f8fb] px-1.5 py-0.5 text-[10px] font-black text-[#8f96a3]">PM</span><span className="h-6 w-6 rounded-full bg-[#7b68ee]" /></div>
                     </div>
                   ))}
@@ -159,8 +198,7 @@ export default function LandingPage() {
             <h2 className="text-2xl font-black text-[#20242a]">Workspace views that match the app</h2>
             <p className="mt-1 text-sm font-semibold text-[#68707d]">Every card below opens the matching dashboard route.</p>
           </div>
-          <Link href="/tickets" onClick={(e) => handleProtectedNav(e as any, "/tickets")} className="inline-flex h-9 items-center justify-center rounded-[8px] border border-[#dfe3e8] bg-white px-4 text-xs font-black text-[#68707d] shadow-sm hover:bg-[#f7f8fb]">Open task list</Link>
-        </div>
+                  </div>
         <div className="grid gap-4 md:grid-cols-4">
         {views.map((item) => (
           <Link
@@ -204,26 +242,6 @@ export default function LandingPage() {
           </div>
         </div>
       )}
-
-      <section id="security" className="mx-auto max-w-7xl px-6 pb-16">
-        <div className="rounded-[12px] border border-[#dfe3e8] bg-white p-5 shadow-sm">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center">
-            <div className="flex h-10 w-10 items-center justify-center rounded-[9px] bg-[#ecfff6] text-[#00b884]"><ShieldCheck size={20} /></div>
-            <div className="min-w-0">
-              <h2 className="text-lg font-black">Frontend ready for secure integration</h2>
-              <p className="text-sm font-semibold text-[#68707d]">Auth flows, typed services, validation, and dashboard surfaces are prepared for backend growth.</p>
-            </div>
-            <div className="hidden items-center gap-2 md:ml-auto md:flex">
-              <Layers3 size={16} className="text-[#7b68ee]" />
-              <span className="text-xs font-black text-[#8f96a3]">Workspace-grade UI</span>
-            </div>
-            <div className="flex flex-col gap-2 sm:flex-row md:ml-4">
-              <Link href="/register" className="inline-flex h-9 items-center justify-center rounded-[8px] bg-[#7b68ee] px-4 text-xs font-black text-white shadow-sm hover:bg-[#6d56ea]">Start free</Link>
-              <Link href="/chat" className="inline-flex h-9 items-center justify-center gap-1 rounded-[8px] border border-[#dfe3e8] bg-white px-4 text-xs font-black text-[#68707d] shadow-sm hover:bg-[#f7f8fb]"><MessageSquare size={13} /> See chat</Link>
-            </div>
-          </div>
-        </div>
-      </section>
     </main>
   );
 }

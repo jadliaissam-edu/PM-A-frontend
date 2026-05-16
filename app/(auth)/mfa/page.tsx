@@ -1,9 +1,21 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { AuthCard } from "@/features/auth/components/auth-card";
 
 export default function MfaIndex() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const email = searchParams?.get("email");
+    if (email) {
+      router.push(`/mfa/verify?email=${encodeURIComponent(email)}`);
+    }
+  }, [searchParams]);
+
   return (
     <AuthCard title="Multi-factor Authentication" description="Protect your account with an additional authentication factor.">
       <div className="space-y-3">

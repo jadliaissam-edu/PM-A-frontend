@@ -9,6 +9,7 @@ import { Plus, Search, Filter, Globe, Lock, MoreHorizontal } from "lucide-react"
 export default function WorkspacesListPage() {
   const router = useRouter();
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
+  const [orgMap, setOrgMap] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
 
@@ -17,6 +18,15 @@ export default function WorkspacesListPage() {
       try {
         const data = await orgService.getWorkspaces();
         setWorkspaces(data);
+        // also fetch organizations to show org name for each workspace
+        try {
+          const orgs = await orgService.getOrganizations();
+          const map: Record<string, string> = {};
+          orgs.forEach((o) => { map[o.id] = o.name; });
+          setOrgMap(map);
+        } catch (err) {
+          console.warn('Failed to load organizations', err);
+        }
       } catch (err) {
         console.error("Failed to load workspaces", err);
       } finally {
@@ -98,6 +108,7 @@ export default function WorkspacesListPage() {
               </div>
 
               <div className="mb-4 min-w-0">
+                <h4 className="truncate text-[11px] font-black text-[#8f96a3] tracking-tight mb-1">{orgMap[w.organization] ? `${orgMap[w.organization]} /` : ''}</h4>
                 <h3 className="truncate text-lg font-black text-[#20242a] tracking-tight">{w.name}</h3>
                 <p className="mt-1 line-clamp-2 text-sm font-semibold text-[#68707d] leading-relaxed">
                   {w.description || "No description provided for this workspace."}

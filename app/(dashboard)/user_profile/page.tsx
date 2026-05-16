@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { CheckCircle2, KeyRound, Palette, ShieldAlert, UserCircle, UserPlus } from "lucide-react";
 import { Chip, GhostButton, Panel, PrimaryButton, WorkspaceHeader, WorkspacePage } from "@/components/workspace-ui";
 import { useAuthStore } from "../../../store";
+import { api } from "@/lib/api";
 
 export default function SettingsHubPage() {
   const user = useAuthStore((state) => state.user);
@@ -17,12 +18,16 @@ export default function SettingsHubPage() {
   const [density, setDensity] = useState("Standard");
   const [accent, setAccent] = useState("#7b68ee");
   const [notice, setNotice] = useState("");
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   
   const [securityMenu, setSecurityMenu] = useState<"password" | "mfa" | null>(null);
 
-  // Initialize from localStorage and apply to document
+  
   useEffect(() => {
     try {
       const storedAccent = localStorage.getItem("af:accent");
@@ -72,13 +77,89 @@ export default function SettingsHubPage() {
       lastName: (user as any).last_name || (user as any).lastName || "",
       email: user.email || "",
     });
+    const pickAvatar = (u: any) => u?.avatar_url || u?.avatarUrl || u?.avatar || u?.profile_image || u?.image || u?.picture || null;
+    setAvatarPreview(pickAvatar(user));
   }, [user]);
+
+  // Debug: log profile form changes to help trace why edits may not persist
+  useEffect(() => {
+    try {
+      // eslint-disable-next-line no-console
+      console.debug("profileForm changed:", profileForm, "avatarFile:", avatarFile);
+    } catch (e) {}
+  }, [profileForm, avatarFile]);
+
+  // Handle avatar file selection and upload immediately
+  const handleAvatarSelected = async (file: File | null) => {
+    setAvatarFile(file);
+    if (!file) return;
+    const prevPreview = avatarPreview;
+    const tempUrl = URL.createObjectURL(file);
+    setAvatarPreview(tempUrl);
+    setIsSaving(true);
+    try {
+      // try common backend field names if unknown
+      const candidateNames = ["avatar", "avatar_file", "file"];
+      let resp: any = null;
+      for (const name of candidateNames) {
+        const form = new FormData();
+        form.append(name, file);
+        try {
+          resp = await api.patch("/users/me/", form);
+          // break on successful status
+          if (resp && resp.status >= 200 && resp.status < 300) break;
+        } catch (err) {
+          // try next candidate
+          resp = null;
+        }
+      }
+
+      // After upload attempt, fetch the authoritative profile from server
+      const profileResp = await api.get("/users/me/");
+      const userData = profileResp.data?.user ?? profileResp.data;
+      // eslint-disable-next-line no-console
+      console.debug("Profile after avatar upload:", profileResp?.status, userData);
+      const pickAvatar = (u: any) => u?.avatar_url || u?.avatarUrl || u?.avatar || u?.profile_image || u?.image || u?.picture || null;
+      const got = pickAvatar(userData);
+      if (userData && got) {
+        setAvatarPreview(got);
+        try { useAuthStore.getState().setAuth({ user: userData, accessToken: localStorage.getItem("accessToken"), refreshToken: localStorage.getItem("refreshToken") }); } catch (e) {}
+        setNotice("Avatar uploaded successfully.");
+      } else if (userData) {
+        // no avatar url found in response; update store and notify user
+        try { useAuthStore.getState().setAuth({ user: userData, accessToken: localStorage.getItem("accessToken"), refreshToken: localStorage.getItem("refreshToken") }); } catch (e) {}
+        setNotice("Upload completed but server returned no avatar URL. Backend may store avatar separately.");
+      } else {
+        setNotice("Upload completed but no profile returned from server.");
+      }
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error("Avatar upload failed:", e);
+      setNotice("Failed to upload avatar.");
+      // revert preview to previous if available
+      setAvatarPreview(prevPreview);
+    } finally {
+      setIsSaving(false);
+      setAvatarFile(null);
+      // release temporary object URL
+      try { URL.revokeObjectURL(tempUrl); } catch (e) {}
+    }
+  };
+
+  // Display name computed from user or local form as a fallback
+  const displayName = (() => {
+    const fn = (user as any)?.first_name || (user as any)?.firstName || profileForm.firstName;
+    const ln = (user as any)?.last_name || (user as any)?.lastName || profileForm.lastName;
+    const name = [fn, ln].filter(Boolean).join(" ");
+    return name || user?.username || "";
+  })();
 
   return (
     <WorkspacePage>
       <WorkspaceHeader
         title="Settings"
         subtitle="Everything / profile / workspace preferences"
+        avatarUrl={avatarPreview || (user as any)?.avatar_url}
         actions={<><GhostButton onClick={() => {
           void navigator.clipboard?.writeText(window.location.href);
           setNotice("Profile link copied locally.");
@@ -105,8 +186,21 @@ export default function SettingsHubPage() {
             <div className="grid gap-4 xl:grid-cols-[300px_minmax(0,1fr)]">
               <Panel title="Account summary">
                 <div className="text-center">
-                  <div className="mx-auto mb-3 flex h-24 w-24 items-center justify-center rounded-full bg-[var(--primary-color)] text-3xl font-black text-white ring-4 ring-[#f3efff]">{user?.username?.charAt(0).toUpperCase() || ""}</div>
-                  <h2 className="text-lg font-black text-[#20242a]">{user?.username || ""}</h2>
+                  <div className="mx-auto mb-3 relative h-24 w-24 rounded-full ring-4 ring-[#f3efff]">
+                    {avatarPreview ? (
+                      <img src={avatarPreview} alt="avatar" className="h-24 w-24 rounded-full object-cover" />
+                    ) : (
+                      <div className="flex h-24 w-24 items-center justify-center rounded-full bg-[var(--primary-color)] text-3xl font-black text-white">{user?.username?.charAt(0).toUpperCase() || ""}</div>
+                    )}
+                    <div className="absolute -right-2 -bottom-2">
+                      <input ref={fileInputRef} accept="image/*" onChange={(e) => {
+                        const file = e.target.files?.[0] || null;
+                        void handleAvatarSelected(file);
+                      }} type="file" className="hidden" />
+                      <button type="button" onClick={() => (fileInputRef?.current as HTMLInputElement | null)?.click()} className="h-8 w-8 rounded-full bg-white shadow-sm text-sm">✎</button>
+                    </div>
+                  </div>
+                  <h2 className="text-lg font-black text-[#20242a]">{displayName}</h2>
                   <p className="text-sm font-semibold text-[#7c828d]">{user?.email || ""}</p>
             </div>
               </Panel>
@@ -116,11 +210,56 @@ export default function SettingsHubPage() {
                   <label className="text-xs font-black uppercase text-[#8f96a3]">Last name<input value={profileForm.lastName} onChange={(event) => setProfileForm((current) => ({ ...current, lastName: event.target.value }))} className="mt-1 h-9 w-full rounded-[7px] border border-[#dfe3e8] bg-[#f7f8fb] px-3 text-sm font-semibold text-[#20242a] outline-none focus:border-[var(--primary-color)]" /></label>
                   <label className="md:col-span-2 text-xs font-black uppercase text-[#8f96a3]">Email<input value={profileForm.email} onChange={(event) => setProfileForm((current) => ({ ...current, email: event.target.value }))} className="mt-1 h-9 w-full rounded-[7px] border border-[#dfe3e8] bg-[#f7f8fb] px-3 text-sm font-semibold text-[#20242a] outline-none focus:border-[var(--primary-color)]" /></label>
                 </div>
-                <div className="mt-4 flex justify-end gap-2">
-                  <GhostButton onClick={() => setProfileForm({ firstName: user?.first_name || "", lastName: user?.last_name || "", email: user?.email || "" })}>
-                    Reset</GhostButton>
-                    <PrimaryButton onClick={() => setNotice("Profile changes saved locally.")}>Save changes</PrimaryButton>
-                </div>
+                <div className="mt-4 flex justify-end">
+                    <PrimaryButton disabled={isSaving} onClick={async () => {
+                      setIsSaving(true);
+                      try {
+                        // Debug: show what's being sent
+                        // eslint-disable-next-line no-console
+                        console.debug("Saving profile, payload:", profileForm, "avatarFile:", avatarFile);
+
+                        if (avatarFile) {
+                          const form = new FormData();
+                          form.append("avatar", avatarFile);
+                          form.append("first_name", profileForm.firstName);
+                          form.append("last_name", profileForm.lastName);
+                          form.append("email", profileForm.email);
+                          const derivedUsername = `${(profileForm.firstName || "").toString().trim()}_${(profileForm.lastName || "").toString().trim()}`.replace(/\s+/g, "_");
+                          form.append("username", derivedUsername);
+                          // Let axios set the Content-Type (boundary) automatically
+                          const resp = await api.patch("/users/me/", form);
+                          // Debug: log server response
+                          // eslint-disable-next-line no-console
+                          console.debug("Save response (with avatar):", resp?.status, resp?.data);
+                          const userData = resp.data?.user ?? resp.data;
+                          // ensure username present locally
+                          if (userData && !userData.username) userData.username = derivedUsername;
+                          try { useAuthStore.getState().setAuth({ user: userData, accessToken: localStorage.getItem("accessToken"), refreshToken: localStorage.getItem("refreshToken") }); } catch (e) {}
+                          setProfileForm({ firstName: userData.first_name || userData.firstName || "", lastName: userData.last_name || userData.lastName || "", email: userData.email || "" });
+                          if (userData?.avatar_url) setAvatarPreview(userData.avatar_url);
+                          setAvatarFile(null);
+                          setNotice("Profile updated successfully.");
+                        } else {
+                          const derivedUsername = `${(profileForm.firstName || "").toString().trim()}_${(profileForm.lastName || "").toString().trim()}`.replace(/\s+/g, "_");
+                          const resp = await api.patch("/users/me/", { first_name: profileForm.firstName, last_name: profileForm.lastName, email: profileForm.email, username: derivedUsername });
+                          // Debug: log server response
+                          // eslint-disable-next-line no-console
+                          console.debug("Save response (no avatar):", resp?.status, resp?.data);
+                          const userData = resp.data?.user ?? resp.data;
+                          if (userData && !userData.username) userData.username = derivedUsername;
+                          try { useAuthStore.getState().setAuth({ user: userData, accessToken: localStorage.getItem("accessToken"), refreshToken: localStorage.getItem("refreshToken") }); } catch (e) {}
+                          setProfileForm({ firstName: userData.first_name || userData.firstName || "", lastName: userData.last_name || userData.lastName || "", email: userData.email || "" });
+                          setNotice("Profile updated successfully.");
+                        }
+                      } catch (e) {
+                        // eslint-disable-next-line no-console
+                        console.error("Profile save failed:", e);
+                        setNotice("Failed to update profile.");
+                      } finally {
+                        setIsSaving(false);
+                      }
+                    }}>{isSaving ? "Saving..." : "Save changes"}</PrimaryButton>
+                  </div>
               </Panel>
             </div>
           )}
@@ -172,11 +311,18 @@ export default function SettingsHubPage() {
                     <Link href="/forgot-password" className="inline-flex h-7 items-center rounded-[7px] bg-[var(--primary-color)] px-2 text-xs font-black text-white">Reset password</Link>
                   </div>
                 </div>
-                <button onClick={() => setSecurityMenu("mfa")} className="rounded-[8px] border border-[#edf0f3] bg-[#f7f8fb] p-3 text-left hover:bg-white">
+                <div role="button" tabIndex={0} onClick={() => setSecurityMenu("mfa")} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { setSecurityMenu("mfa"); } }} className="rounded-[8px] border border-[#edf0f3] bg-[#f7f8fb] p-3 text-left hover:bg-white cursor-pointer">
                   <div className="mb-2 flex items-center gap-2"><ShieldAlert size={15} className="text-[var(--primary-color)]" /><p className="text-sm font-black text-[#20242a]">MFA</p></div>
                   <p className="text-xs font-semibold text-[#7c828d]">Enabled for this account.</p>
-                  <div className="mt-3"><Chip tone="green">Protected</Chip></div>
-                </button>
+                  <div className="mt-3">
+                    <Chip tone="green">Protected</Chip>
+                    <div className="mt-3 flex gap-2">
+                      <Link href="/mfa/setup" className="inline-flex h-8 items-center rounded-[7px] bg-[var(--primary-color)] px-3 text-xs font-black text-white">Set up MFA</Link>
+                      <Link href="/mfa/verify" className="inline-flex h-8 items-center rounded-[7px] border border-[#dfe3e8] bg-white px-3 text-xs font-black text-[#68707d]">Verify code</Link>
+                      <button onClick={() => setSecurityMenu("mfa")} className="inline-flex h-8 items-center rounded-[7px] bg-[#f7f8fb] px-3 text-xs font-black text-[#68707d]">Manage</button>
+                    </div>
+                  </div>
+                  </div>
               </div>
             </Panel>
           )}

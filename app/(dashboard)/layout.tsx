@@ -34,6 +34,7 @@ import {
   Workflow,
 } from "lucide-react";
 
+
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -241,19 +242,37 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               <span className="rounded-[3px] bg-[#1090e0]" />
             </span>
           </div>
-          <nav className="flex flex-1 flex-col items-center gap-1.5">
-            {[
-              { href: "/dashboard/enterprise", active: pathname.startsWith("/dashboard"), icon: <Home size={17} /> },
-              { href: "/tickets", active: pathname === "/tickets", icon: <CheckCircle2 size={17} /> },
-              { href: "/Board/kanban", active: pathname.startsWith("/Board/kanban"), icon: <PanelsTopLeft size={17} /> },
-              { href: "/Board/Timeline", active: pathname.startsWith("/Board/Timeline"), icon: <CalendarDays size={17} /> },
-              { href: "/reports", active: pathname === "/reports", icon: <BarChart3 size={17} /> },
-            ].map((item) => (
-              <Link key={item.href} href={item.href} className={`relative flex h-10 w-10 items-center justify-center rounded-[10px] transition ${item.active ? "bg-white text-[#6d28d9] shadow-sm" : "text-white/62 hover:bg-white/10 hover:text-white"}`}>
-                {item.active && <span className="absolute -left-2 h-5 w-1 rounded-r-full bg-white" />}
-                {item.icon}
-              </Link>
-            ))}
+          <nav role="navigation" aria-label="Main sidebar" className="flex flex-1 flex-col items-center gap-1.5">
+            {(() => {
+              const items = [
+                { href: "/dashboard/enterprise", label: "Home", active: pathname.startsWith("/dashboard"), icon: <Home size={17} /> },
+                { href: "/tickets", label: "Tasks", active: pathname.startsWith("/tickets"), icon: <CheckCircle2 size={17} /> },
+                { href: "/Board/kanban", label: "Kanban", active: pathname.startsWith("/Board/kanban"), icon: <PanelsTopLeft size={17} /> },
+                { href: "/Board/Timeline", label: "Timeline", active: pathname.startsWith("/Board/Timeline"), icon: <CalendarDays size={17} /> },
+                { href: "/reports", label: "Reports", active: pathname.startsWith("/reports"), icon: <BarChart3 size={17} /> },
+                { href: "/released" , label: "Releases", active: pathname.startsWith("/release"), icon: <Workflow size={17} /> }, 
+                
+              ];
+
+              return items.map((item) => {
+                const isActive = Boolean(item.active);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    title={item.label}
+                    aria-current={isActive ? "page" : undefined}
+                    className={`relative flex h-10 w-10 items-center justify-center rounded-[10px] transition focus:outline-none focus-visible:ring-2 focus-visible:ring-white ${
+                      isActive ? "bg-white text-[#6d28d9] shadow-sm" : "text-white/62 hover:bg-white/10 hover:text-white"
+                    }`}
+                  >
+                    <span className="sr-only">{item.label}</span>
+                    {isActive && <span className="absolute -left-2 h-5 w-1 rounded-r-full bg-white" aria-hidden />}
+                    <span aria-hidden>{item.icon}</span>
+                  </Link>
+                );
+              });
+            })()}
           </nav>
           <button onClick={() => router.push("/reports")} className="mb-1 flex h-10 w-10 items-center justify-center rounded-[10px] text-white/70 transition hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/30" aria-label="Open reports">
             <Sparkles size={17} />
@@ -278,7 +297,18 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 <div className="absolute left-3 right-3 top-[52px] z-50 rounded-[10px] border border-[#dfe3e8] bg-white p-2 shadow-xl">
                   <p className="mb-2 border-b border-[#edf0f3] px-2 pb-2 text-[11px] font-black uppercase text-[#8f96a3]">Organisations</p>
                   {orgs.map((org) => (
-                    <button key={org.id} onClick={() => { setOrganization(org.name); setSelectedOrgId(String(org.id)); try { if (typeof window !== 'undefined') { localStorage.setItem('af:org', org.name); localStorage.setItem('af:org_id', String(org.id)); } } catch {} setMenu(null); }} className="flex w-full items-center justify-between rounded-[7px] px-2 py-2 text-left text-sm font-bold text-[#2f343c] hover:bg-[#f7f8fb]">
+                    <button key={org.id} onClick={() => {
+                      setOrganization(org.name);
+                      setSelectedOrgId(String(org.id));
+                      try {
+                        if (typeof window !== 'undefined') {
+                          localStorage.setItem('af:org', org.name);
+                          localStorage.setItem('af:org_id', String(org.id));
+                          try { window.dispatchEvent(new CustomEvent('af:org_changed', { detail: { id: String(org.id), name: org.name } })); } catch {}
+                        }
+                      } catch {}
+                      setMenu(null);
+                    }} className="flex w-full items-center justify-between rounded-[7px] px-2 py-2 text-left text-sm font-bold text-[#2f343c] hover:bg-[#f7f8fb]">
                       {org.name}
                       {String(selectedOrgId) === String(org.id) && <CheckCircle2 size={16} className="text-[#7b68ee]" />}
                     </button>
@@ -385,7 +415,18 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                   <div className="absolute left-0 top-full z-50 mt-2 w-64 rounded-[10px] border border-[#dfe3e8] bg-white p-2 shadow-xl">
                     <p className="mb-2 border-b border-[#edf0f3] px-2 pb-2 text-[11px] font-black uppercase text-[#8f96a3]">Organisations</p>
                     {orgs && orgs.length > 0 ? orgs.map((org) => (
-                      <button key={org.id} onClick={() => { setOrganization(org.name); setSelectedOrgId(String(org.id)); try { if (typeof window !== 'undefined') { localStorage.setItem('af:org', org.name); localStorage.setItem('af:org_id', String(org.id)); } } catch {} setMenu(null); }} className="flex w-full items-center justify-between rounded-[7px] px-2 py-2 text-left text-sm font-bold text-[#2f343c] hover:bg-[#f7f8fb]">
+                      <button key={org.id} onClick={() => {
+                        setOrganization(org.name);
+                        setSelectedOrgId(String(org.id));
+                        try {
+                          if (typeof window !== 'undefined') {
+                            localStorage.setItem('af:org', org.name);
+                            localStorage.setItem('af:org_id', String(org.id));
+                            try { window.dispatchEvent(new CustomEvent('af:org_changed', { detail: { id: String(org.id), name: org.name } })); } catch {}
+                          }
+                        } catch {}
+                        setMenu(null);
+                      }} className="flex w-full items-center justify-between rounded-[7px] px-2 py-2 text-left text-sm font-bold text-[#2f343c] hover:bg-[#f7f8fb]">
                         {org.name}
                         {String(selectedOrgId) === String(org.id) && <CheckCircle2 size={16} className="text-[#7b68ee]" />}
                       </button>
@@ -424,6 +465,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                   <CirclePlus size={14} />
                   New
                 </button>
+                
                 <button onClick={() => openQuickPanel("notifications")} className="flex h-8 w-8 items-center justify-center rounded-[7px] text-[#68707d] hover:bg-[#f7f8fb]" aria-label="Open notifications">
                   <Bell size={15} />
                 </button>

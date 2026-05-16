@@ -91,8 +91,22 @@ export default function RegisterPage() {
 
       <div className="space-y-3">
         <div className="space-y-2">
-          <button type="button" onClick={() => signIn('google')} className="flex h-9 w-full items-center justify-center gap-2 rounded-[7px] border border-[#dfe3e8] bg-white px-3 text-xs font-black text-[#20242a] shadow-sm hover:bg-[#f7f8fb]">Continue with Google</button>
-          <button type="button" onClick={() => signIn('github')} className="flex h-9 w-full items-center justify-center gap-2 rounded-[7px] border border-[#dfe3e8] bg-white px-3 text-xs font-black text-[#20242a] shadow-sm hover:bg-[#f7f8fb]">Continue with GitHub</button>
+          <button type="button" onClick={() => signIn('google')} className="flex h-9 w-full items-center justify-center gap-2 rounded-[7px] border border-[#dfe3e8] bg-white px-3 text-xs font-black text-[#20242a] shadow-sm hover:bg-[#f7f8fb]">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden className="-ml-0.5">
+              <path d="M17.64 9.2c0-.63-.06-1.24-.18-1.82H9v3.44h4.84c-.21 1.14-.84 2.11-1.8 2.76v2.28h2.9c1.7-1.57 2.7-3.86 2.7-6.66z" fill="#4285F4"/>
+              <path d="M9 18c2.43 0 4.47-.8 5.96-2.17l-2.9-2.28c-.8.54-1.83.86-3.06.86-2.35 0-4.34-1.58-5.05-3.72H.99v2.34C2.46 15.9 5.54 18 9 18z" fill="#34A853"/>
+              <path d="M3.95 10.69A5.41 5.41 0 013.78 9c0-.63.11-1.24.31-1.8V4.86H.99A8.98 8.98 0 000 9c0 1.45.35 2.82.99 4.02l2.96-2.33z" fill="#FBBC05"/>
+              <path d="M9 3.56c1.32 0 2.5.45 3.43 1.34l2.57-2.57C13.45.9 11.43 0 9 0 5.54 0 2.46 2.1.99 4.86l2.96 2.34C4.66 5.14 6.65 3.56 9 3.56z" fill="#EA4335"/>
+            </svg>
+            <span>Continue with Google</span>
+          </button>
+
+          <button type="button" onClick={() => signIn('github')} className="flex h-9 w-full items-center justify-center gap-2 rounded-[7px] border border-[#dfe3e8] bg-white px-3 text-xs font-black text-[#20242a] shadow-sm hover:bg-[#f7f8fb]">
+            <svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="currentColor" className="text-[#20242a]">
+              <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.28.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.19 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" />
+            </svg>
+            <span>Continue with GitHub</span>
+          </button>
         </div>
 
         <div className="flex items-center gap-3">

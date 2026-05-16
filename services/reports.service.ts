@@ -1,4 +1,4 @@
-import api from '../lib/api'
+import { api } from '../lib/api'
 
 export type ProjectProgressReport = any
 export type SprintReport = any
@@ -23,6 +23,10 @@ export const reportsService = {
 
   /* Generic report helper */
   runCustomReport: (url: string, params?: any) => api.get(url, { params }).then((r) => r.data),
+  /* Exports (return blob) */
+  exportProjectReport: (projectId: number, format = 'csv') => api.get(`${BASE}${projectId}/reports/export/`, { params: { format }, responseType: 'blob' }).then((r) => r.data),
+  exportSprintReport: (projectId: number, sprintId: number, format = 'csv') => api.get(`${BASE}${projectId}/sprints/${sprintId}/reports/export/`, { params: { format }, responseType: 'blob' }).then((r) => r.data),
+  exportMemberReport: (projectId: number, userId: number | string, format = 'csv') => api.get(`${BASE}${projectId}/members/${userId}/reports/export/`, { params: { format }, responseType: 'blob' }).then((r) => r.data),
 }
 
 export default reportsService

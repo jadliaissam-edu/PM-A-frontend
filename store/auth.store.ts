@@ -35,15 +35,16 @@ export const useAuthStore = create<AuthState>()(
           user: null,
           accessToken: null,
           refreshToken: null,
-        }),
-    }),
-    {
-      name: "auth-storage",
-      // Only persist tokens and user — not functions
-      partialize: (state) => ({
+        {
+          name: "auth-storage",
+          // Persist user and tokens in localStorage (restore previous behavior).
+          partialize: (state) => ({
+            user: state.user,
+            accessToken: state.accessToken,
+            refreshToken: state.refreshToken,
+          }),
+        }
         user: state.user,
-        accessToken: state.accessToken,
-        refreshToken: state.refreshToken,
       }),
     }
   )

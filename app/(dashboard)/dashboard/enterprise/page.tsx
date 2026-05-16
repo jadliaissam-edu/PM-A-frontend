@@ -20,7 +20,7 @@ type DashboardPanel = "customize" | "task" | "invite" | "view";
 
 const focusItems: FocusItem[] = [];
 
-const quickActions = ["Create task", "Open board", "Invite teammate", "Add view"];
+
 
 export default function EnterpriseDashboardPage() {
   const router = useRouter();
@@ -31,6 +31,7 @@ export default function EnterpriseDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
+  const [selectedOrgId, setSelectedOrgId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [panel, setPanel] = useState<DashboardPanel | null>(null);
   const [localFocusItems, setLocalFocusItems] = useState<FocusItem[]>(focusItems);
@@ -43,11 +44,79 @@ export default function EnterpriseDashboardPage() {
   const [selectedFocus, setSelectedFocus] = useState<FocusItem | null>(null);
   const [selectedActivity, setSelectedActivity] = useState<ActivityItem | null>(null);
   const [doneUpcoming, setDoneUpcoming] = useState<Set<string>>(new Set());
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    // mark mounted (so server/client render match) and fetch data on client
+    setMounted(true);
     // fetchData is defined below and used on mount and via the Refresh button
     fetchData();
+    try {
+      const stored = typeof window !== "undefined" ? localStorage.getItem("af:org_id") : null;
+      if (stored) setSelectedOrgId(String(stored));
+    } catch (e) {
+      // ignore
+    }
   }, []);
+
+  // Listen for org selection changes in other tabs/windows (localStorage updates)
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === "af:org_id") {
+        setSelectedOrgId(e.newValue);
+        (async () => {
+          try {
+            const w = await orgService.getWorkspaces();
+            setWorkspaces(w || []);
+          } catch (err) {
+            // ignore
+          }
+        })();
+      }
+    };
+
+    const onOrgChanged = (e: Event) => {
+      try {
+        const detail = (e as CustomEvent)?.detail;
+        const id = detail?.id ?? null;
+        setSelectedOrgId(id);
+        (async () => {
+          try {
+            const w = await orgService.getWorkspaces();
+            setWorkspaces(w || []);
+          } catch (err) {
+            // ignore
+          }
+        })();
+      } catch (err) {
+        // ignore
+      }
+    };
+
+    window.addEventListener("storage", onStorage);
+    window.addEventListener("af:org_changed", onOrgChanged as EventListener);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("af:org_changed", onOrgChanged as EventListener);
+    };
+  }, []);
+
+  // Refresh workspaces when selectedOrgId changes
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const w = await orgService.getWorkspaces();
+        if (!mounted) return;
+        setWorkspaces(w || []);
+      } catch (e) {
+        // ignore
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, [selectedOrgId]);
 
   // fetchData: reusable loader for initial mount and manual refresh
   async function fetchData() {
@@ -101,6 +170,43 @@ export default function EnterpriseDashboardPage() {
   });
   const visibleActivities = activities.filter((item) => `${item.title} ${item.meta}`.toLowerCase().includes(search.toLowerCase()));
   const visibleAssignedTasks = (tasks.length > 0 ? tasks.slice(0, 4) : localFocusItems).filter((task) => task.title.toLowerCase().includes(search.toLowerCase()));
+  // Compute upcoming items from assigned tasks (fallback to local focus items), sort by due date
+  const upcomingItems = (() => {
+    const source: any[] = tasks.length > 0 ? tasks : localFocusItems;
+    const mapped = (source || []).map((t: any) => {
+      const dueRaw = t.due_date || t.due || t.due_at || t.dueAt || null;
+      let dueDate: Date | null = null;
+      if (dueRaw) {
+        const d = new Date(dueRaw);
+        if (!isNaN(d.getTime())) dueDate = d;
+        else {
+          const parsed = Date.parse(dueRaw);
+          if (!isNaN(parsed)) dueDate = new Date(parsed);
+        }
+      }
+      return {
+        id: String(t.id || t.pk || t.key || t.slug || t.title),
+        title: t.title || t.summary || t.content || t.name || "Untitled",
+        dueDate,
+      };
+    });
+    const withDates = mapped.filter((m) => m.dueDate).sort((a, b) => (a.dueDate!.getTime() - b.dueDate!.getTime()));
+    const without = mapped.filter((m) => !m.dueDate);
+    return [...withDates, ...without].slice(0, 3);
+  })();
+  // Determine an urgent ticket: prefer high-priority from focus items, otherwise first upcoming
+  const urgentTicket: (FocusItem & { due?: string }) | null = (() => {
+    try {
+      const source = localFocusItems || [];
+      const high = source.find((f) => (f.priority || "").toString().toLowerCase() === "high");
+      if (high) return high;
+      const up = upcomingItems && upcomingItems.length > 0 ? upcomingItems[0] : null;
+      if (up) return { id: up.id, title: up.title, status: "TO DO", owner: "--", due: up.dueDate ? up.dueDate.toLocaleDateString() : "", priority: "High" } as any;
+    } catch (e) {
+      console.warn("urgentTicket compute failed", e);
+    }
+    return null;
+  })();
   const isWidgetVisible = (widget: string) => !hiddenWidgets.has(widget);
   const overviewColumns = [
     { title: "To Do", filter: "TO DO" as const, count: stats?.total_projects ?? 0, color: "bg-[#87909e]", width: "w-[54%]" },
@@ -144,7 +250,7 @@ export default function EnterpriseDashboardPage() {
         <div className="flex flex-col gap-3 border-b border-[#edf0f3] px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <h1 className="truncate text-[21px] font-black text-[#20242a]">Good morning, {profile?.username || "Aya"}</h1>
+              <h1 className="truncate text-[21px] font-black text-[#20242a]">Good morning, {profile?.username || ""}</h1>
           </div>
             <p className="mt-0.5 text-xs font-semibold text-[#7c828d]">A dense command center for active sprint delivery, review queues, and team activity.</p>
           </div>
@@ -153,25 +259,24 @@ export default function EnterpriseDashboardPage() {
               <Search size={14} className="text-[#8f96a3]" />
               <input value={search} onChange={(event) => setSearch(event.target.value)} className="min-w-0 flex-1 bg-transparent text-[12px] font-semibold outline-none placeholder:text-[#9aa1ad]" placeholder="Search dashboard..." />
             </div>
-            <button onClick={() => fetchData()} disabled={loading} className="rounded-[7px] border border-[#dfe3e8] bg-white px-3 py-1.5 text-xs font-black text-[#68707d] shadow-sm transition hover:bg-[#f7f8fb] focus:outline-none focus:ring-2 focus:ring-[#d7d1ff]">
-              {loading ? "Refreshing..." : "Refresh"}
+            <button onClick={() => fetchData()} disabled={!mounted ? false : loading} className="rounded-[7px] border border-[#dfe3e8] bg-white px-3 py-1.5 text-xs font-black text-[#68707d] shadow-sm transition hover:bg-[#f7f8fb] focus:outline-none focus:ring-2 focus:ring-[#d7d1ff]">
+              {!mounted ? "Refresh" : (loading ? "Refreshing..." : "Refresh")}
             </button>
               <button onClick={() => router.push('/organization')} className="rounded-[7px] border border-[#dfe3e8] bg-white px-3 py-1.5 text-xs font-black text-[#68707d] shadow-sm transition hover:bg-[#f7f8fb] focus:outline-none focus:ring-2 focus:ring-[#d7d1ff]">Organizations</button>
             <button onClick={() => setPanel("customize")} className="rounded-[7px] border border-[#dfe3e8] bg-white px-3 py-1.5 text-xs font-black text-[#68707d] shadow-sm transition hover:bg-[#f7f8fb] focus:outline-none focus:ring-2 focus:ring-[#d7d1ff]">Customize</button>
-            <button onClick={() => setPanel("task")} className="rounded-[7px] bg-[var(--primary-color)] px-3.5 py-1.5 text-xs font-black text-white shadow-sm transition hover:bg-[var(--primary-color-hover)] focus:outline-none focus:ring-2 focus:ring-[#d7d1ff]">New task</button>
           </div>
         </div>
         <div className="grid divide-y divide-[#edf0f3] md:grid-cols-4 md:divide-x md:divide-y-0">
           <MetricStrip title="Total projects" value={(stats?.total_projects ?? 0).toString()} subtitle="workspace projects" color="bg-[#7b68ee]" onClick={() => router.push("/project")} />
           <MetricStrip title="Owned projects" value={(stats?.owned_projects ?? 0).toString()} subtitle="created by you" color="bg-[#1090e0]" onClick={() => router.push("/project")} />
-          <MetricStrip title="Collaborations" value={(stats?.member_projects ?? 0).toString()} subtitle="shared spaces" color="bg-[#f8ae00]" onClick={() => router.push("/chat")} />
+          <MetricStrip title="Workspaces" value={(workspaces.length ?? 0).toString()} subtitle="active workspaces" color="bg-[#f8ae00]" onClick={() => router.push("/workspaces")} />
           <MetricStrip title="Archived" value={(stats?.archived_projects ?? 0).toString()} subtitle="inactive work" color="bg-[#87909e]" onClick={() => setNotice("Archived project filter is staged locally.")} />
         </div>
       </section>
 
       <div className="grid gap-4 2xl:grid-cols-[minmax(0,1fr)_370px]">
         <section className="space-y-4">
-          <Panel title="Workspace overview" icon={<FolderKanban size={16} />} action={<button onClick={() => router.push("/Board/kanban")} className="flex h-7 items-center gap-1 rounded-[6px] border border-[#dfe3e8] bg-white px-2 text-[11px] font-black text-[#68707d]">Open board</button>}>
+          <Panel title="Ticket overview" icon={<FolderKanban size={16} />} >
             <div className="mb-3 flex flex-wrap gap-1">
               {["All", "TO DO", "IN PROGRESS", "REVIEW"].map((item) => (
                 <button key={item} onClick={() => setStatusFilter(item as "All" | FocusItem["status"])} className={`h-7 rounded-[7px] px-2.5 text-[11px] font-black ${statusFilter === item ? "border border-[#dfe3e8] bg-white text-[#20242a] shadow-sm" : "text-[#68707d] hover:bg-white"}`}>{item}</button>
@@ -216,22 +321,29 @@ export default function EnterpriseDashboardPage() {
             {/* Removed demo-only sprint and team widgets to keep dashboard focused. */}
             <Panel title="Workspace overview" icon={<FolderKanban size={16} />}>
               <div className="space-y-2">
-                <p className="text-sm font-black text-[#20242a]">Organization</p>
-                <div className="rounded-[8px] border border-[#edf0f3] bg-[#f7f8fb] p-3">
-                  <div className="mb-2 flex items-center justify-between">
-                    <div>
-                      <p className="text-xs font-black uppercase text-[#8f96a3]">Organization</p>
-                      <p className="mt-1 text-sm font-black text-[#20242a]">{organizations.length > 0 ? organizations[0].name : profile?.username || "Your organization"}</p>
-                    </div>
-                    <button onClick={() => router.push("/organization")} className="h-8 rounded-[7px] border border-[#dfe3e8] bg-white px-3 text-sm font-black text-[#68707d]">Open</button>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2">
-                    <button onClick={() => router.push("/workspaces")} className="rounded-[7px] border border-[#edf0f3] bg-white p-2 text-xs font-black">Workspaces ({workspaces.length})</button>
-                    <button onClick={() => router.push("/project")} className="rounded-[7px] border border-[#edf0f3] bg-white p-2 text-xs font-black">Projects ({stats?.total_projects ?? 0})</button>
-                    <button onClick={() => router.push(workspaces[0] ? `/workspaces/${workspaces[0].id}` : "/workspaces")} className="rounded-[7px] border border-[#edf0f3] bg-white p-2 text-xs font-black">Open workspace</button>
+                  <p className="text-sm font-black text-[#20242a]">Workspaces</p>
+                  <div className="rounded-[8px] border border-[#edf0f3] bg-[#f7f8fb] p-3">
+                    {workspaces.length === 0 ? (
+                      <p className="text-xs font-semibold text-[#8f96a3]">No workspaces available.</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {(
+                          selectedOrgId ? workspaces.filter((ws) => String(ws.organization) === String(selectedOrgId)) : workspaces
+                        ).map((ws) => (
+                          <div key={ws.id} className="flex items-center justify-between rounded-[8px] border border-[#edf0f3] bg-white px-3 py-2">
+                            <div className="min-w-0">
+                              <p className="text-sm font-black text-[#20242a] truncate">{ws.name}</p>
+                              <p className="text-xs text-[#8f96a3] truncate">{(ws.summary || ws.description || "").toString().slice(0, 80)}</p>
+                            </div>
+                            <div className="ml-2 flex-shrink-0">
+                              <button onClick={() => router.push(`/workspaces/${ws.id}`)} className="h-8 rounded-[7px] border border-[#dfe3e8] bg-white px-3 text-sm font-black text-[#68707d]">Open</button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
-              </div>
             </Panel>
           </div>
         </section>
@@ -245,19 +357,46 @@ export default function EnterpriseDashboardPage() {
             <AssignedList tasks={visibleAssignedTasks} onOpen={() => router.push("/tickets")} />
           </Panel>}
 
+          {isWidgetVisible("urgent") && <Panel title="Urgent" icon={<span className="text-[#e5484d] font-black">!</span>}>
+            <div className="space-y-2">
+              {urgentTicket ? (
+                <button key={urgentTicket.id} onClick={() => router.push("/tickets") } className="flex w-full items-center justify-between rounded-[8px] border border-[#fdecea] bg-[#fff5f5] px-3 py-2 text-left hover:bg-white">
+                  <p className={`text-sm font-black ${urgentTicket ? "text-[#e5484d]" : "text-[#20242a]"}`}>{urgentTicket.title}</p>
+                  <span className="text-xs font-black text-[#e5484d]">{urgentTicket.due ?? "Soon"}</span>
+                </button>
+              ) : (
+                <p className="text-xs font-semibold text-[#8f96a3]">No urgent tickets.</p>
+              )}
+            </div>
+          </Panel>}
+
           {isWidgetVisible("upcoming") && <Panel title="Upcoming" icon={<CalendarDays size={16} />}>
             <div className="space-y-2">
-              {["Homepage review", "Frontend auth polish", "Team sync meeting"].map((title, index) => (
-                <button key={title} onClick={() => setDoneUpcoming((current) => {
-                  const next = new Set(current);
-                  if (next.has(title)) next.delete(title);
-                  else next.add(title);
-                  return next;
-                })} className="flex w-full items-center justify-between rounded-[8px] border border-[#edf0f3] bg-[#f7f8fb] px-3 py-2 text-left hover:bg-white">
-                  <p className={`text-sm font-black text-[#20242a] ${doneUpcoming.has(title) ? "text-[#8f96a3] line-through" : ""}`}>{title}</p>
-                  <span className={`text-xs font-black ${index === 0 ? "text-[#e5484d]" : "text-[#8f96a3]"}`}>{index === 0 ? "Today" : index === 1 ? "Tomorrow" : "Friday"}</span>
-                </button>
-              ))}
+              {upcomingItems.map((item, index) => {
+                const label = (() => {
+                  if (!item.dueDate) return index === 0 ? "Today" : index === 1 ? "Tomorrow" : "Soon";
+                  const today = new Date();
+                  const due = new Date(item.dueDate.getFullYear(), item.dueDate.getMonth(), item.dueDate.getDate());
+                  const t = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+                  const diff = Math.round((due.getTime() - t.getTime()) / (1000 * 60 * 60 * 24));
+                  if (diff === 0) return "Today";
+                  if (diff === 1) return "Tomorrow";
+                  if (diff > 1 && diff < 7) return item.dueDate.toLocaleDateString(undefined, { weekday: "short" });
+                  return item.dueDate.toLocaleDateString();
+                })();
+
+                return (
+                  <button key={item.id} onClick={() => setDoneUpcoming((current) => {
+                    const next = new Set(current);
+                    if (next.has(item.id)) next.delete(item.id);
+                    else next.add(item.id);
+                    return next;
+                  })} className="flex w-full items-center justify-between rounded-[8px] border border-[#edf0f3] bg-[#f7f8fb] px-3 py-2 text-left hover:bg-white">
+                    <p className={`text-sm font-black text-[#20242a] ${doneUpcoming.has(item.id) ? "text-[#8f96a3] line-through" : ""}`}>{item.title}</p>
+                    <span className={`text-xs font-black ${label === "Today" ? "text-[#e5484d]" : "text-[#8f96a3]"}`}>{label}</span>
+                  </button>
+                );
+              })}
             </div>
           </Panel>}
         </aside>
@@ -449,8 +588,6 @@ function CustomizePanel({
   setHiddenWidgets: (updater: (current: Set<string>) => Set<string>) => void;
 }) {
   const widgets = [
-    { id: "sprint", label: "Sprint pulse" },
-    { id: "team", label: "Team load" },
     { id: "activity", label: "Recent activity" },
     { id: "assigned", label: "Assigned to me" },
     { id: "upcoming", label: "Upcoming" },

@@ -151,4 +151,14 @@ export const ticketsService = {
     const response = await api.delete(`/projects/${projectId}/tickets/${ticketId}/attachments/${attachmentId}/`);
     return response.data;
   },
+
+  /* Bulk assign tickets to a release (project-scoped) */
+  bulkAssignRelease: async (projectId: string, ticketIds: string[], releaseId: string | null) => {
+    // If releaseId provided, prefer the release-scoped URL; otherwise use a generic bulk endpoint
+    const url = releaseId
+      ? `/projects/${projectId}/releases/${releaseId}/assign-tickets/`
+      : `/projects/${projectId}/tickets/bulk-assign-release/`;
+    const response = await api.post(url, { ticket_ids: ticketIds });
+    return response.data;
+  },
 };
