@@ -47,13 +47,13 @@ export default function LoginPage() {
       }
 
       setAuth({
-        user: { username: response.username, email: response.email },
-        accessToken: response.access,
-        refreshToken: response.refresh,
+        user: { username: response.username || "", email: response.email || "" },
+        accessToken: response.access || "",
+        refreshToken: response.refresh || "",
       });
 
-      localStorage.setItem("accessToken", response.access);
-      localStorage.setItem("refreshToken", response.refresh);
+      if (response.access) localStorage.setItem("accessToken", response.access);
+      if (response.refresh) localStorage.setItem("refreshToken", response.refresh);
 
       router.push("/dashboard/enterprise");
     } catch (error) {
