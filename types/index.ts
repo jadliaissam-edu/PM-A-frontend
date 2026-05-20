@@ -7,8 +7,10 @@ export interface User {
 }
 
 export interface AuthResponse {
-  access: string;
-  refresh: string;
-  username: string;
-  email: string;
+  access?: string;
+  refresh?: string;
+  username?: string;
+  email?: string;
+  mfa_required?: boolean;
+  user?: User;
 }
