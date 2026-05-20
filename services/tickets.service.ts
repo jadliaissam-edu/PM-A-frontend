@@ -11,6 +11,7 @@ export interface TicketSummary {
   created_at?: string;
   updated_at?: string;
   comments_count?: number;
+  release?: string | null;
 }
 
 export interface TicketDetail extends TicketSummary {
