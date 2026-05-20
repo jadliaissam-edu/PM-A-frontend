@@ -10,8 +10,8 @@ export interface Workspace {
   organization: string;
   name: string;
   visibility: string;
-  // Metadata for UI
   description?: string;
+  summary?: string;
   member_count?: number;
   task_count?: number;
   last_updated?: string;
