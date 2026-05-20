@@ -16,6 +16,12 @@ export interface ProjectSummary {
   accent?: string;
   tags?: string[];
   memberInitials?: string[];
+  // New optional fields used in UI components
+  health?: string;
+  owner?: string;
+  tasks?: number;
+  due?: string;
+  tone?: string;
 }
 
 export const projectService = {
