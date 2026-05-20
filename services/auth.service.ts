@@ -2,7 +2,8 @@ import { api } from "../lib/api";
 import { AuthResponse } from "../types";
 
 export interface LoginPayload {
-  username: string;
+  username?: string;
+  email?: string;
   password: string;
 }
 
