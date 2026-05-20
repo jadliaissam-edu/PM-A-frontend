@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, type ChangeEvent, type KeyboardEvent, type ReactNode } from "react";
+import { Suspense, useState, useEffect, type ChangeEvent, type KeyboardEvent, type ReactNode } from "react";
 import { useSearchParams } from "next/navigation";
 import { ticketsService } from "@/services/tickets.service";
 import reactionsService from "@/services/reactions.service";
@@ -29,7 +29,7 @@ type ToolbarPanel = "filter" | "sort" | "customize" | null;
 
 const grid = "grid-cols-[42px_minmax(360px,1.25fr)_132px_154px_122px_108px_88px_72px]";
 
-export default function TicketsPage() {
+function TicketsPageContent() {
   const [items, setItems] = useState<Ticket[]>([]);
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<Ticket | null>(null);
@@ -231,13 +231,13 @@ export default function TicketsPage() {
           const ticket: Ticket = {
             id: created.id,
             title: created.title || title,
-            priority: created.priority || newPriority,
-            status: created.status || newStatus,
+            priority: (created.priority as Ticket["priority"]) || newPriority,
+            status: (created.status as Ticket["status"]) || newStatus,
             assignee: created.assigned_to || newAssignee,
             updated: created.updated_at || "now",
-            due: created.due || newDue,
+            due: newDue,
             desc: created.description || "",
-            subtasks: created.subtasks || "0/0",
+            subtasks: "0/0",
             comments: created.comments_count || 0,
           };
           setItems((current) => [ticket, ...current]);
@@ -907,5 +907,13 @@ function FieldSelect({
         ))}
       </select>
     </label>
+  );
+}
+
+export default function TicketsPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <TicketsPageContent />
+    </Suspense>
   );
 }

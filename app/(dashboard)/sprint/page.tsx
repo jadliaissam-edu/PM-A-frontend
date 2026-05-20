@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { projectService } from "@/services/project.service";
 import { useSearchParams } from "next/navigation";
+import RetrospectiveBoard from "./RetrospectiveBoard";
 
 type BacklogItem = {
   id: string;
@@ -36,7 +37,7 @@ const priorityStyle = {
   Low: "bg-zinc-100 text-zinc-600",
 } as const;
 
-export default function SprintPlanningPage() {
+function SprintPlanningContent() {
   const searchParams = useSearchParams();
   const projectId = searchParams?.get("projectId");
 
@@ -338,5 +339,13 @@ export default function SprintPlanningPage() {
         </div>
       )}
     </main>
+  );
+}
+
+export default function SprintPlanningPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <SprintPlanningContent />
+    </Suspense>
   );
 }

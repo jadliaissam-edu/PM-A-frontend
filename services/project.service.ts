@@ -21,7 +21,7 @@ export interface ProjectSummary {
   owner?: string;
   tasks?: number;
   due?: string;
-  tone?: string;
+  tone?: "blue" | "neutral" | "purple" | "green" | "red" | "yellow";
 }
 
 export const projectService = {

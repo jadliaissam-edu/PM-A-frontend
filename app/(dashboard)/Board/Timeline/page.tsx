@@ -2,7 +2,7 @@
 
 import { CalendarDays, CirclePlus, Filter, MoreHorizontal, Search } from "lucide-react";
 import { Avatar, Chip, GhostButton, Panel, PrimaryButton, WorkspaceHeader, WorkspacePage } from "@/components/workspace-ui";
-import { useState, type ReactNode, useEffect } from "react";
+import { Suspense, useState, type ReactNode, useEffect } from "react";
 import { projectService } from "@/services/project.service";
 import { useSearchParams } from "next/navigation";
 
@@ -25,7 +25,7 @@ type Milestone = {
   status: "Done" | "Open" | "At risk";
 };
 
-export default function TimelineBoardPage() {
+function TimelineBoardContent() {
   const searchParams = useSearchParams();
   const projectId = searchParams?.get("projectId");
 
@@ -232,6 +232,14 @@ function FilterGroup({ title, children }: { title: string; children: ReactNode }
       <p className="mb-1.5 text-[10px] font-black uppercase text-[#8f96a3]">{title}</p>
       <div className="flex flex-wrap gap-1">{children}</div>
     </div>
+  );
+}
+
+export default function TimelineBoardPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <TimelineBoardContent />
+    </Suspense>
   );
 }
 

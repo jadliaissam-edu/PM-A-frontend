@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { Suspense, useEffect, useState, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AuthCard } from "@/features/auth/components/auth-card";
 import { authAdvancedService } from "@/services/auth-advanced.service";
 import { useAuthStore } from "@/store";
 
-export default function MfaVerifyPage() {
+function MfaVerifyContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const setAuth = useAuthStore((s) => s.setAuth);
@@ -101,5 +101,13 @@ export default function MfaVerifyPage() {
         {message && <div className="mt-2 text-sm text-[#68707d]">{message}</div>}
       </div>
     </AuthCard>
+  );
+}
+
+export default function MfaVerifyPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <MfaVerifyContent />
+    </Suspense>
   );
 }

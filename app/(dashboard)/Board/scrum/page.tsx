@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { projectService } from "@/services/project.service";
 import { useSearchParams } from "next/navigation";
 
@@ -21,7 +21,7 @@ interface Ticket {
   status_display: string;
 }
 
-export default function ScrumBoardPage() {
+function ScrumBoardContent() {
   const searchParams = useSearchParams();
   const projectId = searchParams?.get("projectId");
 
@@ -154,5 +154,13 @@ export default function ScrumBoardPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function ScrumBoardPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ScrumBoardContent />
+    </Suspense>
   );
 }

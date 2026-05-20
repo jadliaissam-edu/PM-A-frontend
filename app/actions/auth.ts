@@ -15,13 +15,13 @@ export async function loginAction(data: LoginFormData) {
     // If backend indicates MFA is required, return that to the caller so
     // the frontend can redirect the user to the MFA verification flow.
     if (response?.mfa_required) {
-      return { success: true, mfa_required: true, email: response.email || data.email };
+      return { success: true, mfa_required: true, email: response.email || data.username };
     }
 
     const cookieStore = await cookies();
 
     // Set httpOnly cookies from the server
-    cookieStore.set('accessToken', response.access, {
+    cookieStore.set('accessToken', response.access || '', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
@@ -29,7 +29,7 @@ export async function loginAction(data: LoginFormData) {
       path: '/',
     });
 
-    cookieStore.set('refreshToken', response.refresh, {
+    cookieStore.set('refreshToken', response.refresh || '', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',

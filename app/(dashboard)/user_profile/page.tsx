@@ -26,6 +26,11 @@ export default function SettingsHubPage() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   
   const [securityMenu, setSecurityMenu] = useState<"password" | "mfa" | null>(null);
+  const [preferences, setPreferences] = useState({
+    emailNotifications: true,
+    darkMode: false,
+    autoSave: true,
+  });
 
   
   useEffect(() => {
@@ -123,11 +128,11 @@ export default function SettingsHubPage() {
       const got = pickAvatar(userData);
       if (userData && got) {
         setAvatarPreview(got);
-        try { useAuthStore.getState().setAuth({ user: userData, accessToken: localStorage.getItem("accessToken"), refreshToken: localStorage.getItem("refreshToken") }); } catch (e) {}
+        try { useAuthStore.getState().setAuth({ user: userData, accessToken: localStorage.getItem("accessToken") ?? undefined, refreshToken: localStorage.getItem("refreshToken") ?? undefined }); } catch (e) {}
         setNotice("Avatar uploaded successfully.");
       } else if (userData) {
         // no avatar url found in response; update store and notify user
-        try { useAuthStore.getState().setAuth({ user: userData, accessToken: localStorage.getItem("accessToken"), refreshToken: localStorage.getItem("refreshToken") }); } catch (e) {}
+        try { useAuthStore.getState().setAuth({ user: userData, accessToken: localStorage.getItem("accessToken") ?? undefined, refreshToken: localStorage.getItem("refreshToken") ?? undefined }); } catch (e) {}
         setNotice("Upload completed but server returned no avatar URL. Backend may store avatar separately.");
       } else {
         setNotice("Upload completed but no profile returned from server.");
@@ -234,7 +239,7 @@ export default function SettingsHubPage() {
                           const userData = resp.data?.user ?? resp.data;
                           // ensure username present locally
                           if (userData && !userData.username) userData.username = derivedUsername;
-                          try { useAuthStore.getState().setAuth({ user: userData, accessToken: localStorage.getItem("accessToken"), refreshToken: localStorage.getItem("refreshToken") }); } catch (e) {}
+                          try { useAuthStore.getState().setAuth({ user: userData, accessToken: localStorage.getItem("accessToken") ?? undefined, refreshToken: localStorage.getItem("refreshToken") ?? undefined }); } catch (e) {}
                           setProfileForm({ firstName: userData.first_name || userData.firstName || "", lastName: userData.last_name || userData.lastName || "", email: userData.email || "" });
                           if (userData?.avatar_url) setAvatarPreview(userData.avatar_url);
                           setAvatarFile(null);
@@ -247,7 +252,7 @@ export default function SettingsHubPage() {
                           console.debug("Save response (no avatar):", resp?.status, resp?.data);
                           const userData = resp.data?.user ?? resp.data;
                           if (userData && !userData.username) userData.username = derivedUsername;
-                          try { useAuthStore.getState().setAuth({ user: userData, accessToken: localStorage.getItem("accessToken"), refreshToken: localStorage.getItem("refreshToken") }); } catch (e) {}
+                          try { useAuthStore.getState().setAuth({ user: userData, accessToken: localStorage.getItem("accessToken") ?? undefined, refreshToken: localStorage.getItem("refreshToken") ?? undefined }); } catch (e) {}
                           setProfileForm({ firstName: userData.first_name || userData.firstName || "", lastName: userData.last_name || userData.lastName || "", email: userData.email || "" });
                           setNotice("Profile updated successfully.");
                         }
@@ -291,7 +296,7 @@ export default function SettingsHubPage() {
                 {Object.keys(preferences).map((item) => (
                   <label key={item} className="flex items-center justify-between rounded-[8px] border border-[#edf0f3] bg-[#f7f8fb] p-3">
                     <span className="text-sm font-black text-[#20242a]">{item}</span>
-                    <input type="checkbox" checked={preferences[item]} onChange={() => { setPreferences((current) => ({ ...current, [item]: !current[item] })); setNotice("Preference updated locally."); }} className="h-4 w-4 accent-[var(--primary-color)]" />
+                    <input type="checkbox" checked={preferences[item as keyof typeof preferences]} onChange={() => { setPreferences((current) => ({ ...current, [item]: !current[item as keyof typeof preferences] })); setNotice("Preference updated locally."); }} className="h-4 w-4 accent-[var(--primary-color)]" />
                   </label>
                 ))}
               </div>

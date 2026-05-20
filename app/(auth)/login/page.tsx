@@ -30,18 +30,18 @@ export default function LoginPage() {
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: "",
+      username: "",
       password: "",
     },
   });
 
   const onSubmit = async (data: LoginFormData) => {
     try {
-      const response = await authService.login({ email: data.email, password: data.password });
+      const response = await authService.login({ username: data.username, password: data.password });
 
       // If backend requires MFA, redirect to the verify page with the email
       if (response?.mfa_required) {
-        const emailToUse = response.email || data.email;
+        const emailToUse = response.email || data.username;
         router.push(`/mfa?email=${encodeURIComponent(emailToUse)}`);
         return;
       }
@@ -94,19 +94,19 @@ export default function LoginPage() {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-3" noValidate>
         <div>
           <label className="mb-1 flex items-center justify-between text-[10px] font-black uppercase text-[#8f96a3]">
-            Email
+            Username
             <span className="normal-case text-[10px] font-bold text-[#a2a9b5]">Required</span>
           </label>
           <input
-            type="email"
-            {...register("email")}
-            aria-invalid={Boolean(errors.email)}
-            className="h-9 w-full rounded-[7px] border border-[#dfe3e8] bg-[#f7f8fb] px-3 text-xs font-black text-[#20242a] outline-none transition placeholder:text-[#9aa1ad] hover:bg-white focus:border-[#7b68ee] focus:bg-white focus:ring-2 focus:ring-[#d7d1ff] aria-[invalid=true]:border-[#ffd6d6] aria-[invalid=true]:bg-[#fffafa]"
-            placeholder="you@company.com"
+            type="text"
+            {...register("username")}
+            aria-invalid={Boolean(errors.username)}
+            className="h-9 w-full rounded-[7px] border border-[#dfe3e8] bg-[#f7f8fb] px-3 text-xs font-black text-[#20242a] outline-none transition placeholder:text-[#9aa1ad] hover:bg-white focus:border-[#7b68ee] focus:bg-white focus:ring-2 focus:ring-[#d7d1ff] aria-[invalid=true]:border-[#ffd6d6] aria-[invalid=true]:bg-[#fff1f1]"
+            placeholder="Enter your username"
           />
-          {!errors.email && <p className="mt-1 text-[10px] font-bold text-[#8f96a3]">Use your work email to sign in.</p>}
-          {errors.email && (
-            <p className="mt-1 rounded-[4px] border border-[#ffd6d6] bg-[#fff1f1] px-2 py-1 text-[10px] font-black text-[#e5484d]">{errors.email.message}</p>
+          {!errors.username && <p className="mt-1 text-[10px] font-bold text-[#8f96a3]">Use your username to sign in.</p>}
+          {errors.username && (
+            <p className="mt-1 rounded-[4px] border border-[#ffd6d6] bg-[#fff1f1] px-2 py-1 text-[10px] font-black text-[#e5484d]">{errors.username.message}</p>
           )}
         </div>
 

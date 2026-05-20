@@ -147,7 +147,7 @@ export default function ReportsPage() {
                     setNotice('Please select a project to export');
                     return;
                   }
-                  const blob = await reportsService.exportProjectReport(projectId, 'csv');
+                  const blob = await reportsService.exportProjectReport(Number(projectId), 'csv');
                   const url = window.URL.createObjectURL(new Blob([blob]));
                   const a = document.createElement('a');
                   a.href = url;

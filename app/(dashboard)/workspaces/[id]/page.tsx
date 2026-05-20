@@ -174,7 +174,7 @@ export default function WorkspaceDetailView() {
       setCreatingRelease(false);
     } catch (err) {
       console.error("Failed to create release", err);
-      alert("Failed to create release: " + (err?.message || String(err)));
+      alert("Failed to create release: " + ((err as Error)?.message || String(err)));
     } finally {
       setLoadingReleases(false);
     }

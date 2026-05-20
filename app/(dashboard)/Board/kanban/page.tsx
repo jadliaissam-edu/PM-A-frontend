@@ -1,6 +1,6 @@
 "use client";
 
-import { type DragEvent, useEffect, useState } from "react";
+import { Suspense, type DragEvent, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useAuthStore } from "../../../../store";
 import { dashboardService } from "@/services/dashboard.service";
@@ -40,7 +40,7 @@ const backendToFrontendPriority = (p: string): BoardTask["priority"] => {
   return map[(p || "medium").toLowerCase()] || "Normal";
 };
 
-export default function KanbanBoardPage() {
+function KanbanBoardContent() {
   const user = useAuthStore((state) => state.user);
   const [boardColumns, setBoardColumns] = useState<BoardColumn[]>(initialColumns);
   // Start as false so server-rendered HTML matches client initial render
@@ -784,5 +784,13 @@ function FieldSelect({
         ))}
       </select>
     </label>
+  );
+}
+
+export default function KanbanBoardPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <KanbanBoardContent />
+    </Suspense>
   );
 }

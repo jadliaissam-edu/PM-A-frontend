@@ -19,10 +19,10 @@ export default function Providers({
       const accessToken = localStorage.getItem("accessToken");
       const refreshToken = localStorage.getItem("refreshToken");
       if (accessToken) {
-        setAuth({ user: null, accessToken, refreshToken });
+        setAuth({ user: null, accessToken, refreshToken: refreshToken ?? undefined });
         authService
           .getProfile()
-          .then((profile) => setAuth({ user: profile, accessToken, refreshToken }))
+          .then((profile) => setAuth({ user: { ...profile, id: parseInt(profile.id) } as any, accessToken, refreshToken: refreshToken ?? undefined }))
           .catch(() => {
             // profile fetch failed — tokens might be invalid
           });

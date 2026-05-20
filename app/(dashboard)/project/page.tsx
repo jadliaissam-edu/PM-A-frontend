@@ -44,10 +44,8 @@ export default function ProjectsPage() {
           progress: p.progress || 0,
           owner: (p.lead && p.lead.slice(0, 2)) || (p.memberInitials && p.memberInitials[0]) || "--",
           tasks: p.issueCount || 0,
-          due: p.dueLabel || p.dueLabel || "",
-          tone: p.accent ? "green" : "blue",
-          // keep other fields from API
-          ...p,
+          due: p.dueLabel || "",
+          tone: (p.accent ? "green" : "blue") as ProjectSummary["tone"],
         }));
         setItems(mapped);
       } catch (e) {
@@ -97,7 +95,7 @@ export default function ProjectsPage() {
                     <span className="mt-1 block h-1.5 rounded-full bg-[#e4e7ec]"><span className="block h-full rounded-full bg-[#7b68ee]" style={{ width: `${project.progress}%` }} /></span>
                   </span>
                   <span className="border-l border-[#e5e7eb] px-3"><Chip tone={project.tone}>{project.health}</Chip></span>
-                  <span className="flex items-center border-l border-[#e5e7eb] px-3"><Avatar initials={project.owner} /></span>
+                  <span className="flex items-center border-l border-[#e5e7eb] px-3"><Avatar initials={project.owner ?? "--"} /></span>
                   <span className="border-l border-[#e5e7eb] px-3 font-black text-[#68707d]">{project.tasks}</span>
                   <span className="border-l border-[#e5e7eb] px-3 font-black text-[#68707d]">{project.due}</span>
                 </button>
@@ -141,7 +139,7 @@ export default function ProjectsPage() {
             </div>
             {dialog === "project" && <><input value={newProjectName} onChange={(event) => setNewProjectName(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") createProject(); }} autoFocus placeholder="Project name" className="h-10 w-full rounded-[8px] border border-[#dfe3e8] bg-[#f7f8fb] px-3 text-sm font-semibold outline-none focus:border-[#7b68ee]" /><div className="mt-3 flex justify-end"><PrimaryButton onClick={createProject}>Create locally</PrimaryButton></div></>}
             {dialog === "template" && <><p className="text-sm font-semibold text-[#68707d]">Template selected: {newProjectName}. Start a local project from this template.</p><div className="mt-3 flex justify-end"><PrimaryButton onClick={createProject}>Use template</PrimaryButton></div></>}
-            {dialog === "actions" && selectedProject && <div className="space-y-2"><p className="text-sm font-black text-[#20242a]">{selectedProject.name}</p><button onClick={() => { setHealthFilter(selectedProject.health); setDialog(null); }} className="h-9 w-full rounded-[8px] border border-[#edf0f3] bg-[#f7f8fb] text-sm font-black text-[#68707d] hover:bg-white">Filter by {selectedProject.health}</button><Link href={`/project/${selectedProject.id}`} className="flex h-9 items-center justify-center rounded-[8px] bg-[#7b68ee] text-sm font-black text-white">Open project</Link></div>}
+            {dialog === "actions" && selectedProject && <div className="space-y-2"><p className="text-sm font-black text-[#20242a]">{selectedProject.name}</p><button onClick={() => { setHealthFilter(selectedProject.health ?? "All"); setDialog(null); }} className="h-9 w-full rounded-[8px] border border-[#edf0f3] bg-[#f7f8fb] text-sm font-black text-[#68707d] hover:bg-white">Filter by {selectedProject.health}</button><Link href={`/project/${selectedProject.id}`} className="flex h-9 items-center justify-center rounded-[8px] bg-[#7b68ee] text-sm font-black text-white">Open project</Link></div>}
           </section>
         </div>
       )}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { CirclePlus, GitBranch, Rocket, Search, ShieldCheck, Clock, Calendar } from "lucide-react";
 import { Avatar, Chip, GhostButton, Panel, PrimaryButton, WorkspaceHeader, WorkspacePage } from "@/components/workspace-ui";
 import { orgService } from "@/services/org.service";
@@ -18,7 +18,7 @@ interface Release {
   description: string;
 }
 
-export default function ReleaseManagementPage() {
+function ReleaseManagementContent() {
   const searchParams = useSearchParams();
   const workspaceId = searchParams?.get("workspace") || "1b14b1ce-3017-49a6-9b01-bc4123305fe0";
 
@@ -284,5 +284,13 @@ export default function ReleaseManagementPage() {
         </div>
       )}
     </WorkspacePage>
+  );
+}
+
+export default function ReleaseManagementPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ReleaseManagementContent />
+    </Suspense>
   );
 }

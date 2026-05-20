@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AuthCard } from "@/features/auth/components/auth-card";
 
-export default function MfaIndex() {
+function MfaContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -27,5 +27,13 @@ export default function MfaIndex() {
         </div>
       </div>
     </AuthCard>
+  );
+}
+
+export default function MfaIndex() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <MfaContent />
+    </Suspense>
   );
 }
