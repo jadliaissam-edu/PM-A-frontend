@@ -30,9 +30,7 @@ export const registerSchema = z.object({
     .min(2, "Last name must be at least 2 characters"),
   username: z
     .string()
-    .optional()
-    .or(z.literal(""))
-    .transform((v) => (v === undefined ? "" : v)),
+    .optional(),
   email: z
     .string()
     .min(1, "Email is required")
